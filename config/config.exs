@@ -66,4 +66,9 @@ config :shop1_cmms, Oban,
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
-import_config "#{config_env()}.exs"
+# Uses config_env()/0 (available in Mix.Config since Elixir 1.11+) instead of Mix.env/0.
+# Safely only imports if the file actually exists to avoid runtime warnings in releases.
+env_config = Path.join([__DIR__, "#{config_env()}.exs"])
+if File.exists?(env_config) do
+  import_config env_config
+end
