@@ -38,8 +38,7 @@ defmodule Shop1Cmms.MixProject do
       {:postgrex, ">= 0.0.0"},
       
       # Authentication and Security
-      {:bcrypt_elixir, "~> 3.0"},
-      {:phx_gen_auth, "~> 0.7", only: :dev, runtime: false},
+      {:pbkdf2_elixir, "~> 2.0"},
       
       # JSON and HTTP
       {:jason, "~> 1.2"},

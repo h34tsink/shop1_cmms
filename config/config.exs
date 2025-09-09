@@ -1,5 +1,8 @@
 import Config
 
+# Configure Ecto repos
+config :shop1_cmms, ecto_repos: [Shop1Cmms.Repo]
+
 # Configure your database
 config :shop1_cmms, Shop1Cmms.Repo,
   username: "postgres",

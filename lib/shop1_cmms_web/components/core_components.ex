@@ -189,7 +189,7 @@ defmodule Shop1CmmsWeb.CoreComponents do
 
   slot :inner_block, required: true
 
-  def form(assigns) do
+  def custom_form(assigns) do
     ~H"""
     <.form :let={f} for={@for} as={@as} {@rest}>
       <%= render_slot(@inner_block, f) %>
@@ -660,7 +660,7 @@ defmodule Shop1CmmsWeb.CoreComponents do
   attr :rest, :global
   slot :inner_block, required: true
 
-  def focus_wrap(assigns) do
+  def custom_focus_wrap(assigns) do
     ~H"""
     <div id={@id} class={@class} {@rest}>
       <%= render_slot(@inner_block) %>

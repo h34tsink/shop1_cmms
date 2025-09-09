@@ -76,7 +76,7 @@ defmodule Shop1Cmms.Accounts.User do
     if hash_password? && password && changeset.valid? do
       changeset
       |> validate_length(:password, max: 72, count: :bytes)
-      |> put_change(:password_hash, Bcrypt.hash_pwd_salt(password))
+      |> put_change(:password_hash, Pbkdf2.hash_pwd_salt(password))
       |> delete_change(:password)
     else
       changeset
@@ -85,11 +85,11 @@ defmodule Shop1Cmms.Accounts.User do
 
   def valid_password?(%__MODULE__{password_hash: password_hash}, password)
       when is_binary(password_hash) and byte_size(password) > 0 do
-    Bcrypt.verify_pass(password, password_hash)
+    Pbkdf2.verify_pass(password, password_hash)
   end
 
   def valid_password?(_, _) do
-    Bcrypt.no_user_verify()
+    Pbkdf2.no_user_verify()
     false
   end
 

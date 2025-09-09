@@ -161,18 +161,20 @@ defmodule Shop1Cmms.Accounts do
       order_by: [ud.full_name, ud.display_name, u.username]
     )
 
-    case Keyword.get(opts, :site_id) do
+    query = case Keyword.get(opts, :site_id) do
       nil -> query
       site_id -> 
         from([u, uta, ud] in query, 
           where: is_nil(uta.default_site_id) or uta.default_site_id == ^site_id
         )
     end
-    |> case Keyword.get(opts, :cmms_enabled_only) do
+
+    query = case Keyword.get(opts, :cmms_enabled_only) do
       true -> from([u, uta, ud] in query, where: u.cmms_enabled == true)
       _ -> query
     end
-    |> Repo.all()
+
+    Repo.all(query)
   end
 
   ## Role-based authorization
