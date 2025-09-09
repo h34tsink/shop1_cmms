@@ -1,0 +1,90 @@
+# The directory Mix will write compiled artifacts to.
+/_build/
+
+# If you run "mix test --cover", coverage assets end up here.
+/cover/
+
+# The directory Mix downloads your dependencies sources to.
+/deps/
+
+# Where third-party dependencies like ExDoc output generated docs.
+/doc/
+
+# Ignore .fetch files in case you like to edit your project deps locally.
+/.fetch
+
+# If the VM crashes, it generates a dump, let's ignore it too.
+erl_crash.dump
+
+# Also ignore archive artifacts (built via "mix archive.build").
+*.ez
+
+# Ignore package tarball (built via "mix hex.build").
+shop1_cmms-*.tar
+
+# Temporary files, for example, from tests.
+/tmp/
+
+# If you use macOS, you may want to add
+.DS_Store
+
+# Logs
+*.log
+
+# Phoenix specific
+/priv/static/assets/
+/priv/static/cache_manifest.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Node modules (if using npm/yarn for assets)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Elixir Language Server
+.elixir_ls/
+
+# Dialyzer
+priv/plts/
+
+# Test coverage
+cover/
+
+# Sobelow security scanner
+.sobelow-*
+
+# Backup files
+*.bak
+*.backup
+
+# CMMS specific ignores
+/uploads/
+/exports/
+/temp/
+.cmms_cache/
