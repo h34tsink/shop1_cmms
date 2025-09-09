@@ -1,6 +1,7 @@
 defmodule Shop1Cmms.Assets.MeterReading do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -10,8 +11,7 @@ defmodule Shop1Cmms.Assets.MeterReading do
     field :reading_date, :utc_datetime
     field :reading_type, :string, default: "manual"
     field :notes, :string
-    field :tenant_id, :integer
-    field :recorded_by_id, :integer
+  # tenant_id & recorded_by_id provided via belongs_to associations
 
     # Associations
     belongs_to :recorded_by, Shop1Cmms.Accounts.User, foreign_key: :recorded_by_id, type: :integer
@@ -24,8 +24,8 @@ defmodule Shop1Cmms.Assets.MeterReading do
   @doc false
   def changeset(meter_reading, attrs) do
     meter_reading
-    |> cast(attrs, [:reading, :reading_date, :reading_type, :notes,
-                    :tenant_id, :recorded_by, :asset_meter_id])
+  |> cast(attrs, [:reading, :reading_date, :reading_type, :notes,
+          :tenant_id, :recorded_by_id, :asset_meter_id])
     |> validate_required([:reading, :reading_date, :tenant_id, :asset_meter_id])
     |> validate_number(:reading, greater_than_or_equal_to: 0)
     |> validate_inclusion(:reading_type, ["manual", "automatic", "estimated"])

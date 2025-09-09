@@ -1,6 +1,7 @@
 defmodule Shop1Cmms.Assets.AssetMeter do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -11,7 +12,7 @@ defmodule Shop1Cmms.Assets.AssetMeter do
     field :reading_frequency, :integer
     field :next_reading_due, :date
     field :is_active, :boolean, default: true
-    field :tenant_id, :integer
+  # tenant_id provided via belongs_to :tenant
 
     # Associations
     belongs_to :asset, Shop1Cmms.Assets.Asset, foreign_key: :asset_id
@@ -25,7 +26,7 @@ defmodule Shop1Cmms.Assets.AssetMeter do
   @doc false
   def changeset(asset_meter, attrs) do
     asset_meter
-    |> cast(attrs, [:current_reading, :last_reading_date, :reading_frequency, 
+    |> cast(attrs, [:current_reading, :last_reading_date, :reading_frequency,
                     :next_reading_due, :is_active, :tenant_id, :asset_id, :meter_type_id])
     |> validate_required([:tenant_id, :asset_id, :meter_type_id])
     |> validate_number(:current_reading, greater_than_or_equal_to: 0)

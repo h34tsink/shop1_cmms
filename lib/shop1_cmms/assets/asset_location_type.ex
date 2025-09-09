@@ -1,6 +1,7 @@
 defmodule Shop1Cmms.Assets.AssetLocationType do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -11,7 +12,7 @@ defmodule Shop1Cmms.Assets.AssetLocationType do
     field :code, :string
     field :icon, :string
     field :color, :string
-    field :tenant_id, :integer
+  # tenant_id provided by belongs_to :tenant
 
     # Associations
     has_many :asset_locations, Shop1Cmms.Assets.AssetLocation, foreign_key: :location_type_id
@@ -32,7 +33,5 @@ defmodule Shop1Cmms.Assets.AssetLocationType do
     |> unique_constraint([:tenant_id, :code], name: :asset_location_types_tenant_id_code_index)
   end
 
-  def for_tenant(query, tenant_id) do
-    from q in query, where: q.tenant_id == ^tenant_id
-  end
+  def for_tenant(query, tenant_id), do: from(q in query, where: q.tenant_id == ^tenant_id)
 end

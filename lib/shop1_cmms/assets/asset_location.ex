@@ -1,6 +1,7 @@
 defmodule Shop1Cmms.Assets.AssetLocation do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -14,7 +15,7 @@ defmodule Shop1Cmms.Assets.AssetLocation do
     field :area_size, :decimal
     field :area_unit, :string, default: "sqft"
     field :is_active, :boolean, default: true
-    field :tenant_id, :integer
+    # tenant_id provided via belongs_to :tenant
 
     # Associations
     belongs_to :parent_location, __MODULE__, foreign_key: :parent_location_id
@@ -29,7 +30,7 @@ defmodule Shop1Cmms.Assets.AssetLocation do
   @doc false
   def changeset(asset_location, attrs) do
     asset_location
-    |> cast(attrs, [:name, :description, :code, :address, :gps_coordinates, :area_size, 
+    |> cast(attrs, [:name, :description, :code, :address, :gps_coordinates, :area_size,
                     :area_unit, :is_active, :tenant_id, :parent_location_id, :location_type_id])
     |> validate_required([:name, :code, :tenant_id, :location_type_id])
     |> validate_length(:name, max: 255)
@@ -45,7 +46,7 @@ defmodule Shop1Cmms.Assets.AssetLocation do
   defp validate_gps_coordinates(changeset) do
     case get_field(changeset, :gps_coordinates) do
       nil -> changeset
-      coords -> 
+      coords ->
         case String.split(coords, ",") do
           [lat_str, lng_str] ->
             with {lat, ""} <- Float.parse(String.trim(lat_str)),
@@ -64,7 +65,7 @@ defmodule Shop1Cmms.Assets.AssetLocation do
   defp prevent_circular_reference(changeset) do
     parent_id = get_field(changeset, :parent_location_id)
     current_id = get_field(changeset, :id)
-    
+
     cond do
       is_nil(parent_id) -> changeset
       parent_id == current_id -> add_error(changeset, :parent_location_id, "cannot be self")

@@ -1,6 +1,7 @@
 defmodule Shop1Cmms.Assets.Asset do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -23,7 +24,7 @@ defmodule Shop1Cmms.Assets.Asset do
     field :criticality, Ecto.Enum, values: [:low, :medium, :high, :critical], default: :medium
     field :specifications, :map
     field :notes, :string
-    field :tenant_id, :integer
+  # tenant_id field comes from belongs_to :tenant; explicit field removed to avoid duplication
 
     # Associations
     belongs_to :parent_asset, __MODULE__, foreign_key: :parent_asset_id
@@ -76,7 +77,7 @@ defmodule Shop1Cmms.Assets.Asset do
   defp validate_date_not_future(changeset, field) do
     case get_field(changeset, field) do
       nil -> changeset
-      date -> 
+      date ->
         if Date.compare(date, Date.utc_today()) == :gt do
           add_error(changeset, field, "cannot be in the future")
         else
@@ -101,7 +102,7 @@ defmodule Shop1Cmms.Assets.Asset do
   defp prevent_circular_reference(changeset) do
     parent_id = get_field(changeset, :parent_asset_id)
     current_id = get_field(changeset, :id)
-    
+
     cond do
       is_nil(parent_id) -> changeset
       parent_id == current_id -> add_error(changeset, :parent_asset_id, "cannot be self")
@@ -109,39 +110,17 @@ defmodule Shop1Cmms.Assets.Asset do
     end
   end
 
-  def for_tenant(query, tenant_id) do
-    from q in query, where: q.tenant_id == ^tenant_id
-  end
-
-  def by_status(query, status) do
-    from q in query, where: q.status == ^status
-  end
-
-  def by_criticality(query, criticality) do
-    from q in query, where: q.criticality == ^criticality
-  end
-
-  def by_asset_type(query, asset_type_id) do
-    from q in query, where: q.asset_type_id == ^asset_type_id
-  end
-
-  def by_location(query, location_id) do
-    from q in query, where: q.location_id == ^location_id
-  end
-
-  def operational(query) do
-    from q in query, where: q.status == :operational
-  end
-
-  def needs_maintenance(query) do
-    from q in query, where: q.status in [:maintenance, :repair]
-  end
-
+  def for_tenant(query, tenant_id), do: from(q in query, where: q.tenant_id == ^tenant_id)
+  def by_status(query, status), do: from(q in query, where: q.status == ^status)
+  def by_criticality(query, criticality), do: from(q in query, where: q.criticality == ^criticality)
+  def by_asset_type(query, asset_type_id), do: from(q in query, where: q.asset_type_id == ^asset_type_id)
+  def by_location(query, location_id), do: from(q in query, where: q.location_id == ^location_id)
+  def operational(query), do: from(q in query, where: q.status == :operational)
+  def needs_maintenance(query), do: from(q in query, where: q.status in [:maintenance, :repair])
   def search_by_name(query, search_term) do
-    search_pattern = "%#{search_term}%"
-    from q in query, 
-      where: ilike(q.name, ^search_pattern) or 
-             ilike(q.asset_number, ^search_pattern) or
-             ilike(q.serial_number, ^search_pattern)
+    pattern = "%#{search_term}%"
+    from(q in query,
+      where: ilike(q.name, ^pattern) or ilike(q.asset_number, ^pattern) or ilike(q.serial_number, ^pattern)
+    )
   end
 end

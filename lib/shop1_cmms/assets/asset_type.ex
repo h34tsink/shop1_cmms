@@ -1,6 +1,7 @@
 defmodule Shop1Cmms.Assets.AssetType do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -15,7 +16,7 @@ defmodule Shop1Cmms.Assets.AssetType do
     field :has_meters, :boolean, default: false
     field :has_components, :boolean, default: false
     field :default_pm_frequency, :integer
-    field :tenant_id, :integer
+    # tenant_id provided via belongs_to :tenant
 
     # Associations
     has_many :assets, Shop1Cmms.Assets.Asset, foreign_key: :asset_type_id
@@ -27,7 +28,7 @@ defmodule Shop1Cmms.Assets.AssetType do
   @doc false
   def changeset(asset_type, attrs) do
     asset_type
-    |> cast(attrs, [:name, :description, :code, :category, :icon, :color, 
+    |> cast(attrs, [:name, :description, :code, :category, :icon, :color,
                     :has_meters, :has_components, :default_pm_frequency, :tenant_id])
     |> validate_required([:name, :code, :category, :tenant_id])
     |> validate_length(:name, max: 255)

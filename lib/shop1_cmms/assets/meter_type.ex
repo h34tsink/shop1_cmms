@@ -1,6 +1,7 @@
 defmodule Shop1Cmms.Assets.MeterType do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -11,7 +12,7 @@ defmodule Shop1Cmms.Assets.MeterType do
     field :unit, :string
     field :data_type, :string, default: "integer"
     field :is_cumulative, :boolean, default: true
-    field :tenant_id, :integer
+    # tenant_id provided via belongs_to :tenant
 
     # Associations
     has_many :asset_meters, Shop1Cmms.Assets.AssetMeter, foreign_key: :meter_type_id
