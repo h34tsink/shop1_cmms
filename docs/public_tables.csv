@@ -1,0 +1,487 @@
+"table_name","column_name","data_type"
+audit_logs,id,integer
+audit_logs,user_id,integer
+audit_logs,timestamp,timestamp with time zone
+audit_logs,action_type,text
+audit_logs,entity_type,text
+audit_logs,entity_id,integer
+audit_logs,field_changed,text
+audit_logs,old_value,text
+audit_logs,new_value,text
+audit_logs,ip_address,text
+contacts,id,integer
+contacts,customer_id,integer
+contacts,name,text
+contacts,position,text
+contacts,phone,text
+contacts,email,text
+contacts,notes,text
+contacts,created_at,timestamp with time zone
+contacts,updated_at,timestamp with time zone
+customer_attribute_definitions,id,integer
+customer_attribute_definitions,attribute_key,character varying
+customer_attribute_definitions,attribute_name,character varying
+customer_attribute_definitions,attribute_type,character varying
+customer_attribute_definitions,max_length,integer
+customer_attribute_definitions,min_value,numeric
+customer_attribute_definitions,max_value,numeric
+customer_attribute_definitions,allowed_values,text
+customer_attribute_definitions,is_required,boolean
+customer_attribute_definitions,display_order,integer
+customer_attribute_definitions,group_name,character varying
+customer_attribute_definitions,description,text
+customer_attribute_definitions,help_text,text
+customer_attribute_definitions,is_active,boolean
+customer_attribute_definitions,created_by,character varying
+customer_attribute_definitions,created_date,timestamp without time zone
+customer_attribute_definitions,modified_by,character varying
+customer_attribute_definitions,modified_date,timestamp without time zone
+customer_attribute_history,id,integer
+customer_attribute_history,customer_id,integer
+customer_attribute_history,attribute_id,integer
+customer_attribute_history,old_string_value,character varying
+customer_attribute_history,old_integer_value,integer
+customer_attribute_history,old_decimal_value,numeric
+customer_attribute_history,old_boolean_value,boolean
+customer_attribute_history,old_date_value,date
+customer_attribute_history,old_text_value,text
+customer_attribute_history,old_json_value,jsonb
+customer_attribute_history,new_string_value,character varying
+customer_attribute_history,new_integer_value,integer
+customer_attribute_history,new_decimal_value,numeric
+customer_attribute_history,new_boolean_value,boolean
+customer_attribute_history,new_date_value,date
+customer_attribute_history,new_text_value,text
+customer_attribute_history,new_json_value,jsonb
+customer_attribute_history,change_type,character varying
+customer_attribute_history,changed_by,character varying
+customer_attribute_history,changed_date,timestamp without time zone
+customer_attributes,id,integer
+customer_attributes,customer_id,integer
+customer_attributes,attribute_id,integer
+customer_attributes,string_value,character varying
+customer_attributes,integer_value,integer
+customer_attributes,decimal_value,numeric
+customer_attributes,boolean_value,boolean
+customer_attributes,date_value,date
+customer_attributes,text_value,text
+customer_attributes,json_value,jsonb
+customer_attributes,created_by,character varying
+customer_attributes,created_date,timestamp without time zone
+customer_attributes,modified_by,character varying
+customer_attributes,modified_date,timestamp without time zone
+customer_billing_addresses,id,integer
+customer_billing_addresses,customer_id,integer
+customer_billing_addresses,name,character varying
+customer_billing_addresses,address_line_1,character varying
+customer_billing_addresses,address_line_2,character varying
+customer_billing_addresses,city,character varying
+customer_billing_addresses,state,character varying
+customer_billing_addresses,zip_code,character varying
+customer_billing_addresses,is_active,boolean
+customer_billing_addresses,created_date,timestamp without time zone
+customer_contact_log,id,integer
+customer_contact_log,customer_id,integer
+customer_contact_log,contact_date,date
+customer_contact_log,made_by,character varying
+customer_contact_log,contact_person,character varying
+customer_contact_log,subject,character varying
+customer_contact_log,notes,text
+customer_contact_log,created_date,timestamp without time zone
+customer_contacts,id,integer
+customer_contacts,customer_id,integer
+customer_contacts,first_name,character varying
+customer_contacts,last_name,character varying
+customer_contacts,position,character varying
+customer_contacts,phone,character varying
+customer_contacts,extension,character varying
+customer_contacts,email,character varying
+customer_contacts,receives_ready_notice,boolean
+customer_contacts,is_primary,boolean
+customer_contacts,is_active,boolean
+customer_contacts,created_date,timestamp without time zone
+customer_parts,id,integer
+customer_parts,customer_id,integer
+customer_parts,part_number,character varying
+customer_parts,part_description,character varying
+customer_parts,process_description,character varying
+customer_parts,process_code,character varying
+customer_parts,process_code_2,character varying
+customer_parts,process_code_3,character varying
+customer_parts,alloy,character varying
+customer_parts,temper,character varying
+customer_parts,revision,character varying
+customer_parts,last_run_date,date
+customer_parts,is_active,boolean
+customer_parts,created_date,timestamp without time zone
+customer_pricing,id,integer
+customer_pricing,customer_id,integer
+customer_pricing,part_number,character varying
+customer_pricing,part_description,character varying
+customer_pricing,process_description,character varying
+customer_pricing,unit_price,numeric
+customer_pricing,sub_account_1,character varying
+customer_pricing,sub_price_1,numeric
+customer_pricing,sub_account_2,character varying
+customer_pricing,sub_price_2,numeric
+customer_pricing,sub_account_3,character varying
+customer_pricing,sub_price_3,numeric
+customer_pricing,sub_account_4,character varying
+customer_pricing,sub_price_4,numeric
+customer_pricing,sub_account_5,character varying
+customer_pricing,sub_price_5,numeric
+customer_pricing,sub_account_6,character varying
+customer_pricing,sub_price_6,numeric
+customer_pricing,activity_code,character varying
+customer_pricing,created_date,date
+customer_pricing,changed_date,date
+customer_pricing,last_referenced,date
+customer_pricing,is_active,boolean
+customer_quality_metrics,id,integer
+customer_quality_metrics,customer_id,integer
+customer_quality_metrics,year,integer
+customer_quality_metrics,month,integer
+customer_quality_metrics,processed_quantity,integer
+customer_quality_metrics,damaged_quantity,integer
+customer_quality_metrics,ppm_value,numeric
+customer_quality_metrics,created_date,timestamp without time zone
+customer_red_flags,id,integer
+customer_red_flags,customer_id,integer
+customer_red_flags,is_red_flagged,boolean
+customer_red_flags,flag_date,date
+customer_red_flags,flag_notes,text
+customer_red_flags,created_by,character varying
+customer_red_flags,created_date,timestamp without time zone
+customer_sales_history,id,integer
+customer_sales_history,customer_id,integer
+customer_sales_history,year,integer
+customer_sales_history,month,integer
+customer_sales_history,activity_code,character varying
+customer_sales_history,sales_amount,numeric
+customer_sales_history,created_date,timestamp without time zone
+customer_shipping_addresses,id,integer
+customer_shipping_addresses,customer_id,integer
+customer_shipping_addresses,name,character varying
+customer_shipping_addresses,address_line_1,character varying
+customer_shipping_addresses,address_line_2,character varying
+customer_shipping_addresses,city,character varying
+customer_shipping_addresses,state,character varying
+customer_shipping_addresses,zip_code,character varying
+customer_shipping_addresses,preferred_carrier,character varying
+customer_shipping_addresses,carrier_account,character varying
+customer_shipping_addresses,is_default,boolean
+customer_shipping_addresses,is_active,boolean
+customer_shipping_addresses,created_date,timestamp without time zone
+customers,id,integer
+customers,customer_number,character varying
+customers,name,character varying
+customers,address_line_1,character varying
+customers,address_line_2,character varying
+customers,city,character varying
+customers,state,character varying
+customers,zip_code,character varying
+customers,contact_person,character varying
+customers,phone,character varying
+customers,fax_number,character varying
+customers,website,character varying
+customers,terms,character varying
+customers,sales_rep,character varying
+customers,industry_group,character varying
+customers,status,character varying
+customers,po_required,boolean
+customers,no_minimum_charge,boolean
+customers,no_cert_charge,boolean
+customers,minimum_charge,numeric
+customers,email_ready_notice,boolean
+customers,serial_numbers_req,boolean
+customers,template_only,boolean
+customers,lot_number_req,boolean
+customers,cert_required,boolean
+customers,detailed_job_list,boolean
+customers,full_shipper,boolean
+customers,order_hide_nc,boolean
+customers,promise_date_req,boolean
+customers,no_certs,boolean
+customers,no_quantity_labels,boolean
+customers,generate_schedule_cards,boolean
+customers,ffl_number,character varying
+customers,ffl_expiration,date
+customers,default_apqp_level,integer
+customers,turnaround_agreement,text
+customers,fax_order_ready,boolean
+customers,fax_contact,character varying
+customers,email_invoice_to,character varying
+customers,created_date,date
+customers,last_activity,date
+customers,last_paid_date,date
+customers,created_by,character varying
+customers,modified_by,character varying
+customers,modified_date,timestamp without time zone
+departments,id,integer
+departments,name,character varying
+departments,description,text
+departments,department_code,character varying
+departments,manager_id,integer
+departments,parent_department_id,integer
+departments,is_active,boolean
+departments,created_at,timestamp with time zone
+departments,updated_at,timestamp with time zone
+employee_attributes,id,integer
+employee_attributes,employee_id,integer
+employee_attributes,attribute_name,character varying
+employee_attributes,attribute_value,text
+employee_attributes,data_type,character varying
+employee_attributes,created_at,timestamp with time zone
+employee_attributes,updated_at,timestamp with time zone
+employee_emergency_contacts,id,integer
+employee_emergency_contacts,employee_id,integer
+employee_emergency_contacts,contact_name,character varying
+employee_emergency_contacts,relationship,character varying
+employee_emergency_contacts,primary_phone,character varying
+employee_emergency_contacts,secondary_phone,character varying
+employee_emergency_contacts,email,character varying
+employee_emergency_contacts,address_line_1,character varying
+employee_emergency_contacts,address_line_2,character varying
+employee_emergency_contacts,city,character varying
+employee_emergency_contacts,state,character varying
+employee_emergency_contacts,zip_code,character varying
+employee_emergency_contacts,is_primary,boolean
+employee_emergency_contacts,medical_notes,text
+employee_emergency_contacts,created_at,timestamp with time zone
+employee_emergency_contacts,updated_at,timestamp with time zone
+employee_hr_data,employee_id,integer
+employee_hr_data,ssn_encrypted,text
+employee_hr_data,date_of_birth,date
+employee_hr_data,drivers_license_encrypted,text
+employee_hr_data,pay_type,character varying
+employee_hr_data,base_salary,numeric
+employee_hr_data,hourly_rate,numeric
+employee_hr_data,currency,character varying
+employee_hr_data,initial_vacation_days,integer
+employee_hr_data,current_vacation_balance,numeric
+employee_hr_data,vacation_accrual_rate,numeric
+employee_hr_data,performance_points,integer
+employee_hr_data,last_review_date,date
+employee_hr_data,next_review_date,date
+employee_hr_data,background_check_date,date
+employee_hr_data,drug_test_date,date
+employee_hr_data,i9_verification_date,date
+employee_hr_data,created_at,timestamp with time zone
+employee_hr_data,updated_at,timestamp with time zone
+employee_hr_data,created_by,integer
+employee_hr_data,updated_by,integer
+employees,id,integer
+employees,employee_number,character varying
+employees,user_id,integer
+employees,first_name,character varying
+employees,last_name,character varying
+employees,middle_name,character varying
+employees,preferred_name,character varying
+employees,personal_email,character varying
+employees,personal_phone,character varying
+employees,address_line_1,character varying
+employees,address_line_2,character varying
+employees,city,character varying
+employees,state,character varying
+employees,zip_code,character varying
+employees,country,character varying
+employees,hire_date,date
+employees,termination_date,date
+employees,employment_status,character varying
+employees,is_active,boolean
+employees,job_title,character varying
+employees,department_id,integer
+employees,manager_id,integer
+employees,location_id,integer
+employees,shift_id,integer
+employees,created_at,timestamp with time zone
+employees,updated_at,timestamp with time zone
+employees,created_by,integer
+employees,updated_by,integer
+entity_properties,id,integer
+entity_properties,entity_type,text
+entity_properties,entity_id,integer
+entity_properties,name,text
+entity_properties,value,text
+entity_properties,value_type,text
+entity_properties,created_at,timestamp with time zone
+entity_properties,updated_at,timestamp with time zone
+event_logs,id,integer
+event_logs,timestamp,timestamp with time zone
+event_logs,user_id,integer
+event_logs,event_type,text
+event_logs,source,text
+event_logs,message,text
+event_logs,reference_id,integer
+event_logs,data_json,jsonb
+job_cards,id,integer
+job_cards,order_id,integer
+job_cards,customer_name,text
+job_cards,part_desc,text
+job_cards,current_dept,text
+job_cards,status,text
+job_cards,color_code,text
+job_cards,locked_by,integer
+job_cards,last_moved,timestamp with time zone
+locations,id,integer
+locations,name,character varying
+locations,address_line_1,character varying
+locations,address_line_2,character varying
+locations,city,character varying
+locations,state,character varying
+locations,zip_code,character varying
+locations,is_active,boolean
+locations,created_at,timestamp with time zone
+notifications,id,integer
+notifications,tenant,character varying
+notifications,user_id,character varying
+notifications,created_at,timestamp with time zone
+notifications,status,integer
+notifications,message,character varying
+notifications,type,integer
+notifications,action_url,character varying
+notifications,action_text,character varying
+notifications,category,character varying
+notifications,icon_glyph,character varying
+notifications,read_at,timestamp with time zone
+notifications,expires_at,timestamp with time zone
+notifications,is_pinned,boolean
+notifications,pinned_at,timestamp with time zone
+orders,id,integer
+orders,customer_id,integer
+orders,part_id,integer
+orders,po_number,text
+orders,lot,text
+orders,release,text
+orders,process,text
+orders,quantity,integer
+orders,notes,text
+orders,created_by,integer
+orders,created_at,timestamp with time zone
+parts,id,integer
+parts,customer_id,integer
+parts,pn,text
+parts,description,text
+parts,process,text
+parts,last_run_date,date
+parts,disabled,boolean
+parts,created_at,timestamp with time zone
+parts,updated_at,timestamp with time zone
+permissions,id,bigint
+permissions,code,text
+permissions,name,text
+permissions,area,text
+permissions,description,text
+role_permissions,role_id,bigint
+role_permissions,permission_id,bigint
+roles,id,integer
+roles,name,text
+roles,description,text
+roles,permissions,ARRAY
+roles,code,text
+roles,is_system,boolean
+roles,is_active,boolean
+roles,priority,integer
+roles,created_at,timestamp with time zone
+roles,updated_at,timestamp with time zone
+roles_clean,id,bigint
+roles_clean,code,text
+roles_clean,name,text
+roles_clean,description,text
+roles_clean,is_system,boolean
+roles_clean,active,boolean
+shifts,id,integer
+shifts,name,character varying
+shifts,start_time,time without time zone
+shifts,end_time,time without time zone
+shifts,days_of_week,ARRAY
+shifts,is_active,boolean
+shifts,created_at,timestamp with time zone
+sync_queue,id,integer
+sync_queue,entity_type,text
+sync_queue,entity_id,integer
+sync_queue,payload_json,jsonb
+sync_queue,attempts,integer
+sync_queue,last_attempt,timestamp with time zone
+sync_queue,status,text
+sync_queue,created_at,timestamp with time zone
+sync_queue,updated_at,timestamp with time zone
+user_details,id,integer
+user_details,username,USER-DEFINED
+user_details,role_id,integer
+user_details,user_is_active,boolean
+user_details,last_login,timestamp with time zone
+user_details,user_created_at,timestamp with time zone
+user_details,role_name,text
+user_details,role_description,text
+user_details,profile_id,integer
+user_details,first_name,character varying
+user_details,last_name,character varying
+user_details,display_name,character varying
+user_details,full_name,character varying
+user_details,email,character varying
+user_details,phone,character varying
+user_details,mobile,character varying
+user_details,department,character varying
+user_details,job_title,character varying
+user_details,avatar_url,text
+user_details,bio,text
+user_details,location,character varying
+user_details,timezone,character varying
+user_details,metadata,jsonb
+user_details,preferences,jsonb
+user_details,profile_is_active,boolean
+user_details,profile_created_at,timestamp with time zone
+user_details,profile_updated_at,timestamp with time zone
+user_permissions_view,user_id,integer
+user_permissions_view,username,USER-DEFINED
+user_permissions_view,user_is_active,boolean
+user_permissions_view,role_id,integer
+user_permissions_view,role_code,text
+user_permissions_view,role_name,text
+user_permissions_view,permission_id,bigint
+user_permissions_view,permission_code,text
+user_permissions_view,permission_name,text
+user_permissions_view,permission_area,text
+user_permissions_view,assigned_at,timestamp with time zone
+user_permissions_view,valid_from,timestamp with time zone
+user_permissions_view,valid_to,timestamp with time zone
+user_permissions_view,assigned_by,text
+user_profiles,id,integer
+user_profiles,user_id,integer
+user_profiles,first_name,character varying
+user_profiles,last_name,character varying
+user_profiles,display_name,character varying
+user_profiles,email,character varying
+user_profiles,phone,character varying
+user_profiles,mobile,character varying
+user_profiles,department,character varying
+user_profiles,job_title,character varying
+user_profiles,manager_id,integer
+user_profiles,avatar_url,text
+user_profiles,bio,text
+user_profiles,location,character varying
+user_profiles,timezone,character varying
+user_profiles,metadata,jsonb
+user_profiles,preferences,jsonb
+user_profiles,is_active,boolean
+user_profiles,created_at,timestamp with time zone
+user_profiles,updated_at,timestamp with time zone
+user_profiles,created_by,integer
+user_profiles,updated_by,integer
+user_roles,user_id,bigint
+user_roles,role_id,bigint
+user_roles,assigned_at,timestamp with time zone
+user_roles,valid_from,timestamp with time zone
+user_roles,valid_to,timestamp with time zone
+user_roles,assigned_by,text
+user_roles,is_active,boolean
+users,id,integer
+users,username,USER-DEFINED
+users,password_hash,text
+users,role_id,integer
+users,last_login,timestamp with time zone
+users,failed_logins,integer
+users,created_at,timestamp with time zone
+users,updated_at,timestamp with time zone
+users,is_active,boolean

@@ -11,9 +11,10 @@ defmodule Shop1Cmms.Assets.MeterReading do
     field :reading_type, :string, default: "manual"
     field :notes, :string
     field :tenant_id, :integer
+    field :recorded_by_id, :integer
 
     # Associations
-    belongs_to :recorded_by, Shop1Cmms.Accounts.User, foreign_key: :recorded_by, type: :integer
+    belongs_to :recorded_by, Shop1Cmms.Accounts.User, foreign_key: :recorded_by_id, type: :integer
     belongs_to :asset_meter, Shop1Cmms.Assets.AssetMeter, foreign_key: :asset_meter_id
     belongs_to :tenant, Shop1Cmms.Tenants.Tenant, foreign_key: :tenant_id, type: :integer
 
@@ -23,7 +24,7 @@ defmodule Shop1Cmms.Assets.MeterReading do
   @doc false
   def changeset(meter_reading, attrs) do
     meter_reading
-    |> cast(attrs, [:reading, :reading_date, :reading_type, :notes, 
+    |> cast(attrs, [:reading, :reading_date, :reading_type, :notes,
                     :tenant_id, :recorded_by, :asset_meter_id])
     |> validate_required([:reading, :reading_date, :tenant_id, :asset_meter_id])
     |> validate_number(:reading, greater_than_or_equal_to: 0)
@@ -50,7 +51,7 @@ defmodule Shop1Cmms.Assets.MeterReading do
     # to ensure cumulative readings are increasing
     # For now, we'll add a basic validation
     reading = get_field(changeset, :reading)
-    
+
     if reading && Decimal.compare(reading, Decimal.new("0")) == :lt do
       add_error(changeset, :reading, "cannot be negative")
     else
@@ -75,7 +76,7 @@ defmodule Shop1Cmms.Assets.MeterReading do
   end
 
   def in_date_range(query, start_date, end_date) do
-    from q in query, 
+    from q in query,
       where: q.reading_date >= ^start_date and q.reading_date <= ^end_date
   end
 end
