@@ -28,7 +28,13 @@ defmodule Shop1CmmsWeb.LoginLive do
 
       <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white py-8 px-4 shadow-xl sm:rounded-xl sm:px-10 border border-gray-100">
-          <.form for={@form} phx-submit="login" class="space-y-6">
+                    <.form
+            for={@form}
+            id="login-form"
+            phx-submit="login"
+            phx-change="validate"
+            class="space-y-6"
+          >
             <div>
               <label for="username" class="block text-sm font-semibold text-gray-700">
                 Username
@@ -40,7 +46,10 @@ defmodule Shop1CmmsWeb.LoginLive do
                   type="text"
                   autocomplete="username"
                   required
-                  class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm"
+                  class={[
+                    "appearance-none block w-full px-4 py-3 border rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm",
+                    if(@form[:username].errors != [], do: "border-red-300 focus:ring-red-500 focus:border-red-500", else: "border-gray-300")
+                  ]}
                   placeholder="Enter your username"
                   value={@form[:username].value}
                 />
@@ -59,7 +68,10 @@ defmodule Shop1CmmsWeb.LoginLive do
                   type="password"
                   autocomplete="current-password"
                   required
-                  class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm"
+                  class={[
+                    "appearance-none block w-full px-4 py-3 border rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm",
+                    if(@form[:password].errors != [], do: "border-red-300 focus:ring-red-500 focus:border-red-500", else: "border-gray-300")
+                  ]}
                   placeholder="Enter your password"
                   value={@form[:password].value}
                 />
@@ -165,53 +177,80 @@ defmodule Shop1CmmsWeb.LoginLive do
   end
 
   @impl true
+  def handle_event("validate", %{"username" => username, "password" => password} = params, socket) do
+    form =
+      %{"username" => username, "password" => password, "remember_me" => params["remember_me"] || false}
+      |> to_form()
+      |> Map.put(:errors, validate_login_form(username, password))
+
+    # Clear server error when user starts typing
+    error_message = if socket.assigns.error_message && (username != "" || password != ""), do: nil, else: socket.assigns.error_message
+
+    {:noreply, socket |> assign(:form, form) |> assign(:error_message, error_message)}
+  end
+
+  @impl true
   def handle_event("login", %{"username" => username, "password" => password} = params, socket) do
-    socket = assign(socket, :loading, true)
+    # Validate form first
+    form_errors = validate_login_form(username, password)
+    if form_errors != [] do
+      form =
+        %{"username" => username, "password" => password, "remember_me" => params["remember_me"] || false}
+        |> to_form()
+        |> Map.put(:errors, form_errors)
 
-    case Auth.authenticate_user(username, password) do
-      {:ok, user} ->
-        # Get user's available tenants
-        tenant_options = Auth.get_user_tenant_options(user)
+      {:noreply, assign(socket, :form, form)}
+    else
+      socket = assign(socket, :loading, true)
 
-        case tenant_options do
-          [] ->
-            {:noreply,
-             socket
-             |> assign(:loading, false)
-             |> assign(:error_message, "No CMMS tenants available for your account. Contact your administrator.")}
+      case Auth.authenticate_user(username, password) do
+        {:ok, user} ->
+          # Get user's available tenants
+          tenant_options = Auth.get_user_tenant_options(user)
 
-          [single_tenant] ->
-            # User has access to only one tenant, log them in directly
-            {:noreply,
-             socket
-             |> put_flash(:info, "Welcome to Shop1 CMMS!")
-             |> redirect(to: "/auth/login-complete?user_id=#{user.id}&tenant_id=#{single_tenant.id}&remember_me=#{params["remember_me"] || "false"}")}
+          case tenant_options do
+            [] ->
+              {:noreply,
+               socket
+               |> assign(:loading, false)
+               |> assign(:error_message, "No CMMS tenants available for your account. Contact your administrator.")}
 
-          _multiple_tenants ->
-            # User has multiple tenants, redirect to tenant selection
-            {:noreply,
-             socket
-             |> put_flash(:info, "Please select your tenant.")
-             |> redirect(to: "/auth/select-tenant?user_id=#{user.id}&remember_me=#{params["remember_me"] || "false"}")}
-        end
+            [single_tenant] ->
+              # User has access to only one tenant, log them in directly
+              {:noreply,
+               socket
+               |> put_flash(:info, "Welcome to Shop1 CMMS!")
+               |> redirect(to: "/auth/login-complete?user_id=#{user.id}&tenant_id=#{single_tenant.id}&remember_me=#{params["remember_me"] || "false"}")}
 
-      {:error, :cmms_not_enabled} ->
-        {:noreply,
-         socket
-         |> assign(:loading, false)
-         |> assign(:error_message, "CMMS access is not enabled for your account. Contact your administrator.")}
+            _multiple_tenants ->
+              # User has multiple tenants, redirect to tenant selection
+              {:noreply,
+               socket
+               |> put_flash(:info, "Please select your tenant.")
+               |> redirect(to: "/auth/select-tenant?user_id=#{user.id}&remember_me=#{params["remember_me"] || "false"}")}
+          end
 
-      {:error, :invalid_credentials} ->
-        {:noreply,
-         socket
-         |> assign(:loading, false)
-         |> assign(:error_message, "Invalid username or password.")}
+        {:error, :cmms_not_enabled} ->
+          {:noreply,
+           socket
+           |> assign(:loading, false)
+           |> assign(:error_message, "CMMS access is not enabled for your account. Contact your administrator.")}
 
-      {:error, _reason} ->
-        {:noreply,
-         socket
-         |> assign(:loading, false)
-         |> assign(:error_message, "An error occurred during login. Please try again.")}
+        {:error, :invalid_credentials} ->
+          {:noreply,
+           socket
+           |> assign(:loading, false)
+           |> assign(:error_message, "Invalid username or password.")}
+      end
     end
+  end
+
+  defp validate_login_form(username, password) do
+    errors = []
+
+    errors = if String.trim(username) == "", do: [username: "Username is required"] ++ errors, else: errors
+    errors = if String.trim(password) == "", do: [password: "Password is required"] ++ errors, else: errors
+
+    errors
   end
 end

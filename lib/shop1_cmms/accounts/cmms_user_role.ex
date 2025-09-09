@@ -8,13 +8,14 @@ defmodule Shop1Cmms.Accounts.CMMSUserRole do
     belongs_to :tenant, Shop1Cmms.Tenants.Tenant
     belongs_to :site, Shop1Cmms.Tenants.Site
     belongs_to :granted_by_user, Shop1Cmms.Accounts.User, foreign_key: :granted_by
-    
+
     field :role, :string
     field :granted_at, :utc_datetime
     field :expires_at, :utc_datetime
     field :is_active, :boolean, default: true
-    
-    timestamps(type: :utc_datetime)
+
+    # Use existing database column names instead of Phoenix defaults
+    timestamps(inserted_at: :created_at, updated_at: :updated_at, type: :utc_datetime)
   end
 
   @valid_roles ~w(tenant_admin maintenance_manager supervisor technician operator)

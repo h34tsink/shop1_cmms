@@ -18,12 +18,13 @@ defmodule Shop1Cmms.Tenants.Tenant do
     has_many :user_tenant_assignments, Shop1Cmms.Accounts.UserTenantAssignment
     has_many :users, through: [:user_tenant_assignments, :user]
 
-    timestamps(type: :utc_datetime)
+    # Use existing database column names instead of Phoenix defaults
+    timestamps(inserted_at: :created_at, updated_at: :updated_at, type: :utc_datetime)
   end
 
   def changeset(tenant, attrs) do
     tenant
-    |> cast(attrs, [:name, :code, :description, :contact_email, :contact_phone, 
+    |> cast(attrs, [:name, :code, :description, :contact_email, :contact_phone,
                     :address, :timezone, :settings, :is_active])
     |> validate_required([:name, :code])
     |> validate_length(:name, min: 2, max: 100)

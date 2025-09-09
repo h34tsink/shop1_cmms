@@ -16,10 +16,10 @@ defmodule Shop1Cmms.Auth do
     case Accounts.get_user_by_username_and_password(username, password) do
       %User{cmms_enabled: true} = user ->
         {:ok, user}
-      
+
       %User{cmms_enabled: false} ->
         {:error, :cmms_not_enabled}
-      
+
       nil ->
         {:error, :invalid_credentials}
     end
@@ -47,7 +47,7 @@ defmodule Shop1Cmms.Auth do
         # Set additional session variables for RLS
         Tenants.set_tenant_context(tenant_id)
         {:ok, user}
-      
+
       error ->
         error
     end
@@ -58,12 +58,12 @@ defmodule Shop1Cmms.Auth do
   """
   def get_user_tenant_options(%User{} = user) do
     tenants = Accounts.get_user_tenants(user.id)
-    
+
     Enum.map(tenants, fn tenant ->
       %{
         id: tenant.id,
         name: tenant.name,
-        code: tenant.tenant_code,
+        code: tenant.code,
         role: Accounts.get_user_highest_cmms_role(user.id, tenant.id)
       }
     end)
@@ -122,7 +122,7 @@ defmodule Shop1Cmms.Auth do
   def generate_session_token(%User{} = user, tenant_id) do
     # Simple token generation - in production, use proper JWT or session tokens
     token = :crypto.strong_rand_bytes(32) |> Base.encode64()
-    
+
     # Store token in user preferences for validation
     Accounts.update_user_cmms_preferences(user, %{
       "session_tokens" => [
@@ -134,7 +134,7 @@ defmodule Shop1Cmms.Auth do
         }
       ]
     })
-    
+
     {:ok, token}
   end
 
@@ -153,12 +153,12 @@ defmodule Shop1Cmms.Auth do
   def logout(%User{} = user) do
     # Clear database session variables
     Tenants.clear_context()
-    
+
     # Update last CMMS login to track session end
     Accounts.update_user_cmms_preferences(user, %{
       "last_logout" => DateTime.utc_now() |> DateTime.to_iso8601()
     })
-    
+
     :ok
   end
 
@@ -195,14 +195,14 @@ defmodule Shop1Cmms.Auth do
     # Verify the revoking admin has permission
     # This is a simplified check - you might want more sophisticated authorization
     case Accounts.disable_cmms_for_user(user_id) do
-      {:ok, user} -> 
+      {:ok, user} ->
         # Log the revocation
         Accounts.update_user_cmms_preferences(user, %{
           "access_revoked_at" => DateTime.utc_now() |> DateTime.to_iso8601(),
           "access_revoked_by" => revoking_admin_id
         })
         {:ok, user}
-      
+
       error -> error
     end
   end

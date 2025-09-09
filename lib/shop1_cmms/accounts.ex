@@ -41,7 +41,7 @@ defmodule Shop1Cmms.Accounts do
         details = UserDetails
         |> UserDetails.by_user_id(id)
         |> Repo.one()
-        
+
         Map.put(user, :details, details)
     end
   end
@@ -56,10 +56,10 @@ defmodule Shop1Cmms.Accounts do
 
   def enable_cmms_for_user(user_id, tenant_id, enabling_user_id) do
     user = get_user!(user_id)
-    
+
     Repo.transaction(fn ->
       # Enable CMMS access
-      {:ok, updated_user} = 
+      {:ok, updated_user} =
         user
         |> User.cmms_changeset(%{cmms_enabled: true})
         |> Repo.update()
@@ -86,7 +86,7 @@ defmodule Shop1Cmms.Accounts do
 
   def disable_cmms_for_user(user_id) do
     user = get_user!(user_id)
-    
+
     Repo.transaction(fn ->
       # Disable all CMMS roles
       CMMSUserRole
@@ -129,7 +129,7 @@ defmodule Shop1Cmms.Accounts do
 
   def get_user_highest_cmms_role(user_id, tenant_id) do
     roles = get_user_cmms_roles(user_id, tenant_id)
-    
+
     roles
     |> Enum.map(& &1.role)
     |> Enum.max_by(&CMMSUserRole.role_priority/1, fn -> "operator" end)
@@ -163,8 +163,8 @@ defmodule Shop1Cmms.Accounts do
 
     query = case Keyword.get(opts, :site_id) do
       nil -> query
-      site_id -> 
-        from([u, uta, ud] in query, 
+      site_id ->
+        from([u, uta, ud] in query,
           where: is_nil(uta.default_site_id) or uta.default_site_id == ^site_id
         )
     end
@@ -191,13 +191,13 @@ defmodule Shop1Cmms.Accounts do
   defp check_role_permission("tenant_admin", _action, _resource, _user, _tenant_id), do: true
 
   defp check_role_permission("maintenance_manager", action, _resource, _user, _tenant_id) do
-    action in [:manage_assets, :manage_pm_templates, :create_work_orders, 
-               :assign_work_orders, :approve_work_orders, :manage_inventory, 
+    action in [:manage_assets, :manage_pm_templates, :create_work_orders,
+               :assign_work_orders, :approve_work_orders, :manage_inventory,
                :view_reports, :manage_users]
   end
 
   defp check_role_permission("supervisor", action, _resource, _user, _tenant_id) do
-    action in [:assign_work_orders, :approve_work_orders, :create_work_orders, 
+    action in [:assign_work_orders, :approve_work_orders, :create_work_orders,
                :view_work_orders, :update_pm_schedules, :view_reports, :manage_inventory]
   end
 
@@ -245,16 +245,16 @@ defmodule Shop1Cmms.Accounts do
   def set_user_tenant_context(user_id, tenant_id) do
     # Verify user has access to this tenant
     if user_has_cmms_access?(user_id, tenant_id) do
-      # Set PostgreSQL session variables for RLS
-      Repo.query!("SET app.current_user_id = $1", [user_id])
-      Repo.query!("SET app.current_tenant_id = $1", [tenant_id])
-      
+      # Set PostgreSQL session variables for RLS (cannot use parameterized queries with SET)
+      Repo.query!("SET app.current_user_id = #{user_id}")
+      Repo.query!("SET app.current_tenant_id = #{tenant_id}")
+
       # Update last CMMS login
       user = get_user!(user_id)
       user
       |> User.cmms_changeset(%{last_cmms_login: DateTime.utc_now()})
       |> Repo.update()
-      
+
       {:ok, user}
     else
       {:error, :no_tenant_access}
@@ -266,7 +266,7 @@ defmodule Shop1Cmms.Accounts do
   def update_user_cmms_preferences(user, preferences) do
     current_prefs = user.cmms_preferences || %{}
     new_prefs = Map.merge(current_prefs, preferences)
-    
+
     user
     |> User.cmms_changeset(%{cmms_preferences: new_prefs})
     |> Repo.update()

@@ -11,21 +11,21 @@ defmodule Shop1Cmms.Accounts.User do
     field :last_login, :utc_datetime
     field :failed_logins, :integer, default: 0
     field :is_active, :boolean, default: true
-    
+
     # CMMS extensions (added by migration)
     field :cmms_enabled, :boolean, default: false
     field :last_cmms_login, :utc_datetime
     field :cmms_preferences, :map, default: %{}
-    
+
     # Virtual field for password changes
     field :password, :string, virtual: true, redact: true
-    
+
     # Relationships
     belongs_to :role, Shop1Cmms.Accounts.Role
     has_many :cmms_user_roles, Shop1Cmms.Accounts.CMMSUserRole
     has_many :user_tenant_assignments, Shop1Cmms.Accounts.UserTenantAssignment
     has_many :tenants, through: [:user_tenant_assignments, :tenant]
-    
+
     # Timestamps (existing)
     field :created_at, :utc_datetime
     field :updated_at, :utc_datetime
@@ -85,7 +85,27 @@ defmodule Shop1Cmms.Accounts.User do
 
   def valid_password?(%__MODULE__{password_hash: password_hash}, password)
       when is_binary(password_hash) and byte_size(password) > 0 do
-    Pbkdf2.verify_pass(password, password_hash)
+    # Handle legacy Shop1FinishLine plaintext passwords
+    case password_hash do
+      # If it's a short string (likely plaintext), compare directly
+      hash when byte_size(hash) < 20 ->
+        password == password_hash
+      # If it's a longer string, assume it's a proper hash
+      _ ->
+        Pbkdf2.verify_pass(password, password_hash)
+    end
+  end
+
+  # Handle legacy Shop1FinishLine password format (stored as array)
+  def valid_password?(%__MODULE__{password_hash: password_hash}, password)
+      when is_list(password_hash) and byte_size(password) > 0 do
+    case password_hash do
+      [stored_password] when is_binary(stored_password) ->
+        # Legacy format: plaintext password stored in array
+        password == stored_password
+      _ ->
+        false
+    end
   end
 
   def valid_password?(_, _) do
