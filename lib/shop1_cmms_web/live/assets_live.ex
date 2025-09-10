@@ -3,35 +3,26 @@ defmodule Shop1CmmsWeb.AssetsLive do
   alias Shop1Cmms.Assets
   alias Shop1Cmms.Assets.{Asset, AssetType}
 
-  def mount(_params, session, socket) do
-    # Validate tenant access
-    with {:ok, user} <- Shop1Cmms.Auth.require_authenticated_user(session),
-         {:ok, _} <- Shop1Cmms.Auth.validate_tenant_access(user.id, session["tenant_id"]) do
+  def mount(_params, _session, socket) do
+    current_user = socket.assigns.current_user
+    current_tenant_id = socket.assigns.current_tenant_id
 
-      # Set user context for RLS
-      Shop1Cmms.Accounts.set_user_tenant_context(user.id, session["tenant_id"])
+    # Load assets and asset types
+    assets = Assets.list_assets_with_details(current_tenant_id)
+    asset_types = Assets.list_asset_types(current_tenant_id)
 
-      # Load assets and asset types
-      assets = Assets.list_assets_with_details(session["tenant_id"])
-      asset_types = Assets.list_asset_types(session["tenant_id"])
+    socket = socket
+    |> assign(:user, current_user)
+    |> assign(:tenant_id, current_tenant_id)
+    |> assign(:assets, assets)
+    |> assign(:asset_types, asset_types)
+    |> assign(:selected_status, "all")
+    |> assign(:selected_type, "all")
+    |> assign(:search_term, "")
+    |> assign(:filtered_assets, assets)
+    |> assign(:page_title, "Assets Management")
 
-      socket = socket
-      |> assign(:user, user)
-      |> assign(:tenant_id, session["tenant_id"])
-      |> assign(:assets, assets)
-      |> assign(:asset_types, asset_types)
-      |> assign(:selected_status, "all")
-      |> assign(:selected_type, "all")
-      |> assign(:search_term, "")
-      |> assign(:page_title, "Assets Management")
-
-      {:ok, socket}
-    else
-      {:error, :no_tenant_access} ->
-        {:ok, redirect(socket, to: "/tenant-select")}
-      {:error, :not_authenticated} ->
-        {:ok, redirect(socket, to: "/login")}
-    end
+    {:ok, socket}
   end
 
   def handle_event("filter_status", %{"status" => status}, socket) do

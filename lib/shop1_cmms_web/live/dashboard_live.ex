@@ -219,7 +219,7 @@ defmodule Shop1CmmsWeb.DashboardLive do
           <% end %>
 
           <%= if @auth.view_assets do %>
-            <div class="group relative bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <.link href="/assets" class="group relative bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 block">
               <div class="absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8 opacity-10">
                 <div class="w-full h-full bg-gradient-to-br from-green-400 to-green-600 rounded-full"></div>
               </div>
@@ -250,7 +250,7 @@ defmodule Shop1CmmsWeb.DashboardLive do
                   </div>
                 </div>
               </div>
-            </div>
+            </.link>
           <% end %>
 
           <%= if @auth.manage_pm_templates do %>
@@ -319,7 +319,7 @@ defmodule Shop1CmmsWeb.DashboardLive do
         <%= if @auth.view_assets and @stats.total_assets > 0 do %>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
             <!-- Asset Status Breakdown -->
-            <div class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100">
+            <.link href="/assets" class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 block">
               <div class="p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Asset Status</h3>
                 <div class="space-y-4">
@@ -342,10 +342,10 @@ defmodule Shop1CmmsWeb.DashboardLive do
                   <% end %>
                 </div>
               </div>
-            </div>
+            </.link>
 
             <!-- Asset Criticality Breakdown -->
-            <div class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100">
+            <.link href="/assets" class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 block">
               <div class="p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Asset Criticality</h3>
                 <div class="space-y-4">
@@ -368,7 +368,7 @@ defmodule Shop1CmmsWeb.DashboardLive do
                   <% end %>
                 </div>
               </div>
-            </div>
+            </.link>
           </div>
         <% end %>
 
@@ -408,12 +408,12 @@ defmodule Shop1CmmsWeb.DashboardLive do
               <% end %>
 
               <%= if @auth.manage_assets do %>
-                <button class="group relative overflow-hidden inline-flex items-center justify-center px-6 py-5 border border-gray-200 text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gradient-to-r hover:from-gray-50 hover:to-green-50 hover:border-green-200 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                <.link href="/assets" class="group relative overflow-hidden inline-flex items-center justify-center px-6 py-5 border border-gray-200 text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gradient-to-r hover:from-gray-50 hover:to-green-50 hover:border-green-200 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
                   <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
                   </svg>
                   Add Asset
-                </button>
+                </.link>
               <% end %>
 
               <%= if @auth.view_reports do %>
@@ -655,9 +655,9 @@ defmodule Shop1CmmsWeb.DashboardLive do
   end  # Enhanced navigation link component
   defp nav_link(assigns) do
     ~H"""
-    <a href={@href} class={"px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center border #{@class}"}>
+    <.link href={@href} class={"px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center border #{@class}"}>
       <%= render_slot(@inner_block) %>
-    </a>
+    </.link>
     """
   end
 
