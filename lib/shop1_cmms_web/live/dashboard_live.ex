@@ -9,10 +9,10 @@ defmodule Shop1CmmsWeb.DashboardLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <!-- Enhanced Navigation -->
-      <nav class="bg-white/95 backdrop-blur-sm shadow-lg border-b border-gray-200/20 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <!-- Full-width Top Navigation Bar -->
+      <nav class="w-full bg-white/95 backdrop-blur-sm shadow-lg border-b border-gray-200/20 sticky top-0 z-40">
+        <div class="w-full px-6 lg:px-8">
           <div class="flex justify-between h-16">
             <div class="flex">
               <div class="flex-shrink-0 flex items-center">
@@ -144,8 +144,8 @@ defmodule Shop1CmmsWeb.DashboardLive do
         </div>
       </nav>
 
-      <!-- Enhanced Main content -->
-      <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <!-- Full-width Main content -->
+      <main class="w-full py-8 px-6 lg:px-8">
         <!-- Enhanced Dashboard Header -->
         <div class="mb-10">
           <div class="lg:flex lg:items-center lg:justify-between">
