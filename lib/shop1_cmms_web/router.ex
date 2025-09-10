@@ -49,7 +49,7 @@ defmodule Shop1CmmsWeb.Router do
         {Shop1CmmsWeb.UserAuth, :mount_current_user},
         {Shop1CmmsWeb.UserAuth, :ensure_tenant_access}
       ] do
-      
+
       # Dashboard
       live "/", DashboardLive, :index
       live "/dashboard", DashboardLive, :index
@@ -60,8 +60,8 @@ defmodule Shop1CmmsWeb.Router do
       # live "/work-orders/:id", WorkOrderLive.Show, :show
       # live "/work-orders/:id/edit", WorkOrderLive.Show, :edit
 
-      # Assets (coming soon)
-      # live "/assets", AssetLive.Index, :index
+      # Assets
+      live "/assets", AssetsLive, :index
       # live "/assets/new", AssetLive.Index, :new
       # live "/assets/:id", AssetLive.Show, :show
       # live "/assets/:id/edit", AssetLive.Show, :edit

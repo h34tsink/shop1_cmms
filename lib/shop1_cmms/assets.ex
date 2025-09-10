@@ -202,6 +202,13 @@ defmodule Shop1Cmms.Assets do
   end
 
   @doc """
+  Returns the list of assets with detailed information for the LiveView.
+  """
+  def list_assets_with_details(tenant_id, opts \\ []) do
+    list_assets(tenant_id, opts)
+  end
+
+  @doc """
   Gets a single asset.
   """
   def get_asset!(id) do
@@ -363,9 +370,9 @@ defmodule Shop1Cmms.Assets do
 
   defp update_asset_meter_from_reading(%MeterReading{} = reading) do
     asset_meter = Repo.get!(AssetMeter, reading.asset_meter_id)
-    
+
     next_due = AssetMeter.calculate_next_reading_due(reading.reading_date, asset_meter.reading_frequency)
-    
+
     update_asset_meter(asset_meter, %{
       current_reading: reading.reading,
       last_reading_date: reading.reading_date,
