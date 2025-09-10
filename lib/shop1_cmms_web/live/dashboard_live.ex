@@ -91,20 +91,19 @@ defmodule Shop1CmmsWeb.DashboardLive do
               </div>
 
               <!-- Enhanced User menu -->
-              <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="flex items-center space-x-2 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-white shadow-md hover:shadow-lg transition-all duration-200 px-3 py-2">
+              <div class="relative" x-data="{ open: false }" x-init="open = false">
+                <button @click="open = !open" type="button" class="flex items-center space-x-2 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-white shadow-md hover:shadow-lg transition-all duration-200 px-3 py-2">
                   <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm">
                     <span class="text-sm font-bold text-white">
                       <%= String.first(@current_user.username) |> String.upcase() %>
                     </span>
                   </div>
-                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 text-gray-400 transition-transform duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                   </svg>
                 </button>
 
-                <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                     class="origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-xl bg-white ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
+                <div x-show="open" @click.outside="open = false" x-transition class="origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-xl bg-white ring-1 ring-black ring-opacity-5 z-50 overflow-hidden" style="display: none;">
                   <div class="py-1">
                     <div class="px-4 py-3 bg-gray-50 border-b">
                       <p class="text-sm font-medium text-gray-900">Signed in as</p>

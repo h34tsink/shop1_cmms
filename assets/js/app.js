@@ -21,6 +21,8 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
+// Import Alpine.js for interactive components
+import Alpine from "alpinejs"
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
@@ -41,3 +43,14 @@ liveSocket.connect()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
+
+// Initialize Alpine.js after LiveView is ready
+window.Alpine = Alpine
+
+// Make sure Alpine.js reinitializes when LiveView patches DOM
+window.addEventListener("phx:update", () => {
+  Alpine.initTree(document.body)
+})
+
+// Start Alpine.js
+Alpine.start()
