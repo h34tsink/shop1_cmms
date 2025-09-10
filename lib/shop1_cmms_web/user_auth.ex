@@ -23,7 +23,7 @@ defmodule Shop1CmmsWeb.UserAuth do
   """
   def log_in_user(conn, user, tenant_id, params \\ %{}) do
     token = :crypto.strong_rand_bytes(32) |> Base.encode64()
-    
+
     conn
     |> renew_session()
     |> put_session(:user_id, user.id)
@@ -46,7 +46,7 @@ defmodule Shop1CmmsWeb.UserAuth do
   defp establish_session_context(conn, user_id, tenant_id) do
     case Auth.establish_session_context(user_id, tenant_id) do
       {:ok, _user} -> conn
-      {:error, _reason} -> 
+      {:error, _reason} ->
         conn
         |> clear_session()
         |> put_flash(:error, "Unable to establish session context.")
@@ -79,7 +79,7 @@ defmodule Shop1CmmsWeb.UserAuth do
   """
   def log_out_user(conn) do
     user_id = get_session(conn, :user_id)
-    
+
     if user_id do
       case Accounts.get_user_with_details(user_id) do
         %{} = user -> Auth.logout(user)
@@ -98,14 +98,14 @@ defmodule Shop1CmmsWeb.UserAuth do
   def fetch_current_user(conn, _opts) do
     user_id = get_session(conn, :user_id)
     tenant_id = get_session(conn, :tenant_id)
-    
+
     cond do
       is_nil(user_id) ->
         assign(conn, :current_user, nil)
-      
+
       is_nil(tenant_id) ->
         assign(conn, :current_user, nil)
-      
+
       true ->
         case Accounts.get_user_with_details(user_id) do
           %{cmms_enabled: true} = user ->
@@ -113,15 +113,15 @@ defmodule Shop1CmmsWeb.UserAuth do
               {:ok, _} ->
                 # Re-establish context for this request
                 Auth.establish_session_context(user_id, tenant_id)
-                
+
                 conn
                 |> assign(:current_user, user)
                 |> assign(:current_tenant_id, tenant_id)
-              
+
               {:error, _} ->
                 assign(conn, :current_user, nil)
             end
-          
+
           _ ->
             assign(conn, :current_user, nil)
         end
@@ -233,21 +233,27 @@ defmodule Shop1CmmsWeb.UserAuth do
               {:ok, _} ->
                 # Re-establish context for this LiveView
                 Auth.establish_session_context(user_id, tenant_id)
-                
+
                 socket
                 |> Phoenix.Component.assign(:current_user, user)
                 |> Phoenix.Component.assign(:current_tenant_id, tenant_id)
-              
+
               {:error, _} ->
-                Phoenix.Component.assign(socket, :current_user, nil)
+                socket
+                |> Phoenix.Component.assign(:current_user, nil)
+                |> Phoenix.Component.assign(:current_tenant_id, nil)
             end
-          
+
           _ ->
-            Phoenix.Component.assign(socket, :current_user, nil)
+            socket
+            |> Phoenix.Component.assign(:current_user, nil)
+            |> Phoenix.Component.assign(:current_tenant_id, nil)
         end
 
       _ ->
-        Phoenix.Component.assign(socket, :current_user, nil)
+        socket
+        |> Phoenix.Component.assign(:current_user, nil)
+        |> Phoenix.Component.assign(:current_tenant_id, nil)
     end
   end
 

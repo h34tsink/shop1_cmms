@@ -159,7 +159,7 @@ defmodule Shop1Cmms.Tenants do
          |> UserTenantAssignment.for_tenant(tenant_id)
          |> UserTenantAssignment.active()
          |> Repo.one() do
-      nil -> 
+      nil ->
         {:error, :assignment_not_found}
       assignment ->
         assignment
@@ -171,17 +171,17 @@ defmodule Shop1Cmms.Tenants do
   ## Tenant and site context setting for RLS
 
   def set_tenant_context(tenant_id) do
-    Repo.query!("SET app.current_tenant_id = $1", [tenant_id])
+    Repo.query!("SET app.current_tenant_id = #{tenant_id}")
   end
 
   def set_site_context(site_id) do
-    Repo.query!("SET app.current_site_id = $1", [site_id])
+    Repo.query!("SET app.current_site_id = #{site_id}")
   end
 
   def clear_context do
-    Repo.query!("RESET app.current_tenant_id", [])
-    Repo.query!("RESET app.current_site_id", [])
-    Repo.query!("RESET app.current_user_id", [])
+    Repo.query!("RESET app.current_tenant_id")
+    Repo.query!("RESET app.current_site_id")
+    Repo.query!("RESET app.current_user_id")
   end
 
   ## Tenant creation with initial setup
