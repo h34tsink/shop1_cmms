@@ -1,29 +1,25 @@
-<div class="min-h-screen bg-gray-50">
+<div class="pt-4 pb-8 px-6 lg:px-8">
   <!-- Header -->
-  <div class="bg-white shadow-sm border-b border-gray-200">
+  <div class="bg-white shadow-sm border-b border-gray-200 rounded-lg mb-6">
     <div class="px-6 py-4">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-900">Assets Management</h1>
           <p class="text-sm text-gray-600 mt-1">Manage your facility assets and equipment</p>
         </div>
-        <div class="flex space-x-3">
-          <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-            </svg>
-            <span>Add Asset</span>
-          </button>
+        <div class="flex items-center space-x-3">
+          <.view_toggle current_view={@view_mode} />
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Filters and Search -->
-  <div class="px-6 py-4 bg-white border-b border-gray-200">
-    <div class="flex flex-wrap items-center gap-4">
+  <!-- Enhanced Filters and Search -->
+  <div class="px-6 py-4 bg-white border-b border-gray-200 rounded-lg mb-6">
+    <!-- Main Search and Controls -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
       <!-- Search -->
-      <div class="flex-1 min-w-64">
+      <div class="flex-1 min-w-64 max-w-lg">
         <form phx-change="search" phx-submit="search">
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -35,22 +31,48 @@
               type="text" 
               name="search[term]" 
               value={@search_term}
-              placeholder="Search assets by name, number, or manufacturer..." 
+              placeholder="Search assets by name, number, manufacturer, model, or location..." 
               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </form>
       </div>
 
+      <!-- Controls -->
+      <div class="flex items-center space-x-3">
+        <button 
+          phx-click="toggle_advanced_filters"
+          class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+          </svg>
+          <%= if @show_advanced_filters, do: "Hide Filters", else: "Advanced Filters" %>
+        </button>
+        
+        <.link 
+          navigate={~p"/assets/new"}
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Add Asset
+        </.link>
+      </div>
+    </div>
+
+    <!-- Quick Filters -->
+    <div class="flex flex-wrap items-center gap-4">
       <!-- Status Filter -->
       <div class="flex items-center space-x-2">
         <label class="text-sm font-medium text-gray-700">Status:</label>
         <select phx-change="filter_status" name="status" class="rounded-lg border-gray-300 text-sm">
           <option value="all" selected={@selected_status == "all"}>All Status</option>
-          <option value="operational" selected={@selected_status == "operational"}>Operational</option>
-          <option value="maintenance" selected={@selected_status == "maintenance"}>Maintenance</option>
-          <option value="repair" selected={@selected_status == "repair"}>Repair</option>
-          <option value="retired" selected={@selected_status == "retired"}>Retired</option>
+          <option value="active" selected={@selected_status == "active"}>Active</option>
+          <option value="inactive" selected={@selected_status == "inactive"}>Inactive</option>
+          <option value="under_maintenance" selected={@selected_status == "under_maintenance"}>Under Maintenance</option>
+          <option value="decommissioned" selected={@selected_status == "decommissioned"}>Decommissioned</option>
         </select>
       </div>
 
@@ -60,103 +82,221 @@
         <select phx-change="filter_type" name="type" class="rounded-lg border-gray-300 text-sm">
           <option value="all" selected={@selected_type == "all"}>All Types</option>
           <%= for asset_type <- @asset_types do %>
-            <option value={asset_type.id} selected={@selected_type == asset_type.id}>
+            <option value={asset_type.id} selected={@selected_type == to_string(asset_type.id)}>
               <%= asset_type.name %>
             </option>
           <% end %>
         </select>
       </div>
+
+      <!-- Results Count -->
+      <div class="text-sm text-gray-500 ml-auto">
+        Showing <%= length(@filtered_assets) %> of <%= length(@assets) %> assets
+      </div>
     </div>
+
+    <!-- Advanced Filters -->
+    <%= if @show_advanced_filters do %>
+      <div class="border-t mt-4 pt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Criticality Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Criticality</label>
+            <select 
+              phx-change="filter_criticality" 
+              name="criticality" 
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            >
+              <option value="all" selected={@selected_criticality == "all"}>All Criticality</option>
+              <option value="low" selected={@selected_criticality == "low"}>Low</option>
+              <option value="medium" selected={@selected_criticality == "medium"}>Medium</option>
+              <option value="high" selected={@selected_criticality == "high"}>High</option>
+              <option value="critical" selected={@selected_criticality == "critical"}>Critical</option>
+            </select>
+          </div>
+
+          <!-- Manufacturer Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
+            <select 
+              phx-change="filter_manufacturer" 
+              name="manufacturer" 
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            >
+              <option value="all" selected={@selected_manufacturer == "all"}>All Manufacturers</option>
+              <%= for manufacturer <- @unique_manufacturers do %>
+                <option value={manufacturer} selected={@selected_manufacturer == manufacturer}>
+                  <%= manufacturer %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+
+          <!-- Date From -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Installed From</label>
+            <input 
+              type="date" 
+              phx-change="filter_date_range"
+              name="date_from"
+              value={@date_from}
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
+
+          <!-- Date To -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Installed To</label>
+            <input 
+              type="date" 
+              phx-change="filter_date_range"
+              name="date_to"
+              value={@date_to}
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
+        </div>
+
+        <!-- Clear Filters Button -->
+        <div class="mt-4 flex justify-end">
+          <button 
+            phx-click="clear_filters"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Clear All Filters
+          </button>
+        </div>
+      </div>
+    <% end %>
   </div>
 
-  <!-- Assets Grid -->
+  <!-- Assets Views -->
   <div class="p-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      <%= for asset <- (@filtered_assets || @assets) do %>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-          <!-- Asset Header -->
-          <div class="p-4 border-b border-gray-100">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <h3 class="font-semibold text-gray-900 text-sm leading-tight">
-                  <%= asset.name %>
-                </h3>
-                <p class="text-xs text-gray-600 mt-1">
-                  <%= asset.asset_number %>
-                </p>
-              </div>
-              <div class="flex flex-col space-y-1 ml-2">
-                <span class={"px-2 py-1 text-xs font-medium rounded-full #{status_color(asset.status)}"}>
-                  <%= String.capitalize(to_string(asset.status)) %>
-                </span>
-                <span class={"px-2 py-1 text-xs font-medium rounded-full #{criticality_color(asset.criticality)}"}>
-                  <%= String.capitalize(to_string(asset.criticality)) %>
-                </span>
-              </div>
+    <%= case @view_mode do %>
+      <% "grid" -> %>
+        <!-- Grid View -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <%= for asset <- (@filtered_assets || @assets) do %>
+            <.asset_card asset={asset} view_mode="grid" />
+          <% end %>
+        </div>
+
+      <% "list" -> %>
+        <!-- List View -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-md">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Asset
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Manufacturer/Model
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Criticality
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cost
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Commission Date
+                </th>
+                <th scope="col" class="relative px-6 py-3">
+                  <span class="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <%= for asset <- (@filtered_assets || @assets) do %>
+                <.asset_row asset={asset} />
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+      <% "kanban" -> %>
+        <!-- Kanban View -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <!-- Operational Column -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-gray-900">Operational</h3>
+              <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                <%= length(Enum.filter(@filtered_assets || @assets, &(&1.status == :operational))) %>
+              </span>
+            </div>
+            <div class="space-y-3">
+              <%= for asset <- Enum.filter(@filtered_assets || @assets, &(&1.status == :operational)) do %>
+                <.asset_card asset={asset} view_mode="kanban" class="!shadow-sm" />
+              <% end %>
             </div>
           </div>
 
-          <!-- Asset Details -->
-          <div class="p-4 space-y-3">
-            <!-- Manufacturer & Model -->
-            <div class="space-y-1">
-              <p class="text-xs text-gray-500">Manufacturer</p>
-              <p class="text-sm font-medium text-gray-900">
-                <%= asset.manufacturer || "-" %>
-              </p>
+          <!-- Maintenance Column -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-gray-900">Maintenance</h3>
+              <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                <%= length(Enum.filter(@filtered_assets || @assets, &(&1.status == :maintenance))) %>
+              </span>
             </div>
-
-            <div class="space-y-1">
-              <p class="text-xs text-gray-500">Model</p>
-              <p class="text-sm text-gray-700">
-                <%= asset.model || "-" %>
-              </p>
+            <div class="space-y-3">
+              <%= for asset <- Enum.filter(@filtered_assets || @assets, &(&1.status == :maintenance)) do %>
+                <.asset_card asset={asset} view_mode="kanban" class="!shadow-sm" />
+              <% end %>
             </div>
-
-            <!-- Purchase Info -->
-            <%= if asset.purchase_cost do %>
-              <div class="space-y-1">
-                <p class="text-xs text-gray-500">Purchase Cost</p>
-                <p class="text-sm font-medium text-green-600">
-                  <%= format_currency(asset.purchase_cost) %>
-                </p>
-              </div>
-            <% end %>
-
-            <!-- Dates -->
-            <%= if asset.commission_date do %>
-              <div class="space-y-1">
-                <p class="text-xs text-gray-500">Commission Date</p>
-                <p class="text-sm text-gray-700">
-                  <%= Date.to_string(asset.commission_date) %>
-                </p>
-              </div>
-            <% end %>
           </div>
 
-          <!-- Actions -->
-          <div class="px-4 py-3 border-t border-gray-100 bg-gray-50 rounded-b-lg">
-            <div class="flex justify-between items-center">
-              <button class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                View Details
-              </button>
-              <div class="flex space-x-2">
-                <button class="p-2 text-gray-400 hover:text-gray-600 rounded">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                  </svg>
-                </button>
-                <button class="p-2 text-gray-400 hover:text-red-600 rounded">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                  </svg>
-                </button>
-              </div>
+          <!-- Repair Column -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-gray-900">Repair</h3>
+              <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                <%= length(Enum.filter(@filtered_assets || @assets, &(&1.status == :repair))) %>
+              </span>
+            </div>
+            <div class="space-y-3">
+              <%= for asset <- Enum.filter(@filtered_assets || @assets, &(&1.status == :repair)) do %>
+                <.asset_card asset={asset} view_mode="kanban" class="!shadow-sm" />
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Pending Column -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-gray-900">Pending</h3>
+              <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                <%= length(Enum.filter(@filtered_assets || @assets, &(&1.status == :pending))) %>
+              </span>
+            </div>
+            <div class="space-y-3">
+              <%= for asset <- Enum.filter(@filtered_assets || @assets, &(&1.status == :pending)) do %>
+                <.asset_card asset={asset} view_mode="kanban" class="!shadow-sm" />
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Retired Column -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-gray-900">Retired</h3>
+              <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                <%= length(Enum.filter(@filtered_assets || @assets, &(&1.status == :retired))) %>
+              </span>
+            </div>
+            <div class="space-y-3">
+              <%= for asset <- Enum.filter(@filtered_assets || @assets, &(&1.status == :retired)) do %>
+                <.asset_card asset={asset} view_mode="kanban" class="!shadow-sm" />
+              <% end %>
             </div>
           </div>
         </div>
-      <% end %>
-    </div>
+    <% end %>
 
     <!-- Empty State -->
     <%= if length(@filtered_assets || @assets) == 0 do %>
@@ -183,3 +323,26 @@
     <% end %>
   </div>
 </div>
+
+<!-- Asset Form Modal -->
+<%= if assigns[:show_modal] && @show_modal do %>
+  <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+      
+      <!-- This element is to trick the browser into centering the modal contents. -->
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+        <.live_component
+          module={Shop1CmmsWeb.AssetFormLive}
+          id="asset-form"
+          asset={@asset}
+          asset_types={@asset_types}
+          tenant_id={@tenant_id}
+          live_action={@live_action}
+        />
+      </div>
+    </div>
+  </div>
+<% end %>

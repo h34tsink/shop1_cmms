@@ -228,6 +228,16 @@ defmodule Shop1Cmms.Assets do
   end
 
   @doc """
+  Gets a single asset with all details for the detail view.
+  """
+  def get_asset_with_details!(id, tenant_id) do
+    Asset
+    |> Asset.for_tenant(tenant_id)
+    |> preload([:asset_type, :location, :parent_asset, :child_assets, :asset_meters, :asset_documents])
+    |> Repo.get!(id)
+  end
+
+  @doc """
   Creates an asset.
   """
   def create_asset(attrs \\ %{}) do

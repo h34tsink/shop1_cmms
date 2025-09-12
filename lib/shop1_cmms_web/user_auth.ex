@@ -211,6 +211,42 @@ defmodule Shop1CmmsWeb.UserAuth do
     end
   end
 
+  def on_mount(:load_navigation_data, _params, _session, socket) do
+    case {socket.assigns[:current_user], socket.assigns[:current_tenant_id]} do
+      {%{} = current_user, current_tenant_id} when not is_nil(current_tenant_id) ->
+        # Get tenant information
+        current_tenant = Shop1Cmms.Tenants.get_tenant!(current_tenant_id)
+        user_tenants = Auth.get_user_tenant_options(current_user)
+        user_role = Auth.get_user_role(current_user, current_tenant_id)
+
+        # Pre-calculate authorization for navigation
+        auth = %{
+          view_work_orders: nav_authorized?(current_user, current_tenant_id, :view_work_orders),
+          view_assets: nav_authorized?(current_user, current_tenant_id, :view_assets),
+          view_preventive_maintenance: nav_authorized?(current_user, current_tenant_id, :view_preventive_maintenance),
+          view_reports: nav_authorized?(current_user, current_tenant_id, :view_reports),
+          view_admin: nav_authorized?(current_user, current_tenant_id, :view_admin),
+          manage_pm_templates: nav_authorized?(current_user, current_tenant_id, :manage_pm_templates),
+          manage_users: nav_authorized?(current_user, current_tenant_id, :manage_users),
+          create_work_orders: nav_authorized?(current_user, current_tenant_id, :create_work_orders),
+          add_meter_readings: nav_authorized?(current_user, current_tenant_id, :add_meter_readings),
+          manage_assets: nav_authorized?(current_user, current_tenant_id, :manage_assets)
+        }
+
+        socket =
+          socket
+          |> Phoenix.Component.assign(:current_tenant, current_tenant)
+          |> Phoenix.Component.assign(:user_tenants, user_tenants)
+          |> Phoenix.Component.assign(:user_role, user_role)
+          |> Phoenix.Component.assign(:auth, auth)
+
+        {:cont, socket}
+
+      _ ->
+        {:cont, socket}
+    end
+  end
+
   def on_mount(:redirect_if_user_is_authenticated, _params, session, socket) do
     socket = mount_current_user(socket, session)
 
@@ -337,6 +373,14 @@ defmodule Shop1CmmsWeb.UserAuth do
   """
   def authorized?(conn_or_socket, action, resource \\ nil) do
     case authorize(conn_or_socket, action, resource) do
+      :ok -> true
+      _ -> false
+    end
+  end
+
+  # Helper function to check authorization for navigation
+  defp nav_authorized?(user, tenant_id, action) do
+    case Shop1Cmms.Auth.authorize(user, action, nil, tenant_id) do
       :ok -> true
       _ -> false
     end

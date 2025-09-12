@@ -47,7 +47,8 @@ defmodule Shop1CmmsWeb.Router do
     live_session :authenticated,
       on_mount: [
         {Shop1CmmsWeb.UserAuth, :mount_current_user},
-        {Shop1CmmsWeb.UserAuth, :ensure_tenant_access}
+        {Shop1CmmsWeb.UserAuth, :ensure_tenant_access},
+        {Shop1CmmsWeb.UserAuth, :load_navigation_data}
       ] do
 
       # Dashboard
@@ -62,9 +63,9 @@ defmodule Shop1CmmsWeb.Router do
 
       # Assets
       live "/assets", AssetsLive, :index
-      # live "/assets/new", AssetLive.Index, :new
-      # live "/assets/:id", AssetLive.Show, :show
-      # live "/assets/:id/edit", AssetLive.Show, :edit
+      live "/assets/new", AssetsLive, :new
+      live "/assets/:id", AssetDetailLive, :show
+      live "/assets/:id/edit", AssetsLive, :edit
 
       # Preventive Maintenance (coming soon)
       # live "/preventive-maintenance", PMTemplateLive.Index, :index
