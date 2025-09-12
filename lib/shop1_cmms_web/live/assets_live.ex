@@ -242,7 +242,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
       String.contains?(String.downcase(asset.asset_number || ""), term) ||
       String.contains?(String.downcase(asset.manufacturer || ""), term) ||
       String.contains?(String.downcase(asset.model || ""), term) ||
-      String.contains?(String.downcase(asset.location || ""), term)
+      (asset.location && String.contains?(String.downcase(asset.location.name || ""), term))
     end)
   end
 
