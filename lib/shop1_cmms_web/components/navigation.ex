@@ -58,6 +58,15 @@ defmodule Shop1CmmsWeb.Components.Navigation do
                 </.nav_link>
               <% end %>
 
+              <%= if @auth.view_assets do %>
+                <.nav_link href="/metadata/manufacturers" class="text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                  </svg>
+                  Metadata
+                </.nav_link>
+              <% end %>
+
               <%= if @auth.manage_pm_templates do %>
                 <.nav_link href="/preventive-maintenance" class="text-gray-600 hover:text-gray-900 hover:bg-gray-50">
                   <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

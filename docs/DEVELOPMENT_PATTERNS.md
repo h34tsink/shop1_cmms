@@ -257,3 +257,43 @@ AssetType |> where([at], at.tenant_id == 1) |> Repo.all()
 3. Purchase order integration
 
 Remember: Always validate tenant access, use proper changesets, and maintain consistent UI patterns with Alpine.js + Tailwind CSS.
+
+## Protocol Safe Rendering in LiveView Templates
+
+### Critical Rule: Never Render Structs Directly
+
+**❌ AVOID - Will cause Protocol.UndefinedError:**
+```elixir
+<%= @asset.location %>          # AssetLocation struct
+<%= @asset.asset_type %>        # AssetType struct  
+<%= @user.tenant %>             # Tenant struct
+<%= @work_order.assigned_to %>  # User struct
+```
+
+**✅ CORRECT - Access specific fields:**
+```elixir
+<%= @asset.location.name %>                                    # Required associations
+<%= if @asset.location, do: @asset.location.name, else: "N/A" %> # Optional associations
+<%= @asset.location&.name || "N/A" %>                         # Safe navigation
+```
+
+### Development Checklist for Templates
+
+Before committing LiveView template changes:
+- [ ] All `<%= %>` expressions render primitives (string/number/boolean/HTML-safe)
+- [ ] Struct associations accessed via specific fields (`.name`, `.title`, `.username`) 
+- [ ] Optional associations use nil checks or safe navigation (`&.`)
+- [ ] Tested with both populated and nil association data
+
+### High-Risk Areas to Monitor
+
+**Files commonly rendering associations:**
+- `lib/shop1_cmms_web/live/asset_*_live.ex` - Asset location, type, parent
+- `lib/shop1_cmms_web/live/work_order_*_live.ex` - Assigned users, assets
+- `lib/shop1_cmms_web/live/user_*_live.ex` - Tenant, role associations
+
+**Common problematic associations:**
+- `belongs_to :location` → Use `.name` or `.code`
+- `belongs_to :asset_type` → Use `.name`
+- `belongs_to :tenant` → Use `.name`
+- `belongs_to :assigned_to` → Use `.username` or `.email`
