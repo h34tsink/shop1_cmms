@@ -14,6 +14,9 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
     work_orders = WorkOrders.list_work_orders_for_asset(id, current_tenant_id)
     maintenance_history = WorkOrders.get_maintenance_history(id, current_tenant_id)
 
+    # Check if user can edit assets
+    can_edit = Shop1Cmms.Accounts.can?(current_user, :manage_assets, asset, current_tenant_id)
+
     socket = socket
     |> assign(:user, current_user)
     |> assign(:tenant_id, current_tenant_id)
@@ -22,6 +25,9 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
     |> assign(:maintenance_history, maintenance_history)
     |> assign(:page_title, "Asset Details - #{asset.name}")
     |> assign(:active_tab, "overview")
+    |> assign(:edit_mode, false)
+    |> assign(:can_edit, can_edit)
+    |> assign(:form, nil)
 
     {:ok, socket}
   end
@@ -34,6 +40,49 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
   @impl true
   def handle_event("change_tab", %{"tab" => tab}, socket) do
     {:noreply, assign(socket, :active_tab, tab)}
+  end
+
+  def handle_event("toggle_edit", _params, socket) do
+    if socket.assigns.can_edit do
+      edit_mode = !socket.assigns.edit_mode
+
+      socket = if edit_mode do
+        # Entering edit mode - create form
+        changeset = Assets.change_asset(socket.assigns.asset)
+        assign(socket, :form, to_form(changeset))
+      else
+        # Exiting edit mode - clear form
+        assign(socket, :form, nil)
+      end
+
+      {:noreply, assign(socket, :edit_mode, edit_mode)}
+    else
+      {:noreply, put_flash(socket, :error, "You don't have permission to edit assets")}
+    end
+  end
+
+  def handle_event("validate", %{"asset" => asset_params}, socket) do
+    changeset = Assets.change_asset(socket.assigns.asset, asset_params)
+    {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
+  end
+
+  def handle_event("save", %{"asset" => asset_params}, socket) do
+    case Assets.update_asset(socket.assigns.asset, asset_params) do
+      {:ok, updated_asset} ->
+        # Reload asset with details to get fresh data
+        asset = Assets.get_asset_with_details!(updated_asset.id, socket.assigns.tenant_id)
+
+        socket = socket
+        |> assign(:asset, asset)
+        |> assign(:edit_mode, false)
+        |> assign(:form, nil)
+        |> put_flash(:info, "Asset updated successfully")
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
+    end
   end
 
   def handle_event("delete_asset", %{"id" => id}, socket) do
@@ -91,15 +140,40 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
           </div>
 
           <div class="flex items-center space-x-3">
-            <.link
-              navigate={~p"/assets/#{@asset.id}/edit"}
-              class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-              </svg>
-              Edit
-            </.link>
+            <%= if @can_edit do %>
+              <button
+                phx-click="toggle_edit"
+                class={[
+                  "inline-flex items-center px-4 py-2 border shadow-sm text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2",
+                  if @edit_mode do
+                    "border-red-300 text-red-700 bg-red-50 hover:bg-red-100 focus:ring-red-500"
+                  else
+                    "border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-blue-500"
+                  end
+                ]}
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <%= if @edit_mode do %>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  <% else %>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  <% end %>
+                </svg>
+                <%= if @edit_mode, do: "Cancel", else: "Edit" %>
+              </button>
+
+              <%= if @edit_mode do %>
+                <button
+                  phx-click="save"
+                  class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  Save
+                </button>
+              <% end %>
+            <% end %>
 
             <button
               phx-click="delete_asset"
@@ -187,50 +261,111 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         <div class="bg-white shadow rounded-lg p-6">
           <h2 class="text-lg font-medium text-gray-900 mb-6">Asset Information</h2>
 
-          <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Asset Number</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @asset.asset_number %></dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Asset Type</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @asset.asset_type.name %></dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Manufacturer</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @asset.manufacturer || "N/A" %></dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Model</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @asset.model || "N/A" %></dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Serial Number</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @asset.serial_number || "N/A" %></dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Location</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= if @asset.location, do: @asset.location.name, else: "N/A" %></dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Purchase Date</dt>
-              <dd class="mt-1 text-sm text-gray-900">
-                <%= if @asset.purchase_date, do: Calendar.strftime(@asset.purchase_date, "%B %d, %Y"), else: "N/A" %>
-              </dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Install Date</dt>
-              <dd class="mt-1 text-sm text-gray-900">
-                <%= if @asset.install_date, do: Calendar.strftime(@asset.install_date, "%B %d, %Y"), else: "N/A" %>
-              </dd>
-            </div>
-          </dl>
+          <%= if @edit_mode and @form do %>
+            <.form for={@form} phx-change="validate" phx-submit="save" class="space-y-6">
+              <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <div>
+                  <.input field={@form[:name]} label="Asset Name" type="text" required />
+                </div>
+                <div>
+                  <.input field={@form[:asset_number]} label="Asset Number" type="text" required />
+                </div>
+                <div>
+                  <.input field={@form[:manufacturer]} label="Manufacturer" type="text" />
+                </div>
+                <div>
+                  <.input field={@form[:model]} label="Model" type="text" />
+                </div>
+                <div>
+                  <.input field={@form[:serial_number]} label="Serial Number" type="text" />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:status]}
+                    label="Status"
+                    type="select"
+                    options={[
+                      {"Active", "active"},
+                      {"Inactive", "inactive"},
+                      {"Under Maintenance", "under_maintenance"},
+                      {"Out of Service", "out_of_service"}
+                    ]}
+                  />
+                </div>
+                <div>
+                  <.input field={@form[:purchase_date]} label="Purchase Date" type="date" />
+                </div>
+                <div>
+                  <.input field={@form[:install_date]} label="Install Date" type="date" />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:criticality]}
+                    label="Criticality"
+                    type="select"
+                    options={[
+                      {"Low", "low"},
+                      {"Medium", "medium"},
+                      {"High", "high"},
+                      {"Critical", "critical"}
+                    ]}
+                  />
+                </div>
+                <div>
+                  <.input field={@form[:purchase_cost]} label="Purchase Cost" type="number" step="0.01" />
+                </div>
+              </div>
 
-          <%= if @asset.description do %>
-            <div class="mt-6 pt-6 border-t border-gray-200">
-              <dt class="text-sm font-medium text-gray-500 mb-2">Description</dt>
-              <dd class="text-sm text-gray-900"><%= @asset.description %></dd>
-            </div>
+              <div>
+                <.input field={@form[:description]} label="Description" type="textarea" rows="3" />
+              </div>
+            </.form>
+          <% else %>
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Asset Number</dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= @asset.asset_number %></dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Asset Type</dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= @asset.asset_type.name %></dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Manufacturer</dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= @asset.manufacturer || "N/A" %></dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Model</dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= @asset.model || "N/A" %></dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Serial Number</dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= @asset.serial_number || "N/A" %></dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Location</dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= if @asset.location, do: @asset.location.name, else: "N/A" %></dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Purchase Date</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                  <%= if @asset.purchase_date, do: Calendar.strftime(@asset.purchase_date, "%B %d, %Y"), else: "N/A" %>
+                </dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Install Date</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                  <%= if @asset.install_date, do: Calendar.strftime(@asset.install_date, "%B %d, %Y"), else: "N/A" %>
+                </dd>
+              </div>
+            </dl>
+
+            <%= if @asset.description do %>
+              <div class="mt-6 pt-6 border-t border-gray-200">
+                <dt class="text-sm font-medium text-gray-500 mb-2">Description</dt>
+                <dd class="text-sm text-gray-900"><%= @asset.description %></dd>
+              </div>
+            <% end %>
           <% end %>
         </div>
       </div>
