@@ -8,7 +8,7 @@ defmodule Shop1Cmms.Assets do
 
   alias Shop1Cmms.Assets.{
     Asset, AssetType, AssetLocation, AssetLocationType,
-    MeterType, AssetMeter, MeterReading, AssetDocument
+    MeterType, AssetMeter, MeterReading
   }
 
   ## Asset Location Types
@@ -213,7 +213,7 @@ defmodule Shop1Cmms.Assets do
   """
   def get_asset!(id) do
     Asset
-    |> preload([:asset_type, :location, :parent_asset, :child_assets, :asset_meters, :asset_documents])
+    |> preload([:asset_type, :location, :parent_asset, :child_assets, :asset_meters])
     |> Repo.get!(id)
   end
 
@@ -223,7 +223,7 @@ defmodule Shop1Cmms.Assets do
   def get_asset!(tenant_id, id) do
     Asset
     |> Asset.for_tenant(tenant_id)
-    |> preload([:asset_type, :location, :parent_asset, :child_assets, :asset_meters, :asset_documents])
+    |> preload([:asset_type, :location, :parent_asset, :child_assets, :asset_meters])
     |> Repo.get!(id)
   end
 
@@ -233,7 +233,7 @@ defmodule Shop1Cmms.Assets do
   def get_asset_with_details!(id, tenant_id) do
     Asset
     |> Asset.for_tenant(tenant_id)
-    |> preload([:asset_type, :location, :parent_asset, :child_assets, :asset_meters, :asset_documents])
+    |> preload([:asset_type, :location, :parent_asset, :child_assets, :asset_meters])
     |> Repo.get!(id)
   end
 
@@ -390,39 +390,7 @@ defmodule Shop1Cmms.Assets do
     })
   end
 
-  ## Asset Documents
 
-  @doc """
-  Returns the list of asset documents for a tenant.
-  """
-  def list_asset_documents(tenant_id, opts \\ []) do
-    query = AssetDocument
-    |> AssetDocument.for_tenant(tenant_id)
-    |> preload([:asset, :uploaded_by])
-
-    query = if opts[:asset_id], do: AssetDocument.for_asset(query, opts[:asset_id]), else: query
-    query = if opts[:document_type], do: AssetDocument.by_document_type(query, opts[:document_type]), else: query
-
-    query
-    |> AssetDocument.recent_first()
-    |> Repo.all()
-  end
-
-  @doc """
-  Creates an asset document.
-  """
-  def create_asset_document(attrs \\ %{}) do
-    %AssetDocument{}
-    |> AssetDocument.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  @doc """
-  Deletes an asset document.
-  """
-  def delete_asset_document(%AssetDocument{} = document) do
-    Repo.delete(document)
-  end
 
   ## Utility Functions
 
@@ -478,5 +446,38 @@ defmodule Shop1Cmms.Assets do
     |> select([a], {a.status, count(a.id)})
     |> Repo.all()
     |> Enum.into(%{})
+  end
+
+  ## Functions for testing compatibility
+
+  @doc """
+  Returns all assets (for testing without tenant context)
+  """
+  def list_assets() do
+    Asset
+    |> preload([:asset_type, :location])
+    |> Repo.all()
+  end
+
+  @doc """
+  Search assets by name/number for a tenant
+  """
+  def search_assets(tenant_id, search_term) do
+    Asset
+    |> Asset.for_tenant(tenant_id)
+    |> Asset.search_by_name(search_term)
+    |> preload([:asset_type, :location])
+    |> Repo.all()
+  end
+
+  @doc """
+  Filter assets by status for a tenant
+  """
+  def filter_assets_by_status(tenant_id, status) do
+    Asset
+    |> Asset.for_tenant(tenant_id)
+    |> Asset.by_status(status)
+    |> preload([:asset_type, :location])
+    |> Repo.all()
   end
 end

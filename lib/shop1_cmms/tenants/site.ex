@@ -17,7 +17,7 @@ defmodule Shop1Cmms.Tenants.Site do
     belongs_to :tenant, Shop1Cmms.Tenants.Tenant
     has_many :user_tenant_assignments, Shop1Cmms.Accounts.UserTenantAssignment, foreign_key: :default_site_id
 
-    timestamps(type: :utc_datetime, inserted_at: false, updated_at: false)
+    timestamps(type: :naive_datetime, inserted_at: false, updated_at: false)
   end
 
   def changeset(site, attrs) do

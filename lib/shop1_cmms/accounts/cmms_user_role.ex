@@ -4,30 +4,25 @@ defmodule Shop1Cmms.Accounts.CMMSUserRole do
   import Ecto.Query
 
   schema "cmms_user_roles" do
-    belongs_to :user, Shop1Cmms.Accounts.User
-    belongs_to :tenant, Shop1Cmms.Tenants.Tenant
-    belongs_to :site, Shop1Cmms.Tenants.Site
-    belongs_to :granted_by_user, Shop1Cmms.Accounts.User, foreign_key: :granted_by
-
-    field :role, :string
-    field :granted_at, :utc_datetime
-    field :expires_at, :utc_datetime
+    field :name, :string
+    field :display_name, :string
+    field :description, :string
+    field :permissions, {:array, :string}, default: []
+    field :is_system_role, :boolean, default: false
     field :is_active, :boolean, default: true
 
     # Use existing database column names instead of Phoenix defaults
-    timestamps(inserted_at: :created_at, updated_at: :updated_at, type: :utc_datetime)
+    timestamps(inserted_at: :inserted_at, updated_at: :updated_at, type: :naive_datetime)
   end
 
   @valid_roles ~w(tenant_admin maintenance_manager supervisor technician operator)
 
   def changeset(user_role, attrs) do
     user_role
-    |> cast(attrs, [:user_id, :tenant_id, :site_id, :role, :granted_by, :expires_at, :is_active])
-    |> validate_required([:user_id, :tenant_id, :role])
-    |> validate_inclusion(:role, @valid_roles)
-    |> foreign_key_constraint(:user_id)
-    |> foreign_key_constraint(:tenant_id)
-    |> foreign_key_constraint(:site_id)
+    |> cast(attrs, [:name, :display_name, :description, :permissions, :is_system_role, :is_active])
+    |> validate_required([:name, :display_name])
+    |> validate_inclusion(:name, @valid_roles)
+    |> unique_constraint(:name)
     |> foreign_key_constraint(:granted_by)
     |> put_granted_at()
   end
@@ -36,7 +31,7 @@ defmodule Shop1Cmms.Accounts.CMMSUserRole do
     if get_field(changeset, :granted_at) do
       changeset
     else
-      put_change(changeset, :granted_at, DateTime.utc_now())
+      put_change(changeset, :granted_at, DateTime.utc_now() |> DateTime.to_naive() |> NaiveDateTime.truncate(:second))
     end
   end
 
@@ -45,30 +40,20 @@ defmodule Shop1Cmms.Accounts.CMMSUserRole do
     from(r in query, where: r.is_active == true)
   end
 
-  def for_tenant(query \\ __MODULE__, tenant_id) do
-    from(r in query, where: r.tenant_id == ^tenant_id)
-  end
-
-  def for_user(query \\ __MODULE__, user_id) do
-    from(r in query, where: r.user_id == ^user_id)
-  end
+  # Note: CMMSUserRole doesn't have tenant_id or user_id fields
+  # Users are connected to roles through UserTenantAssignment table
 
   def for_site(query \\ __MODULE__, site_id) do
     from(r in query, where: is_nil(r.site_id) or r.site_id == ^site_id)
   end
 
-  def with_role(query \\ __MODULE__, role) do
-    from(r in query, where: r.role == ^role)
-  end
-
-  def unexpired(query \\ __MODULE__) do
-    from(r in query, where: is_nil(r.expires_at) or r.expires_at > ^DateTime.utc_now())
+  def with_name(query \\ __MODULE__, role_name) do
+    from(r in query, where: r.name == ^role_name)
   end
 
   def current(query \\ __MODULE__) do
     query
     |> active_roles()
-    |> unexpired()
   end
 
   def valid_roles, do: @valid_roles

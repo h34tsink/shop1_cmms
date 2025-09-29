@@ -7,23 +7,25 @@ defmodule Shop1Cmms.Accounts.UserTenantAssignment do
     belongs_to :user, Shop1Cmms.Accounts.User
     belongs_to :tenant, Shop1Cmms.Tenants.Tenant
     belongs_to :default_site, Shop1Cmms.Tenants.Site
-    belongs_to :assigned_by_user, Shop1Cmms.Accounts.User, foreign_key: :assigned_by
-    
-    field :is_primary, :boolean, default: false
-    field :assigned_at, :utc_datetime
+    belongs_to :assigned_by_user, Shop1Cmms.Accounts.User, foreign_key: :assigned_by_id
+    belongs_to :role, Shop1Cmms.Accounts.CMMSUserRole
+
+    field :assigned_at, :naive_datetime
     field :is_active, :boolean, default: true
-    
-    timestamps(type: :utc_datetime)
+    field :notes, :string
+
+    timestamps(type: :naive_datetime)
   end
 
   def changeset(assignment, attrs) do
     assignment
-    |> cast(attrs, [:user_id, :tenant_id, :default_site_id, :is_primary, :assigned_by, :is_active])
-    |> validate_required([:user_id, :tenant_id])
+    |> cast(attrs, [:user_id, :tenant_id, :role_id, :default_site_id, :assigned_by_id, :is_active, :notes])
+    |> validate_required([:user_id, :tenant_id, :role_id])
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:tenant_id)
+    |> foreign_key_constraint(:role_id)
     |> foreign_key_constraint(:default_site_id)
-    |> foreign_key_constraint(:assigned_by)
+    |> foreign_key_constraint(:assigned_by_id)
     |> unique_constraint([:user_id, :tenant_id])
     |> put_assigned_at()
   end
@@ -32,7 +34,8 @@ defmodule Shop1Cmms.Accounts.UserTenantAssignment do
     if get_field(changeset, :assigned_at) do
       changeset
     else
-      put_change(changeset, :assigned_at, DateTime.utc_now())
+      naive_now = DateTime.utc_now() |> DateTime.to_naive() |> NaiveDateTime.truncate(:second)
+      put_change(changeset, :assigned_at, naive_now)
     end
   end
 

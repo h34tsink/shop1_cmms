@@ -37,7 +37,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
   end
 
   def handle_event("delete_asset", %{"id" => id}, socket) do
-    asset = Assets.get_asset!(id, socket.assigns.tenant_id)
+    asset = Assets.get_asset!(socket.assigns.tenant_id, id)
 
     case Assets.delete_asset(asset) do
       {:ok, _asset} ->
@@ -210,7 +210,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
             </div>
             <div>
               <dt class="text-sm font-medium text-gray-500">Location</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @asset.location || "N/A" %></dd>
+              <dd class="mt-1 text-sm text-gray-900"><%= if @asset.location, do: @asset.location.name, else: "N/A" %></dd>
             </div>
             <div>
               <dt class="text-sm font-medium text-gray-500">Purchase Date</dt>

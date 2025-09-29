@@ -32,7 +32,7 @@ defmodule Shop1Cmms.Assets.Asset do
     belongs_to :location, Shop1Cmms.Assets.AssetLocation, foreign_key: :location_id
     belongs_to :asset_type, Shop1Cmms.Assets.AssetType, foreign_key: :asset_type_id
     has_many :asset_meters, Shop1Cmms.Assets.AssetMeter, foreign_key: :asset_id
-    has_many :asset_documents, Shop1Cmms.Assets.AssetDocument, foreign_key: :asset_id
+    # has_many :asset_documents, Shop1Cmms.Assets.AssetDocument, foreign_key: :asset_id  # TODO: Create AssetDocument module
     belongs_to :tenant, Shop1Cmms.Tenants.Tenant, foreign_key: :tenant_id, type: :integer
 
     timestamps()

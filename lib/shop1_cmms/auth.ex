@@ -60,11 +60,12 @@ defmodule Shop1Cmms.Auth do
     tenants = Accounts.get_user_tenants(user.id)
 
     Enum.map(tenants, fn tenant ->
+      role = Accounts.get_user_highest_cmms_role(user.id, tenant.id)
       %{
         id: tenant.id,
         name: tenant.name,
         code: tenant.code,
-        role: Accounts.get_user_highest_cmms_role(user.id, tenant.id)
+        role: if(role, do: role.name, else: "operator")
       }
     end)
   end
@@ -94,7 +95,8 @@ defmodule Shop1Cmms.Auth do
   Gets the user's role within a specific tenant.
   """
   def get_user_role(%User{} = user, tenant_id) do
-    Accounts.get_user_highest_cmms_role(user.id, tenant_id)
+    role = Accounts.get_user_highest_cmms_role(user.id, tenant_id)
+    if role, do: role.name, else: "operator"
   end
 
   @doc """
@@ -104,7 +106,8 @@ defmodule Shop1Cmms.Auth do
     user
     |> Accounts.get_user_tenants()
     |> Enum.any?(fn tenant ->
-      Accounts.get_user_highest_cmms_role(user.id, tenant.id) == "tenant_admin"
+      role = Accounts.get_user_highest_cmms_role(user.id, tenant.id)
+      role && role.name == "tenant_admin"
     end)
   end
 
@@ -112,7 +115,8 @@ defmodule Shop1Cmms.Auth do
   Checks if user has admin privileges in a specific tenant.
   """
   def is_tenant_admin?(%User{} = user, tenant_id) do
-    Accounts.get_user_highest_cmms_role(user.id, tenant_id) == "tenant_admin"
+    role = Accounts.get_user_highest_cmms_role(user.id, tenant_id)
+    role && role.name == "tenant_admin"
   end
 
   @doc """

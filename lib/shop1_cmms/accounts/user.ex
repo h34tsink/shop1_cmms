@@ -5,38 +5,38 @@ defmodule Shop1Cmms.Accounts.User do
 
   @derive {Phoenix.Param, key: :id}
   schema "users" do
-    # Existing Shop1FinishLine fields
+    # Basic fields that exist in the database
     field :username, :string
     field :password_hash, :string, redact: true
-    field :last_login, :utc_datetime
-    field :failed_logins, :integer, default: 0
     field :is_active, :boolean, default: true
 
-    # CMMS extensions (added by migration)
+    # CMMS extensions (added by migration if they exist)
     field :cmms_enabled, :boolean, default: false
-    field :last_cmms_login, :utc_datetime
-    field :cmms_preferences, :map, default: %{}
+    field :last_cmms_login, :naive_datetime
+    field :preferences, :map, default: %{}
 
-    # Virtual field for password changes
+    # Virtual fields for password changes
     field :password, :string, virtual: true, redact: true
+    field :password_confirmation, :string, virtual: true, redact: true
 
-    # Relationships
-    belongs_to :role, Shop1Cmms.Accounts.Role
-    has_many :cmms_user_roles, Shop1Cmms.Accounts.CMMSUserRole
+    # Relationships (optional - may not exist)
     has_many :user_tenant_assignments, Shop1Cmms.Accounts.UserTenantAssignment
-    has_many :tenants, through: [:user_tenant_assignments, :tenant]
 
-    # Timestamps (existing)
-    field :created_at, :utc_datetime
-    field :updated_at, :utc_datetime
+    timestamps(type: :naive_datetime)
   end
 
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:username, :is_active, :cmms_enabled, :last_cmms_login, :cmms_preferences, :role_id])
+    |> cast(attrs, [:username, :is_active, :cmms_enabled])
     |> validate_required([:username])
     |> validate_length(:username, min: 3, max: 50)
     |> unique_constraint(:username)
+  end
+
+  def cmms_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:cmms_enabled, :last_cmms_login, :preferences])
+    |> validate_required([:cmms_enabled])
   end
 
   def password_changeset(user, attrs, opts \\ []) do
@@ -48,15 +48,10 @@ defmodule Shop1Cmms.Accounts.User do
 
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:username, :password, :cmms_enabled, :role_id])
+    |> cast(attrs, [:username, :password, :password_confirmation, :cmms_enabled, :is_active])
     |> validate_required([:username, :password])
+    |> validate_confirmation(:password, message: "does not match password")
     |> validate_password(opts)
-  end
-
-  def cmms_changeset(user, attrs) do
-    user
-    |> cast(attrs, [:cmms_enabled, :last_cmms_login, :cmms_preferences])
-    |> validate_required([:cmms_enabled])
   end
 
   defp validate_password(changeset, opts) do

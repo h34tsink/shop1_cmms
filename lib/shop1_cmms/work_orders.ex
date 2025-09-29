@@ -62,14 +62,14 @@ defmodule Shop1Cmms.WorkOrders do
   def get_maintenance_history(asset_id, tenant_id) do
     WorkOrder
     |> where([wo], wo.asset_id == ^asset_id and wo.tenant_id == ^tenant_id and wo.status == :completed)
-    |> where([wo], not is_nil(wo.completed_at))
-    |> order_by([wo], desc: wo.completed_at)
+    |> where([wo], not is_nil(wo.actual_end_date))
+    |> order_by([wo], desc: wo.actual_end_date)
     |> select([wo], %{
       id: wo.id,
       title: wo.title,
       description: wo.description,
-      completed_at: wo.completed_at,
-      type: wo.work_type
+      completed_at: wo.actual_end_date,
+      type: wo.type
     })
     |> Repo.all()
   end

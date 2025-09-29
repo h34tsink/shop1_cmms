@@ -38,18 +38,26 @@ defmodule Shop1Cmms.Accounts do
     case Repo.get(User, id) do
       nil -> nil
       user ->
-        details = UserDetails
-        |> UserDetails.by_user_id(id)
-        |> Repo.one()
+        # For now, create mock details since user_details view doesn't exist
+        # In production, this would query the actual user_details view
+        details = %{
+          username: user.username,
+          user_is_active: user.is_active,
+          first_name: nil,
+          last_name: nil,
+          display_name: user.username,
+          full_name: user.username,
+          email: nil
+        }
 
         Map.put(user, :details, details)
     end
   end
 
-  def get_user_details(user_id) do
-    UserDetails
-    |> UserDetails.by_user_id(user_id)
-    |> Repo.one()
+  def get_user_details(_user_id) do
+    # Return empty map since user_details view doesn't exist yet
+    # In production, this would query the actual user_details view
+    %{}
   end
 
   ## CMMS User Management
@@ -88,15 +96,10 @@ defmodule Shop1Cmms.Accounts do
     user = get_user!(user_id)
 
     Repo.transaction(fn ->
-      # Disable all CMMS roles
-      CMMSUserRole
-      |> CMMSUserRole.for_user(user_id)
-      |> Repo.update_all(set: [is_active: false, updated_at: DateTime.utc_now()])
-
-      # Disable all tenant assignments
+      # Disable all tenant assignments (this effectively removes CMMS role access)
       UserTenantAssignment
       |> UserTenantAssignment.for_user(user_id)
-      |> Repo.update_all(set: [is_active: false, updated_at: DateTime.utc_now()])
+      |> Repo.update_all(set: [is_active: false, updated_at: DateTime.utc_now() |> DateTime.to_naive() |> NaiveDateTime.truncate(:second)])
 
       # Disable CMMS access
       user
@@ -120,19 +123,22 @@ defmodule Shop1Cmms.Accounts do
   end
 
   def get_user_cmms_roles(user_id, tenant_id) do
-    CMMSUserRole
-    |> CMMSUserRole.for_user(user_id)
-    |> CMMSUserRole.for_tenant(tenant_id)
-    |> CMMSUserRole.current()
+    from(uta in UserTenantAssignment,
+      join: r in CMMSUserRole, on: uta.role_id == r.id,
+      where: uta.user_id == ^user_id and uta.tenant_id == ^tenant_id and uta.is_active == true,
+      select: r
+    )
     |> Repo.all()
   end
 
   def get_user_highest_cmms_role(user_id, tenant_id) do
     roles = get_user_cmms_roles(user_id, tenant_id)
 
-    roles
-    |> Enum.map(& &1.role)
-    |> Enum.max_by(&CMMSUserRole.role_priority/1, fn -> "operator" end)
+    # Return the first role if any exist, or nil if none
+    case roles do
+      [role | _] -> role
+      [] -> nil
+    end
   end
 
   def user_has_cmms_access?(user_id, tenant_id) do
@@ -184,7 +190,11 @@ defmodule Shop1Cmms.Accounts do
       false
     else
       highest_role = get_user_highest_cmms_role(user.id, tenant_id)
-      check_role_permission(highest_role, action, resource, user, tenant_id)
+      if highest_role do
+        check_role_permission(highest_role.name, action, resource, user, tenant_id)
+      else
+        false
+      end
     end
   end
 
@@ -252,7 +262,7 @@ defmodule Shop1Cmms.Accounts do
       # Update last CMMS login
       user = get_user!(user_id)
       user
-      |> User.cmms_changeset(%{last_cmms_login: DateTime.utc_now()})
+      |> User.cmms_changeset(%{last_cmms_login: DateTime.utc_now() |> DateTime.to_naive() |> NaiveDateTime.truncate(:second)})
       |> Repo.update()
 
       {:ok, user}
@@ -264,15 +274,85 @@ defmodule Shop1Cmms.Accounts do
   ## User preferences and settings
 
   def update_user_cmms_preferences(user, preferences) do
-    current_prefs = user.cmms_preferences || %{}
+    current_prefs = user.preferences || %{}
     new_prefs = Map.merge(current_prefs, preferences)
 
     user
-    |> User.cmms_changeset(%{cmms_preferences: new_prefs})
+    |> User.cmms_changeset(%{preferences: new_prefs})
     |> Repo.update()
   end
 
   def get_user_cmms_preference(user, key, default \\ nil) do
-    get_in(user.cmms_preferences || %{}, [key]) || default
+    get_in(user.preferences || %{}, [key]) || default
+  end
+
+  ## User Creation for testing
+
+  def create_user(attrs \\ %{}) do
+    %User{}
+    |> User.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def create_user_with_password(attrs \\ %{}) do
+    %User{}
+    |> User.registration_changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def update_user(%User{} = user, attrs) do
+    user
+    |> User.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def change_user(%User{} = user, attrs \\ %{}) do
+    User.changeset(user, attrs)
+  end
+
+  ## Additional User Management Functions
+
+
+
+  def search_users(tenant_id, search_term \\ "") do
+    query = from u in User,
+      join: uta in UserTenantAssignment,
+      on: u.id == uta.user_id,
+      where: uta.tenant_id == ^tenant_id and uta.is_active == true,
+      preload: [user_tenant_assignments: uta]
+
+    query = if search_term != "" do
+      from [u, uta] in query,
+        where: ilike(u.username, ^"%#{search_term}%")
+    else
+      query
+    end
+
+    Repo.all(query)
+  end
+
+  def update_user_role(user_id, tenant_id, new_role_id, granting_user_id) do
+    # Get the user's current tenant assignment
+    assignment =
+      UserTenantAssignment
+      |> UserTenantAssignment.for_user(user_id)
+      |> UserTenantAssignment.for_tenant(tenant_id)
+      |> UserTenantAssignment.active()
+      |> Repo.one()
+
+    if assignment do
+      assignment
+      |> UserTenantAssignment.changeset(%{role_id: new_role_id, assigned_by_id: granting_user_id})
+      |> Repo.update()
+    else
+      {:error, :assignment_not_found}
+    end
+  end
+
+  def get_available_roles() do
+    Shop1Cmms.Accounts.CMMSUserRole
+    |> where([r], r.is_active == true)
+    |> order_by([r], r.name)
+    |> Repo.all()
   end
 end

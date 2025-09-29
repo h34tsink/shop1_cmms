@@ -1,13 +1,13 @@
-<div class="pt-4 pb-8 px-6 lg:px-8">
+<div class="pt-1 pb-3 px-3 lg:px-4">
   <!-- Header -->
-  <div class="bg-white shadow-sm border-b border-gray-200 rounded-lg mb-6">
-    <div class="px-6 py-4">
+  <div class="bg-white shadow-sm border-b border-gray-200 rounded-md mb-2">
+    <div class="px-3 py-2">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Assets Management</h1>
-          <p class="text-sm text-gray-600 mt-1">Manage your facility assets and equipment</p>
+          <h1 class="text-lg font-bold text-gray-900">Assets Management</h1>
+          <p class="text-xs text-gray-600">Manage your facility assets and equipment</p>
         </div>
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-1">
           <.view_toggle current_view={@view_mode} />
         </div>
       </div>
@@ -15,15 +15,15 @@
   </div>
 
   <!-- Enhanced Filters and Search -->
-  <div class="px-6 py-4 bg-white border-b border-gray-200 rounded-lg mb-6">
+  <div class="px-3 py-2 bg-white border-b border-gray-200 rounded-md mb-2">
     <!-- Main Search and Controls -->
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
       <!-- Search -->
-      <div class="flex-1 min-w-64 max-w-lg">
+      <div class="flex-1 min-w-48 max-w-md">
         <form phx-change="search" phx-submit="search">
           <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+              <svg class="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
             </div>
@@ -32,19 +32,19 @@
               name="search[term]" 
               value={@search_term}
               placeholder="Search assets by name, number, manufacturer, model, or location..." 
-              class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              class="block w-full pl-7 pr-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </form>
       </div>
 
       <!-- Controls -->
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-1">
         <button 
           phx-click="toggle_advanced_filters"
-          class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          class="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
           </svg>
           <%= if @show_advanced_filters, do: "Hide Filters", else: "Advanced Filters" %>
@@ -52,9 +52,9 @@
         
         <.link 
           navigate={~p"/assets/new"}
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
           Add Asset
@@ -63,11 +63,11 @@
     </div>
 
     <!-- Quick Filters -->
-    <div class="flex flex-wrap items-center gap-4">
+    <div class="flex flex-wrap items-center gap-2">
       <!-- Status Filter -->
-      <div class="flex items-center space-x-2">
-        <label class="text-sm font-medium text-gray-700">Status:</label>
-        <select phx-change="filter_status" name="status" class="rounded-lg border-gray-300 text-sm">
+      <div class="flex items-center space-x-1">
+        <label class="text-xs font-medium text-gray-700">Status:</label>
+        <select phx-change="filter_status" name="status" class="rounded-md border-gray-300 text-xs py-0.5 px-1">
           <option value="all" selected={@selected_status == "all"}>All Status</option>
           <option value="active" selected={@selected_status == "active"}>Active</option>
           <option value="inactive" selected={@selected_status == "inactive"}>Inactive</option>
@@ -77,9 +77,9 @@
       </div>
 
       <!-- Type Filter -->
-      <div class="flex items-center space-x-2">
-        <label class="text-sm font-medium text-gray-700">Type:</label>
-        <select phx-change="filter_type" name="type" class="rounded-lg border-gray-300 text-sm">
+      <div class="flex items-center space-x-1">
+        <label class="text-xs font-medium text-gray-700">Type:</label>
+        <select phx-change="filter_type" name="type" class="rounded-md border-gray-300 text-xs py-0.5 px-1">
           <option value="all" selected={@selected_type == "all"}>All Types</option>
           <%= for asset_type <- @asset_types do %>
             <option value={asset_type.id} selected={@selected_type == to_string(asset_type.id)}>
@@ -90,22 +90,22 @@
       </div>
 
       <!-- Results Count -->
-      <div class="text-sm text-gray-500 ml-auto">
+      <div class="text-xs text-gray-500 ml-auto">
         Showing <%= length(@filtered_assets) %> of <%= length(@assets) %> assets
       </div>
     </div>
 
     <!-- Advanced Filters -->
     <%= if @show_advanced_filters do %>
-      <div class="border-t mt-4 pt-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="border-t mt-2 pt-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           <!-- Criticality Filter -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Criticality</label>
+            <label class="block text-xs font-medium text-gray-700 mb-0.5">Criticality</label>
             <select 
               phx-change="filter_criticality" 
               name="criticality" 
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              class="block w-full px-1 py-1 text-xs border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all" selected={@selected_criticality == "all"}>All Criticality</option>
               <option value="low" selected={@selected_criticality == "low"}>Low</option>
@@ -117,11 +117,11 @@
 
           <!-- Manufacturer Filter -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
+            <label class="block text-xs font-medium text-gray-700 mb-0.5">Manufacturer</label>
             <select 
               phx-change="filter_manufacturer" 
               name="manufacturer" 
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              class="block w-full px-1 py-1 text-xs border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all" selected={@selected_manufacturer == "all"}>All Manufacturers</option>
               <%= for manufacturer <- @unique_manufacturers do %>
@@ -134,34 +134,34 @@
 
           <!-- Date From -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Installed From</label>
+            <label class="block text-xs font-medium text-gray-700 mb-0.5">Installed From</label>
             <input 
               type="date" 
               phx-change="filter_date_range"
               name="date_from"
               value={@date_from}
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              class="block w-full px-1 py-1 text-xs border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <!-- Date To -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Installed To</label>
+            <label class="block text-xs font-medium text-gray-700 mb-0.5">Installed To</label>
             <input 
               type="date" 
               phx-change="filter_date_range"
               name="date_to"
               value={@date_to}
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              class="block w-full px-1 py-1 text-xs border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
 
         <!-- Clear Filters Button -->
-        <div class="mt-4 flex justify-end">
+        <div class="mt-2 flex justify-end">
           <button 
             phx-click="clear_filters"
-            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            class="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Clear All Filters
           </button>
@@ -171,11 +171,11 @@
   </div>
 
   <!-- Assets Views -->
-  <div class="p-6">
+  <div class="p-3">
     <%= case @view_mode do %>
       <% "grid" -> %>
         <!-- Grid View -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           <%= for asset <- (@filtered_assets || @assets) do %>
             <.asset_card asset={asset} view_mode="grid" />
           <% end %>
@@ -327,18 +327,19 @@
 <!-- Asset Form Modal -->
 <%= if assigns[:show_modal] && @show_modal do %>
   <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="flex items-center justify-center min-h-screen px-4 py-6 text-center sm:block sm:p-0">
       <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
       
       <!-- This element is to trick the browser into centering the modal contents. -->
       <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
       
-      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-4 sm:align-middle sm:max-w-5xl sm:w-full lg:max-w-4xl xl:max-w-5xl">
         <.live_component
           module={Shop1CmmsWeb.AssetFormLive}
           id="asset-form"
           asset={@asset}
           asset_types={@asset_types}
+          asset_locations={@asset_locations}
           tenant_id={@tenant_id}
           live_action={@live_action}
         />

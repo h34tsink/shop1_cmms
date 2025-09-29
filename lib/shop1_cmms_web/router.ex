@@ -77,11 +77,10 @@ defmodule Shop1CmmsWeb.Router do
       # live "/reports", ReportLive.Index, :index
       # live "/reports/:type", ReportLive.Show, :show
 
-      # Admin interface (coming soon)
-      # live "/admin", AdminLive.Index, :index
-      # live "/admin/users", AdminLive.Users, :index
-      # live "/admin/tenants", AdminLive.Tenants, :index
-      # live "/admin/sites", AdminLive.Sites, :index
+      # User Management
+      live "/admin/users", UserManagementLive, :index
+      live "/admin/users/new", UserManagementLive, :new
+      live "/admin/users/:id/edit", UserManagementLive, :edit
     end
   end
 

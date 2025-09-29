@@ -53,7 +53,7 @@ defmodule Shop1Cmms.WorkOrders.WorkOrder do
     # Multi-tenancy (Note: This is an integer foreign key)
     field :tenant_id, :integer
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :naive_datetime)
   end
 
   @doc false

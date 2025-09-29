@@ -4,25 +4,42 @@ defmodule Shop1CmmsWeb.AssetsLive do
   alias Shop1Cmms.Assets.{Asset, AssetType}
   import Shop1CmmsWeb.Components.Assets
 
+  @impl true
   def mount(%{"id" => id}, _session, socket) when socket.assigns.live_action == :edit do
     current_user = socket.assigns.current_user
     current_tenant_id = socket.assigns.current_tenant_id
 
-    asset = Assets.get_asset!(id, current_tenant_id)
+    asset = Assets.get_asset!(current_tenant_id, id)
+    assets = Assets.list_assets_with_details(current_tenant_id)
     asset_types = Assets.list_asset_types(current_tenant_id)
+    asset_locations = Assets.list_asset_locations(current_tenant_id)
 
     socket = socket
     |> assign(:user, current_user)
     |> assign(:tenant_id, current_tenant_id)
+    |> assign(:assets, assets)
     |> assign(:asset, asset)
     |> assign(:asset_types, asset_types)
+    |> assign(:asset_locations, asset_locations)
+    |> assign(:unique_manufacturers, get_unique_manufacturers(assets))
+    |> assign(:selected_status, "all")
+    |> assign(:selected_type, "all")
+    |> assign(:selected_criticality, "all")
+    |> assign(:selected_manufacturer, "all")
+    |> assign(:search_term, "")
+    |> assign(:date_from, "")
+    |> assign(:date_to, "")
+    |> assign(:show_advanced_filters, false)
+    |> assign(:filtered_assets, assets)
     |> assign(:page_title, "Edit Asset - #{asset.name}")
+    |> assign(:view_mode, "grid")
     |> assign(:live_action, :edit)
     |> assign(:show_modal, true)
 
     {:ok, socket}
   end
 
+  @impl true
   def mount(_params, _session, socket) when socket.assigns.live_action == :new do
     current_user = socket.assigns.current_user
     current_tenant_id = socket.assigns.current_tenant_id
@@ -30,12 +47,14 @@ defmodule Shop1CmmsWeb.AssetsLive do
     # Load assets and asset types
     assets = Assets.list_assets_with_details(current_tenant_id)
     asset_types = Assets.list_asset_types(current_tenant_id)
+    asset_locations = Assets.list_asset_locations(current_tenant_id)
 
     socket = socket
     |> assign(:user, current_user)
     |> assign(:tenant_id, current_tenant_id)
     |> assign(:assets, assets)
     |> assign(:asset_types, asset_types)
+    |> assign(:asset_locations, asset_locations)
     |> assign(:asset, %Assets.Asset{})
     |> assign(:unique_manufacturers, get_unique_manufacturers(assets))
     |> assign(:selected_status, "all")
@@ -55,6 +74,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
     {:ok, socket}
   end
 
+  @impl true
   def mount(_params, _session, socket) do
     current_user = socket.assigns.current_user
     current_tenant_id = socket.assigns.current_tenant_id
@@ -62,12 +82,14 @@ defmodule Shop1CmmsWeb.AssetsLive do
     # Load assets and asset types
     assets = Assets.list_assets_with_details(current_tenant_id)
     asset_types = Assets.list_asset_types(current_tenant_id)
+    asset_locations = Assets.list_asset_locations(current_tenant_id)
 
     socket = socket
     |> assign(:user, current_user)
     |> assign(:tenant_id, current_tenant_id)
     |> assign(:assets, assets)
     |> assign(:asset_types, asset_types)
+    |> assign(:asset_locations, asset_locations)
     |> assign(:unique_manufacturers, get_unique_manufacturers(assets))
     |> assign(:selected_status, "all")
     |> assign(:selected_type, "all")
@@ -86,8 +108,33 @@ defmodule Shop1CmmsWeb.AssetsLive do
     {:ok, socket}
   end
 
+  @impl true
+  def handle_params(params, _url, socket) do
+    {:noreply, apply_action(socket, socket.assigns.live_action, params)}
+  end
 
+  defp apply_action(socket, :new, _params) do
+    socket
+    |> assign(:page_title, "Add New Asset")
+    |> assign(:asset, %Assets.Asset{})
+    |> assign(:show_modal, true)
+  end
 
+  defp apply_action(socket, :edit, %{"id" => id}) do
+    asset = Assets.get_asset!(socket.assigns.tenant_id, id)
+    socket
+    |> assign(:page_title, "Edit Asset - #{asset.name}")
+    |> assign(:asset, asset)
+    |> assign(:show_modal, true)
+  end
+
+  defp apply_action(socket, :index, _params) do
+    socket
+    |> assign(:page_title, "Assets Management")
+    |> assign(:show_modal, false)
+  end
+
+  @impl true
   def handle_event("search", %{"search" => %{"term" => term}}, socket) do
     socket = socket
     |> assign(:search_term, term)
@@ -160,7 +207,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
   end
 
   def handle_event("delete_asset", %{"id" => id}, socket) do
-    asset = Assets.get_asset!(id, socket.assigns.tenant_id)
+    asset = Assets.get_asset!(socket.assigns.tenant_id, id)
 
     case Assets.delete_asset(asset) do
       {:ok, _asset} ->

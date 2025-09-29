@@ -7,8 +7,8 @@ defmodule Shop1Cmms.Tenants.Tenant do
     field :name, :string
     field :code, :string
     field :description, :string
-    field :contact_email, :string
-    field :contact_phone, :string
+    field :email, :string
+    field :phone, :string
     field :address, :string
     field :timezone, :string, default: "UTC"
     field :settings, :map, default: %{}
@@ -19,19 +19,20 @@ defmodule Shop1Cmms.Tenants.Tenant do
     has_many :users, through: [:user_tenant_assignments, :user]
 
     # Use existing database column names instead of Phoenix defaults
-    timestamps(inserted_at: :created_at, updated_at: :updated_at, type: :utc_datetime)
+    # Use naive_datetime to match database timestamp without timezone
+    timestamps(inserted_at: :inserted_at, updated_at: :updated_at, type: :naive_datetime)
   end
 
   def changeset(tenant, attrs) do
     tenant
-    |> cast(attrs, [:name, :code, :description, :contact_email, :contact_phone,
+    |> cast(attrs, [:name, :code, :description, :email, :phone,
                     :address, :timezone, :settings, :is_active])
     |> validate_required([:name, :code])
     |> validate_length(:name, min: 2, max: 100)
     |> validate_length(:code, min: 2, max: 20)
     |> validate_format(:code, ~r/^[A-Z0-9_]+$/, message: "must be uppercase letters, numbers, or underscores")
     |> unique_constraint(:code)
-    |> validate_email(:contact_email)
+    |> validate_email(:email)
   end
 
   defp validate_email(changeset, field) do
