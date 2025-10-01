@@ -9,6 +9,10 @@ defmodule Shop1Cmms.Maintenance.AssetDocument do
   @document_type_values [:manual, :drawing, :specification, :procedure, :work_instruction, :certificate, :calibration, :warranty, :other]
 
   schema "asset_documents" do
+    # Original fields (from initial migration)
+    field :name, :string
+    
+    # Enhanced fields (from PM migration)
     field :document_number, :string
     field :title, :string
     field :description, :string
@@ -20,6 +24,7 @@ defmodule Shop1Cmms.Maintenance.AssetDocument do
     field :file_size, :integer
     field :mime_type, :string
     field :file_url, :string
+    field :file_type, :string  # Original field
     
     # Document metadata
     field :version, :string
@@ -47,16 +52,29 @@ defmodule Shop1Cmms.Maintenance.AssetDocument do
   def changeset(document, attrs) do
     document
     |> cast(attrs, [
-      :document_number, :title, :description, :document_type,
-      :file_name, :file_path, :file_size, :mime_type, :file_url,
+      :name, :document_number, :title, :description, :document_type,
+      :file_name, :file_path, :file_size, :mime_type, :file_url, :file_type,
       :version, :revision_date, :expiry_date, :issued_by, :approved_by,
       :tags, :is_active,
       :asset_id, :pm_schedule_id, :work_order_id, :uploaded_by, :tenant_id
     ])
-    |> validate_required([:title, :document_type, :tenant_id])
+    |> maybe_copy_title_to_name()
+    |> validate_required([:name, :document_type, :file_path, :tenant_id])
     |> validate_inclusion(:document_type, @document_type_values)
-    |> validate_length(:title, min: 3, max: 255)
+    |> validate_length(:name, min: 3, max: 255)
     |> validate_at_least_one_reference()
+  end
+
+  # Helper to copy title to name if name is not provided (for backward compatibility)
+  defp maybe_copy_title_to_name(changeset) do
+    name = get_field(changeset, :name)
+    title = get_field(changeset, :title)
+    
+    if is_nil(name) and not is_nil(title) do
+      put_change(changeset, :name, title)
+    else
+      changeset
+    end
   end
 
   defp validate_at_least_one_reference(changeset) do
