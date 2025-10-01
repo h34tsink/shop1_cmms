@@ -237,7 +237,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3 min-w-0 flex-1">
             <h1 class="text-lg font-bold text-gray-900 truncate"><%= @asset.name %></h1>
-            <span class="text-xs font-mono text-gray-600 flex-shrink-0"><%= @asset.asset_code %></span>
+            <span class="text-xs font-mono text-gray-600 flex-shrink-0"><%= @asset.asset_number %></span>
             <AssetComponents.status_badge status={@asset.status} />
             <AssetComponents.criticality_badge criticality={@asset.criticality} />
           </div>

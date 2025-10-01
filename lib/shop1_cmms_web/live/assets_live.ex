@@ -146,7 +146,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
                   <td>
                     <input type="checkbox" class="rounded border-gray-300" onclick="event.stopPropagation()" />
                   </td>
-                  <td class="font-mono text-gray-600"><%= asset.asset_code %></td>
+                  <td class="font-mono text-gray-600"><%= asset.asset_number %></td>
                   <td class="font-medium text-gray-900"><%= asset.name %></td>
                   <td><%= asset.asset_type.name %></td>
                   <td class="text-gray-600"><%= asset.location.name %></td>

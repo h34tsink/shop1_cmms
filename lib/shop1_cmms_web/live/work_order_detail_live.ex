@@ -244,7 +244,7 @@ defmodule Shop1CmmsWeb.WorkOrderDetailLive do
               </div>
               <div class="flex justify-between">
                 <dt class="text-gray-600">Code:</dt>
-                <dd class="font-mono text-gray-900"><%= @work_order.asset.asset_code %></dd>
+                <dd class="font-mono text-gray-900"><%= @work_order.asset.asset_number %></dd>
               </div>
             </dl>
           </div>
