@@ -5,6 +5,201 @@ defmodule Shop1CmmsWeb.Components.Navigation do
   attr :current_user, :map, required: true
   attr :current_tenant, :map, required: true
   attr :user_role, :string, default: nil
+  attr :auth, :map, required: true
+  attr :current_path, :string, default: "/"
+
+  def sidebar_nav(assigns) do
+    ~H"""
+    <!-- Collapsible Sidebar Navigation -->
+    <aside class="w-52 bg-sidebar text-sidebar-text flex-shrink-0 overflow-y-auto border-r border-gray-700">
+      <nav class="py-2">
+        <div class="px-2 space-y-0.5">
+          <!-- Dashboard -->
+          <.nav_item 
+            href="/" 
+            label="Dashboard" 
+            icon="dashboard"
+            active={@current_path == "/" || @current_path == "/dashboard"}
+          />
+          
+          <!-- Maintenance Section -->
+          <.nav_group label="Maintenance" expanded={true}>
+            <%= if @auth.view_work_orders do %>
+              <.nav_item 
+                href="/work_orders" 
+                label="Work Orders" 
+                icon="clipboard"
+                indent={true}
+                active={String.starts_with?(@current_path, "/work_orders") || String.starts_with?(@current_path, "/work-orders")}
+              />
+            <% end %>
+            <%= if @auth.manage_pm_templates do %>
+              <.nav_item 
+                href="/preventive-maintenance" 
+                label="PM Schedules" 
+                icon="calendar"
+                indent={true}
+                active={String.starts_with?(@current_path, "/preventive-maintenance")}
+              />
+            <% end %>
+          </.nav_group>
+          
+          <!-- Assets Section -->
+          <%= if @auth.view_assets do %>
+            <.nav_group label="Assets" expanded={true}>
+              <.nav_item 
+                href="/assets" 
+                label="All Assets" 
+                icon="box"
+                indent={true}
+                active={String.starts_with?(@current_path, "/assets")}
+              />
+              <.nav_item 
+                href="/metadata/manufacturers" 
+                label="Metadata" 
+                icon="database"
+                indent={true}
+                active={String.starts_with?(@current_path, "/metadata")}
+              />
+            </.nav_group>
+          <% end %>
+          
+          <!-- Reports -->
+          <%= if @auth.view_reports do %>
+            <.nav_item 
+              href="/reports" 
+              label="Reports" 
+              icon="chart"
+              active={String.starts_with?(@current_path, "/reports")}
+            />
+          <% end %>
+          
+          <!-- Admin -->
+          <%= if @auth.manage_users do %>
+            <.nav_item 
+              href="/admin/users" 
+              label="Administration" 
+              icon="settings"
+              active={String.starts_with?(@current_path, "/admin")}
+            />
+          <% end %>
+        </div>
+      </nav>
+    </aside>
+    """
+  end
+
+  attr :href, :string, default: nil
+  attr :label, :string, required: true
+  attr :icon, :string, required: true
+  attr :active, :boolean, default: false
+  attr :indent, :boolean, default: false
+  attr :badge, :string, default: nil
+  
+  def nav_item(assigns) do
+    ~H"""
+    <.link 
+      href={@href}
+      class={[
+        "flex items-center px-2 py-1.5 text-xs rounded transition-colors group",
+        @indent && "pl-6",
+        @active && "bg-sidebar-active text-white font-medium",
+        !@active && "text-sidebar-text hover:bg-sidebar-hover hover:text-white"
+      ]}
+    >
+      <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <%= render_icon(@icon) %>
+      </svg>
+      <span class="flex-1 truncate"><%= @label %></span>
+      <%= if @badge do %>
+        <span class="px-1.5 py-0.5 text-xxs bg-red-500 text-white rounded font-medium">
+          <%= @badge %>
+        </span>
+      <% end %>
+    </.link>
+    """
+  end
+  
+  attr :label, :string, required: true
+  attr :expanded, :boolean, default: false
+  slot :inner_block, required: true
+  
+  def nav_group(assigns) do
+    ~H"""
+    <div x-data={"{ expanded: #{@expanded} }"} class="space-y-0.5">
+      <button 
+        @click="expanded = !expanded"
+        class="w-full flex items-center px-2 py-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors"
+      >
+        <svg 
+          class="w-3 h-3 mr-2 transition-transform flex-shrink-0" 
+          :class="{ 'rotate-90': expanded }"
+          fill="currentColor" 
+          viewBox="0 0 20 20"
+        >
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+        </svg>
+        <span class="uppercase tracking-wider font-semibold text-xxs"><%= @label %></span>
+      </button>
+      <div x-show="expanded" x-collapse>
+        <%= render_slot(@inner_block) %>
+      </div>
+    </div>
+    """
+  end
+
+  # Icon definitions
+  defp render_icon("dashboard") do
+    ~H"""
+    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+    """
+  end
+  
+  defp render_icon("clipboard") do
+    ~H"""
+    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+    """
+  end
+  
+  defp render_icon("calendar") do
+    ~H"""
+    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+    """
+  end
+  
+  defp render_icon("box") do
+    ~H"""
+    <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+    """
+  end
+  
+  defp render_icon("database") do
+    ~H"""
+    <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"></path>
+    <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"></path>
+    <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"></path>
+    """
+  end
+  
+  defp render_icon("chart") do
+    ~H"""
+    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+    """
+  end
+  
+  defp render_icon("settings") do
+    ~H"""
+    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+    """
+  end
+  
+  defp render_icon(_), do: ~H""
+
+  # Keep old top_nav for backward compatibility (can be removed later)
+  attr :current_user, :map, required: true
+  attr :current_tenant, :map, required: true
+  attr :user_role, :string, default: nil
   attr :user_tenants, :list, default: []
   attr :auth, :map, required: true
 

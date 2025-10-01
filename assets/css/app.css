@@ -14,32 +14,304 @@ html, body {
   padding: 0;
   height: 100%;
   width: 100%;
+  overflow: hidden;
+}
+
+/* Desktop Application Base Styles */
+body {
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
 }
 
 /* This file is for your main application CSS */
 @import "./phoenix.css";
 
-/* Alerts and form errors used by phx.new */
+/* ===========================================
+   DESKTOP PROFESSIONAL STYLES
+   =========================================== */
+
+/* Dense Tables */
+.table-dense {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+
+.table-dense thead {
+  background-color: #f3f4f6;
+  border-bottom: 2px solid #d1d5db;
+}
+
+.table-dense th {
+  padding: 6px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.table-dense tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.15s;
+}
+
+.table-dense tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.table-dense tbody tr:hover {
+  background-color: #eff6ff;
+  cursor: pointer;
+}
+
+.table-dense td {
+  padding: 6px 12px;
+  color: #111827;
+  font-size: 13px;
+}
+
+/* Compact Forms */
+.form-compact label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.form-compact input,
+.form-compact select,
+.form-compact textarea {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-compact input:focus,
+.form-compact select:focus,
+.form-compact textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+/* Toolbar Buttons */
+.btn-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  background-color: white;
+  color: #374151;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.btn-toolbar:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.btn-toolbar:active {
+  background-color: #e5e7eb;
+}
+
+.btn-toolbar-primary {
+  background-color: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.btn-toolbar-primary:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* Panel Styling */
+.panel {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.panel-header {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #111827;
+}
+
+.panel-body {
+  padding: 12px;
+}
+
+/* Status Bar */
+.status-bar {
+  height: 24px;
+  background-color: #2563eb;
+  color: white;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border-top: 1px solid #1e40af;
+  flex-shrink: 0;
+}
+
+/* Context Menu */
+.context-menu {
+  position: fixed;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 4px 0;
+  z-index: 1000;
+  min-width: 160px;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.context-menu-item:hover {
+  background-color: #2563eb;
+  color: white;
+}
+
+.context-menu-divider {
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 4px 0;
+}
+
+/* Windows-style Scrollbars */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f3f4f6;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #9ca3af;
+  border: 3px solid #f3f4f6;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280;
+}
+
+::-webkit-scrollbar-button {
+  background-color: #e5e7eb;
+  border: 1px solid #d1d5db;
+  height: 16px;
+  width: 16px;
+}
+
+/* Minimal border radius throughout */
+.rounded, .rounded-md {
+  border-radius: 3px !important;
+}
+
+.rounded-lg {
+  border-radius: 4px !important;
+}
+
+.rounded-xl {
+  border-radius: 6px !important;
+}
+
+.rounded-2xl {
+  border-radius: 8px !important;
+}
+
+/* Tight cards */
+.card-tight {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  padding: 12px;
+}
+
+/* Dense Grid */
+.grid-dense {
+  display: grid;
+  gap: 8px;
+}
+
+/* Full width containers */
+.container-full {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+}
+
+/* Better focus indicators */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Alerts and form errors */
 .alert {
-  padding: 15px;
-  margin-bottom: 20px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 3px;
+  font-size: 13px;
 }
 .alert-info {
-  color: #31708f;
-  background-color: #d9edf7;
-  border-color: #bce8f1;
+  color: #1e40af;
+  background-color: #dbeafe;
+  border-color: #bfdbfe;
 }
 .alert-warning {
-  color: #8a6d3b;
-  background-color: #fcf8e3;
-  border-color: #faebcc;
+  color: #92400e;
+  background-color: #fef3c7;
+  border-color: #fde68a;
 }
 .alert-danger {
-  color: #a94442;
-  background-color: #f2dede;
-  border-color: #ebccd1;
+  color: #991b1b;
+  background-color: #fee2e2;
+  border-color: #fecaca;
 }
 .alert p {
   margin-bottom: 0;
@@ -48,7 +320,25 @@ html, body {
   display: none;
 }
 .invalid-feedback {
-  color: #a94442;
+  color: #991b1b;
   display: block;
-  margin: -1rem 0 2rem;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Print styles */
+@media print {
+  nav, .no-print, .sidebar, .status-bar {
+    display: none !important;
+  }
+  
+  .print-area {
+    max-width: 100%;
+    padding: 0;
+  }
+  
+  * {
+    background: white !important;
+    color: black !important;
+  }
 }

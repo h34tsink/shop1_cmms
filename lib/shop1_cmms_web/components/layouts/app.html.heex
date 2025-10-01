@@ -1,16 +1,152 @@
-<div class="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+<div class="h-screen flex flex-col overflow-hidden bg-gray-50">
   <%= if assigns[:current_user] && assigns[:current_tenant] && assigns[:auth] do %>
-    <Shop1CmmsWeb.Components.Navigation.top_nav 
-      current_user={@current_user}
-      current_tenant={@current_tenant}
-      user_role={@user_role}
-      user_tenants={@user_tenants}
-      auth={@auth}
-    />
+    <!-- Fixed Top Bar (Windows-style title bar) -->
+    <header class="h-12 bg-gradient-to-r from-gray-800 to-gray-900 text-white flex items-center px-3 shadow-lg flex-shrink-0 border-b border-gray-700">
+      <div class="flex items-center space-x-3">
+        <!-- App Logo/Icon -->
+        <div class="w-7 h-7 bg-blue-600 rounded flex items-center justify-center shadow-md">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+          </svg>
+        </div>
+        <span class="text-sm font-semibold tracking-tight">Shop1 CMMS</span>
+      </div>
+      
+      <!-- Global Actions (right side) -->
+      <div class="ml-auto flex items-center space-x-2">
+        <!-- Global Search -->
+        <div class="relative">
+          <input 
+            type="search" 
+            placeholder="Search... (Ctrl+K)"
+            id="global-search"
+            class="w-64 h-7 px-3 pl-8 text-xs bg-gray-700 text-white border border-gray-600 rounded focus:outline-none focus:bg-gray-600 focus:border-blue-500 placeholder-gray-400"
+          />
+          <svg class="absolute left-2 top-1.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+        
+        <!-- Notifications -->
+        <button class="p-1.5 hover:bg-gray-700 rounded relative transition-colors" title="Notifications">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
+          </svg>
+          <%= if assigns[:notification_count] && @notification_count > 0 do %>
+            <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+          <% end %>
+        </button>
+        
+        <!-- User Menu -->
+        <div class="flex items-center space-x-2 pl-2 border-l border-gray-600" x-data="{ userMenuOpen: false }">
+          <span class="text-xs"><%= String.split(@current_user.username, "@") |> List.first() %></span>
+          <button 
+            @click="userMenuOpen = !userMenuOpen"
+            class="p-1 hover:bg-gray-700 rounded transition-colors"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+          </button>
+          
+          <!-- User Dropdown -->
+          <div 
+            x-show="userMenuOpen"
+            @click.away="userMenuOpen = false"
+            x-transition:enter="transition ease-out duration-100"
+            x-transition:enter-start="transform opacity-0 scale-95"
+            x-transition:enter-end="transform opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-75"
+            x-transition:leave-start="transform opacity-100 scale-100"
+            x-transition:leave-end="transform opacity-0 scale-95"
+            class="absolute right-3 top-12 mt-1 w-56 bg-white border border-gray-200 rounded shadow-lg z-50"
+            style="display: none;"
+          >
+            <div class="py-1">
+              <div class="px-4 py-2 bg-gray-50 border-b border-gray-200">
+                <p class="text-xs text-gray-500">Signed in as</p>
+                <p class="text-sm font-semibold text-gray-900 truncate"><%= @current_user.username %></p>
+              </div>
+              
+              <%= if length(@user_tenants || []) > 1 do %>
+                <a href="/select-tenant" class="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center">
+                  <svg class="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                  </svg>
+                  Switch Tenant
+                </a>
+              <% end %>
+              
+              <a href="#" class="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center">
+                <svg class="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Settings
+              </a>
+              
+              <div class="border-t border-gray-200 my-1"></div>
+              
+              <a href="/auth/logout" class="block px-4 py-2 text-xs text-red-700 hover:bg-red-50 flex items-center">
+                <svg class="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                Sign out
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area with Sidebar -->
+    <div class="flex-1 flex overflow-hidden">
+      <!-- Collapsible Sidebar Navigation -->
+      <Shop1CmmsWeb.Components.Navigation.sidebar_nav 
+        current_user={@current_user}
+        current_tenant={@current_tenant}
+        user_role={@user_role}
+        auth={@auth}
+        current_path={assigns[:current_path] || "/"}
+      />
+
+      <!-- Main Content Panel -->
+      <main class="flex-1 flex flex-col overflow-hidden bg-white">
+        <!-- Flash Messages -->
+        <.flash_group flash={@flash} />
+        
+        <!-- Scrollable Content Area -->
+        <div class="flex-1 overflow-auto">
+          <%= @inner_content %>
+        </div>
+
+        <!-- Status Bar (Windows-style) -->
+        <div class="status-bar">
+          <div class="flex items-center space-x-4">
+            <span>Ready</span>
+            <span class="opacity-50">|</span>
+            <span>Tenant: <%= @current_tenant.name %></span>
+          </div>
+          <div class="flex items-center space-x-4">
+            <%= if assigns[:stats] do %>
+              <span><%= @stats.total_assets || 0 %> Assets</span>
+              <span class="opacity-50">|</span>
+              <span><%= @stats.open_work_orders || 0 %> Open WOs</span>
+              <span class="opacity-50">|</span>
+            <% end %>
+            <span class="flex items-center space-x-1">
+              <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span>Connected</span>
+            </span>
+          </div>
+        </div>
+      </main>
+    </div>
+  <% else %>
+    <!-- Login/Unauthenticated Layout -->
+    <main class="w-full h-full">
+      <.flash_group flash={@flash} />
+      <%= @inner_content %>
+    </main>
   <% end %>
-  
-  <main class="w-full">
-    <.flash_group flash={@flash} />
-    <%= @inner_content %>
-  </main>
 </div>
