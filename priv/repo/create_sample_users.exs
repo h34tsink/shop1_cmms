@@ -19,27 +19,30 @@ from(u in User, where: u.username in ["admin", "manager", "technician"])
 
 # Create test users with simple passwords
 %User{}
-|> User.changeset(%{
+|> User.registration_changeset(%{
   username: "admin",
-  password_hash: "admin123", # Legacy plaintext for testing
+  password: "Admin123!@#$%",
+  password_confirmation: "Admin123!@#$%",
   is_active: true,
   cmms_enabled: true
 })
 |> Repo.insert!()
 
 %User{}
-|> User.changeset(%{
+|> User.registration_changeset(%{
   username: "manager",
-  password_hash: "manager123",
+  password: "Manager123!@#$%",
+  password_confirmation: "Manager123!@#$%",
   is_active: true,
   cmms_enabled: true
 })
 |> Repo.insert!()
 
 %User{}
-|> User.changeset(%{
+|> User.registration_changeset(%{
   username: "technician",
-  password_hash: "tech123",
+  password: "Technician123!@#",
+  password_confirmation: "Technician123!@#",
   is_active: true,
   cmms_enabled: true
 })
@@ -88,9 +91,9 @@ Repo.insert!(%UserTenantAssignment{
 IO.puts("✅ Sample users created successfully!")
 IO.puts("")
 IO.puts("🔐 Login credentials:")
-IO.puts("   Username: admin     Password: admin123     (Tenant Admin)")
-IO.puts("   Username: manager   Password: manager123   (Maintenance Manager)")
-IO.puts("   Username: technician Password: tech123     (Technician)")
+IO.puts("   Username: admin     Password: Admin123!@#$%     (Tenant Admin)")
+IO.puts("   Username: manager   Password: Manager123!@#$%   (Maintenance Manager)")
+IO.puts("   Username: technician Password: Technician123!@#     (Technician)")
 IO.puts("")
 IO.puts("🌐 Access the application at: http://localhost:4000")
 IO.puts("📋 User Management at: http://localhost:4000/admin/users")

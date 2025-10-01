@@ -1,7 +1,6 @@
 defmodule Shop1CmmsWeb.AssetsLive do
   use Shop1CmmsWeb, :live_view
   alias Shop1Cmms.Assets
-  alias Shop1Cmms.Assets.{Asset, AssetType}
   import Shop1CmmsWeb.Components.Assets
 
   @impl true

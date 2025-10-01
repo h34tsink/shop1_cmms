@@ -166,7 +166,7 @@ defmodule Shop1CmmsWeb.AssetFormLive do
   end
 
   @impl true
-  def update(%{asset: asset, asset_types: asset_types, asset_locations: asset_locations, live_action: live_action} = assigns, socket) do
+  def update(%{asset: asset} = assigns, socket) do
     changeset = Assets.change_asset(asset)
 
     socket = socket

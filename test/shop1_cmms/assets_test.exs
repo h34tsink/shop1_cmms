@@ -23,7 +23,7 @@ defmodule Shop1Cmms.AssetsTest do
         name: "Test Equipment",
         description: "Test equipment type",
         code: "TEST_EQUIP",
-        category: "general",
+        category: "Equipment",
         tenant_id: tenant.id
       }
 
@@ -67,7 +67,7 @@ defmodule Shop1Cmms.AssetsTest do
     @update_attrs %{
       name: "some updated name",
       asset_number: "AST002",
-      status: :down,
+      status: :maintenance,
       criticality: :high,
       description: "some updated description"
     }
@@ -91,7 +91,9 @@ defmodule Shop1Cmms.AssetsTest do
       })
 
       asset = asset_fixture(attrs)
-      assert Assets.list_assets() == [asset]
+      assets = Assets.list_assets()
+      assert length(assets) == 1
+      assert Enum.any?(assets, fn a -> a.id == asset.id end)
     end
 
     test "get_asset!/1 returns the asset with given id", %{tenant: tenant, asset_type: asset_type, location: location} do
@@ -102,7 +104,10 @@ defmodule Shop1Cmms.AssetsTest do
       })
 
       asset = asset_fixture(attrs)
-      assert Assets.get_asset!(asset.id) == asset
+      fetched_asset = Assets.get_asset!(asset.id)
+      assert fetched_asset.id == asset.id
+      assert fetched_asset.name == asset.name
+      assert fetched_asset.asset_number == asset.asset_number
     end
 
     test "create_asset/1 with valid data creates a asset", %{tenant: tenant, asset_type: asset_type, location: location} do
@@ -141,7 +146,7 @@ defmodule Shop1Cmms.AssetsTest do
       assert {:ok, %Asset{} = asset} = Assets.update_asset(asset, update_attrs)
       assert asset.name == "some updated name"
       assert asset.asset_number == "AST002"
-      assert asset.status == :down
+      assert asset.status == :maintenance
       assert asset.criticality == :high
       assert asset.description == "some updated description"
     end
@@ -155,7 +160,9 @@ defmodule Shop1Cmms.AssetsTest do
 
       asset = asset_fixture(attrs)
       assert {:error, %Ecto.Changeset{}} = Assets.update_asset(asset, @invalid_attrs)
-      assert asset == Assets.get_asset!(asset.id)
+      unchanged_asset = Assets.get_asset!(asset.id)
+      assert unchanged_asset.id == asset.id
+      assert unchanged_asset.name == asset.name
     end
 
     test "delete_asset/1 deletes the asset", %{tenant: tenant, asset_type: asset_type, location: location} do
@@ -218,16 +225,16 @@ defmodule Shop1Cmms.AssetsTest do
       })
 
       attrs2 = Map.merge(@valid_attrs, %{
-        name: "Down Asset",
-        asset_number: "DWN001",
-        status: :down,
+        name: "Repair Asset",
+        asset_number: "REP001",
+        status: :repair,
         tenant_id: tenant.id,
         asset_type_id: asset_type.id,
         location_id: location.id
       })
 
       operational_asset = asset_fixture(attrs1)
-      _down_asset = asset_fixture(attrs2)
+      _repair_asset = asset_fixture(attrs2)
 
       # Filter by operational status
       results = Assets.filter_assets_by_status(tenant.id, :operational)

@@ -62,8 +62,6 @@ defmodule Shop1Cmms.Assets.Asset do
   defp validate_date_order(changeset) do
     purchase_date = get_field(changeset, :purchase_date)
     install_date = get_field(changeset, :install_date)
-    commission_date = get_field(changeset, :commission_date)
-    warranty_expiry = get_field(changeset, :warranty_expiry)
 
     changeset
     |> validate_date_not_future(:purchase_date)

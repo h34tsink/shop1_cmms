@@ -13,9 +13,13 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
     asset = Assets.get_asset_with_details!(id, current_tenant_id)
     work_orders = WorkOrders.list_work_orders_for_asset(id, current_tenant_id)
     maintenance_history = WorkOrders.get_maintenance_history(id, current_tenant_id)
+    manufacturers = Shop1Cmms.Metadata.list_manufacturers(current_tenant_id, active_only: true)
 
     # Check if user can edit assets
     can_edit = Shop1Cmms.Accounts.can?(current_user, :manage_assets, asset, current_tenant_id)
+
+    # Create empty manufacturer changeset for modal form
+    manufacturer_changeset = Shop1Cmms.Metadata.change_manufacturer(%Shop1Cmms.Metadata.Manufacturer{})
 
     socket = socket
     |> assign(:user, current_user)
@@ -23,6 +27,9 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
     |> assign(:asset, asset)
     |> assign(:work_orders, work_orders)
     |> assign(:maintenance_history, maintenance_history)
+    |> assign(:manufacturers, manufacturers)
+    |> assign(:manufacturer_form, to_form(manufacturer_changeset))
+    |> assign(:show_manufacturer_modal, false)
     |> assign(:page_title, "Asset Details - #{asset.name}")
     |> assign(:active_tab, "overview")
     |> assign(:edit_mode, false)
@@ -33,7 +40,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
   end
 
   @impl true
-  def handle_params(params, _uri, socket) do
+  def handle_params(_params, _uri, socket) do
     {:noreply, socket}
   end
 
@@ -44,29 +51,41 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
 
   def handle_event("toggle_edit", _params, socket) do
     if socket.assigns.can_edit do
-      edit_mode = !socket.assigns.edit_mode
+      if socket.assigns.edit_mode do
+        # Exiting edit mode - clear form
+        socket = socket
+        |> assign(:edit_mode, false)
+        |> assign(:form, nil)
 
-      socket = if edit_mode do
+        {:noreply, socket}
+      else
         # Entering edit mode - create form
         changeset = Assets.change_asset(socket.assigns.asset)
-        assign(socket, :form, to_form(changeset))
-      else
-        # Exiting edit mode - clear form
-        assign(socket, :form, nil)
-      end
 
-      {:noreply, assign(socket, :edit_mode, edit_mode)}
+        socket = socket
+        |> assign(:edit_mode, true)
+        |> assign(:form, to_form(changeset))
+
+        {:noreply, socket}
+      end
     else
       {:noreply, put_flash(socket, :error, "You don't have permission to edit assets")}
     end
   end
 
   def handle_event("validate", %{"asset" => asset_params}, socket) do
-    changeset = Assets.change_asset(socket.assigns.asset, asset_params)
-    {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
+    changeset =
+      socket.assigns.asset
+      |> Assets.change_asset(asset_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, :form, to_form(changeset))}
   end
 
   def handle_event("save", %{"asset" => asset_params}, socket) do
+    require Logger
+    Logger.info("Save asset called with params: #{inspect(asset_params)}")
+
     case Assets.update_asset(socket.assigns.asset, asset_params) do
       {:ok, updated_asset} ->
         # Reload asset with details to get fresh data
@@ -81,6 +100,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         {:noreply, socket}
 
       {:error, changeset} ->
+        Logger.error("Asset update failed: #{inspect(changeset.errors)}")
         {:noreply, assign(socket, :form, to_form(changeset))}
     end
   end
@@ -98,6 +118,51 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Unable to delete asset. It may have associated work orders.")}
+    end
+  end
+
+  def handle_event("show_manufacturer_modal", _params, socket) do
+    # Reset manufacturer form with empty changeset
+    manufacturer_changeset = Shop1Cmms.Metadata.change_manufacturer(%Shop1Cmms.Metadata.Manufacturer{})
+
+    {:noreply,
+     socket
+     |> assign(show_manufacturer_modal: true)
+     |> assign(manufacturer_form: to_form(manufacturer_changeset))
+     |> put_flash(:info, "Opening manufacturer modal...")}
+  end
+
+  def handle_event("hide_manufacturer_modal", _params, socket) do
+    {:noreply, assign(socket, show_manufacturer_modal: false)}
+  end
+
+  def handle_event("validate_manufacturer", %{"manufacturer" => manufacturer_params}, socket) do
+    changeset = Shop1Cmms.Metadata.change_manufacturer(%Shop1Cmms.Metadata.Manufacturer{}, manufacturer_params)
+    {:noreply, assign(socket, manufacturer_form: to_form(changeset, action: :validate))}
+  end
+
+  def handle_event("create_manufacturer", %{"manufacturer" => manufacturer_params}, socket) do
+    tenant_id = socket.assigns.tenant_id
+
+    manufacturer_params = Map.put(manufacturer_params, "tenant_id", tenant_id)
+
+    case Shop1Cmms.Metadata.create_manufacturer(manufacturer_params) do
+      {:ok, manufacturer} ->
+        manufacturers = Shop1Cmms.Metadata.list_manufacturers(tenant_id, active_only: true)
+
+        # Update the asset form with the new manufacturer
+        changeset = Assets.change_asset(socket.assigns.asset, %{"manufacturer" => manufacturer.name})
+        form = to_form(changeset)
+
+        {:noreply,
+         socket
+         |> assign(manufacturers: manufacturers, show_manufacturer_modal: false, form: form)
+         |> put_flash(:info, "Manufacturer '#{manufacturer.name}' created successfully")}
+
+      {:error, _changeset} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to create manufacturer")}
     end
   end
 
@@ -162,17 +227,6 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
                 <%= if @edit_mode, do: "Cancel", else: "Edit" %>
               </button>
 
-              <%= if @edit_mode do %>
-                <button
-                  phx-click="save"
-                  class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  Save
-                </button>
-              <% end %>
             <% end %>
 
             <button
@@ -250,6 +304,42 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         <% end %>
       </div>
     </div>
+
+    <!-- Manufacturer Creation Modal -->
+    <%= if @show_manufacturer_modal do %>
+      <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" phx-click="hide_manufacturer_modal">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white" phx-click-away="hide_manufacturer_modal">
+          <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-medium text-gray-900">Create New Manufacturer</h3>
+              <button phx-click="hide_manufacturer_modal" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+
+            <.simple_form for={@manufacturer_form} phx-submit="create_manufacturer" phx-change="validate_manufacturer" class="space-y-4">
+              <.input field={@manufacturer_form[:name]} label="Name" type="text" required />
+              <.input field={@manufacturer_form[:description]} label="Description" type="textarea" rows="3" />
+              <.input field={@manufacturer_form[:contact_email]} label="Contact Email" type="email" />
+              <.input field={@manufacturer_form[:contact_phone]} label="Contact Phone" type="text" />
+              <.input field={@manufacturer_form[:website]} label="Website" type="url" />
+              <.input field={@manufacturer_form[:address]} label="Address" type="textarea" rows="2" />
+
+              <div class="flex justify-end space-x-3 pt-4">
+                <.button type="button" phx-click="hide_manufacturer_modal" class="bg-gray-300 hover:bg-gray-400 text-gray-800">
+                  Cancel
+                </.button>
+                <.button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white">
+                  Create Manufacturer
+                </.button>
+              </div>
+            </.simple_form>
+          </div>
+        </div>
+      </div>
+    <% end %>
     """
   end
 
@@ -261,8 +351,12 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         <div class="bg-white shadow rounded-lg p-6">
           <h2 class="text-lg font-medium text-gray-900 mb-6">Asset Information</h2>
 
-          <%= if @edit_mode and @form do %>
+          <%= if @edit_mode and not is_nil(@form) and not is_nil(@manufacturers) and not is_nil(@asset) do %>
             <.form for={@form} phx-change="validate" phx-submit="save" class="space-y-6">
+              <!-- Hidden fields for required values -->
+              <.input field={@form[:tenant_id]} type="hidden" />
+              <.input field={@form[:asset_type_id]} type="hidden" />
+
               <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                 <div>
                   <.input field={@form[:name]} label="Asset Name" type="text" required />
@@ -271,7 +365,26 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
                   <.input field={@form[:asset_number]} label="Asset Number" type="text" required />
                 </div>
                 <div>
-                  <.input field={@form[:manufacturer]} label="Manufacturer" type="text" />
+                  <div class="flex items-end gap-2">
+                    <div class="flex-1">
+                      <.input
+                        field={@form[:manufacturer]}
+                        label="Manufacturer"
+                        type="select"
+                        options={manufacturer_options(@manufacturers, @asset.manufacturer || "")}
+                        prompt="Select manufacturer..."
+                      />
+                    </div>
+                    <div>
+                      <.button
+                        type="button"
+                        phx-click="show_manufacturer_modal"
+                        class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2"
+                      >
+                        + New
+                      </.button>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <.input field={@form[:model]} label="Model" type="text" />
@@ -284,12 +397,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
                     field={@form[:status]}
                     label="Status"
                     type="select"
-                    options={[
-                      {"Active", "active"},
-                      {"Inactive", "inactive"},
-                      {"Under Maintenance", "under_maintenance"},
-                      {"Out of Service", "out_of_service"}
-                    ]}
+                    options={status_options()}
                   />
                 </div>
                 <div>
@@ -318,6 +426,15 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
 
               <div>
                 <.input field={@form[:description]} label="Description" type="textarea" rows="3" />
+              </div>
+
+              <div class="flex justify-end space-x-3 pt-6">
+                <.button type="button" phx-click="toggle_edit" class="bg-gray-300 hover:bg-gray-400 text-gray-800">
+                  Cancel
+                </.button>
+                <.button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white">
+                  Save Asset
+                </.button>
               </div>
             </.form>
           <% else %>
@@ -559,4 +676,25 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
   defp status_color_class(:completed), do: "bg-green-100 text-green-800"
   defp status_color_class(:cancelled), do: "bg-red-100 text-red-800"
   defp status_color_class(_), do: "bg-gray-100 text-gray-800"
+
+  defp manufacturer_options(manufacturers, current_manufacturer) do
+    options = Enum.map(manufacturers, &{&1.name, &1.name})
+
+    # Include current manufacturer if it's not in the list
+    if current_manufacturer && current_manufacturer not in Enum.map(options, &elem(&1, 1)) do
+      [{current_manufacturer, current_manufacturer} | options]
+    else
+      options
+    end
+  end
+
+  defp status_options do
+    [
+      {"Operational", "operational"},
+      {"Maintenance", "maintenance"},
+      {"Repair", "repair"},
+      {"Retired", "retired"},
+      {"Disposed", "disposed"}
+    ]
+  end
 end

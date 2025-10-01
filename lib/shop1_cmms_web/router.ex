@@ -55,11 +55,11 @@ defmodule Shop1CmmsWeb.Router do
       live "/", DashboardLive, :index
       live "/dashboard", DashboardLive, :index
 
-      # Work Orders (coming soon)
-      # live "/work-orders", WorkOrderLive.Index, :index
-      # live "/work-orders/new", WorkOrderLive.Index, :new
-      # live "/work-orders/:id", WorkOrderLive.Show, :show
-      # live "/work-orders/:id/edit", WorkOrderLive.Show, :edit
+      # Work Orders
+      live "/work_orders", WorkOrdersLive, :index
+      live "/work_orders/new", WorkOrdersLive, :new
+      live "/work_orders/:id", WorkOrderDetailLive, :show
+      live "/work_orders/:id/edit", WorkOrdersLive, :edit
 
       # Assets
       live "/assets", AssetsLive, :index
