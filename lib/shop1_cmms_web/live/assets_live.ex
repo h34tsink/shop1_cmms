@@ -151,7 +151,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
                   <td><%= asset.asset_type.name %></td>
                   <td class="text-gray-600"><%= asset.location.name %></td>
                   <td class="text-gray-600"><%= asset.manufacturer || "-" %></td>
-                  <td class="text-gray-600"><%= asset.model_number || "-" %></td>
+                  <td class="text-gray-600"><%= asset.model || "-" %></td>
                   <td>
                     <span class={[
                       "inline-block px-2 py-0.5 text-xs font-medium rounded",
