@@ -162,7 +162,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
                   </td>
                   <td>
                     <div class="flex items-center">
-                      <%= for _ <- 1..asset.criticality do %>
+                      <%= for _ <- 1..criticality_to_number(asset.criticality) do %>
                         <svg class="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
                         </svg>
@@ -251,6 +251,13 @@ defmodule Shop1CmmsWeb.AssetsLive do
   defp format_status(:out_of_service), do: "Out of Service"
   defp format_status(:retired), do: "Retired"
   defp format_status(status), do: to_string(status) |> String.capitalize()
+
+  defp criticality_to_number(:critical), do: 5
+  defp criticality_to_number(:high), do: 4
+  defp criticality_to_number(:medium), do: 3
+  defp criticality_to_number(:low), do: 2
+  defp criticality_to_number(:minimal), do: 1
+  defp criticality_to_number(_), do: 0
 
   @impl true
   def mount(%{"id" => id}, _session, socket) when socket.assigns.live_action == :edit do
