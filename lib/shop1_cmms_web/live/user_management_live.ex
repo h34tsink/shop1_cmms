@@ -170,7 +170,7 @@ defmodule Shop1CmmsWeb.UserManagementLive do
 
   defp save_user(socket, :edit, user_params) do
     case Accounts.update_user(socket.assigns.user, user_params) do
-      {:ok, user} ->
+      {:ok, _user} ->
         socket =
           socket
           |> put_flash(:info, "User updated successfully")
