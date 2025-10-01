@@ -74,7 +74,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
 
   def mount(_params, _session, socket) do
     # Default to manufacturers if no type specified
-    {:ok, push_navigate(socket, to: ~p"/metadata/manufacturers")}
+    {:ok, push_navigate(socket, to: ~p"/configuration/manufacturers")}
   end
 
   @impl true
@@ -118,11 +118,11 @@ defmodule Shop1CmmsWeb.MetadataLive do
   end
 
   def handle_event("new", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/metadata/#{socket.assigns.metadata_type}/new")}
+    {:noreply, push_patch(socket, to: ~p"/configuration/#{socket.assigns.metadata_type}/new")}
   end
 
   def handle_event("edit", %{"id" => id}, socket) do
-    {:noreply, push_patch(socket, to: ~p"/metadata/#{socket.assigns.metadata_type}/#{id}/edit")}
+    {:noreply, push_patch(socket, to: ~p"/configuration/#{socket.assigns.metadata_type}/#{id}/edit")}
   end
 
   def handle_event("delete", %{"id" => id}, socket) do
@@ -143,7 +143,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   end
 
   def handle_event("close_modal", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/metadata/#{socket.assigns.metadata_type}")}
+    {:noreply, push_patch(socket, to: ~p"/configuration/#{socket.assigns.metadata_type}")}
   end
 
   def handle_event("save", params, socket) do
@@ -164,7 +164,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
         {:noreply,
          socket
          |> put_flash(:info, "#{socket.assigns.metadata_config.singular} created successfully")
-         |> push_patch(to: ~p"/metadata/#{type}")
+         |> push_patch(to: ~p"/configuration/#{type}")
          |> load_metadata_items(tenant_id, socket.assigns.search_query)}
 
       {:error, changeset} ->
@@ -191,7 +191,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
         {:noreply,
          socket
          |> put_flash(:info, "#{socket.assigns.metadata_config.singular} updated successfully")
-         |> push_patch(to: ~p"/metadata/#{type}")
+         |> push_patch(to: ~p"/configuration/#{type}")
          |> load_metadata_items(tenant_id, socket.assigns.search_query)}
 
       {:error, changeset} ->

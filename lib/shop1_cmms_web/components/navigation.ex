@@ -55,11 +55,11 @@ defmodule Shop1CmmsWeb.Components.Navigation do
                 active={String.starts_with?(@current_path, "/assets")}
               />
               <.nav_item 
-                href="/metadata/manufacturers" 
-                label="Metadata" 
+                href="/configuration/manufacturers" 
+                label="Configuration" 
                 icon="database"
                 indent={true}
-                active={String.starts_with?(@current_path, "/metadata")}
+                active={String.starts_with?(@current_path, "/configuration")}
               />
             </.nav_group>
           <% end %>

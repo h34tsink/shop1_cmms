@@ -19,7 +19,7 @@
           {"asset_locations", %{title: "Locations", icon: "📍"}}
         ] do %>
           <.link
-            navigate={~p"/metadata/#{type}"}
+            navigate={~p"/configuration/#{type}"}
             class={[
               "flex items-center px-3 py-2 rounded text-sm font-medium transition-colors",
               if @metadata_type == type do
