@@ -35,11 +35,11 @@ defmodule Shop1CmmsWeb.Components.Navigation do
             <% end %>
             <%= if @auth.manage_pm_templates do %>
               <.nav_item 
-                href="/preventive-maintenance" 
+                href="/pm-schedules" 
                 label="PM Schedules" 
                 icon="calendar"
                 indent={true}
-                active={String.starts_with?(@current_path, "/preventive-maintenance")}
+                active={String.starts_with?(@current_path, "/pm-schedules")}
               />
             <% end %>
           </.nav_group>

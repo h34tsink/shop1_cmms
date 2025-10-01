@@ -67,11 +67,10 @@ defmodule Shop1CmmsWeb.Router do
       live "/assets/:id", AssetDetailLive, :show
       live "/assets/:id/edit", AssetsLive, :edit
 
-      # Preventive Maintenance (coming soon)
-      # live "/preventive-maintenance", PMTemplateLive.Index, :index
-      # live "/preventive-maintenance/new", PMTemplateLive.Index, :new
-      # live "/preventive-maintenance/:id", PMTemplateLive.Show, :show
-      # live "/preventive-maintenance/:id/edit", PMTemplateLive.Show, :edit
+      # Preventive Maintenance
+      live "/pm-schedules", PmSchedulesLive, :index
+      live "/pm-schedules/new", PmSchedulesLive, :new
+      live "/pm-schedules/:id/edit", PmSchedulesLive, :edit
 
       # Reports (coming soon)
       # live "/reports", ReportLive.Index, :index
