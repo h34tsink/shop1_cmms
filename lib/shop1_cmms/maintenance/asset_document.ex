@@ -36,8 +36,8 @@ defmodule Shop1Cmms.Maintenance.AssetDocument do
     belongs_to :asset, Shop1Cmms.Assets.Asset, type: :binary_id
     belongs_to :pm_schedule, Shop1Cmms.Maintenance.PmSchedule, type: :binary_id
     belongs_to :work_order, Shop1Cmms.WorkOrders.WorkOrder, type: :binary_id
+    belongs_to :uploaded_by_user, Shop1Cmms.Accounts.User, foreign_key: :uploaded_by
     
-    field :uploaded_by, :integer
     field :tenant_id, :integer
     
     timestamps(type: :naive_datetime)

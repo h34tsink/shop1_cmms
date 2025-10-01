@@ -37,8 +37,8 @@ defmodule Shop1Cmms.Maintenance.PmSchedule do
     
     # References
     belongs_to :asset, Shop1Cmms.Assets.Asset, type: :binary_id
-    field :created_by, :integer
-    field :updated_by, :integer
+    belongs_to :created_by_user, Shop1Cmms.Accounts.User, foreign_key: :created_by
+    belongs_to :updated_by_user, Shop1Cmms.Accounts.User, foreign_key: :updated_by
     
     # Associations
     has_many :components, Shop1Cmms.Maintenance.PmScheduleComponent

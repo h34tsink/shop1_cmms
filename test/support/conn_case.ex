@@ -35,4 +35,20 @@ defmodule Shop1CmmsWeb.ConnCase do
     Shop1Cmms.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
+
+  @doc """
+  Setup helper that logs in a user in a test conn.
+  """
+  def log_in_user(conn, user) do
+    # Try to get tenant_id from user struct or use default
+    tenant_id = Map.get(user, :tenant_id, 1)
+    token = :crypto.strong_rand_bytes(32) |> Base.encode64()
+
+    conn
+    |> Phoenix.ConnTest.init_test_session(%{})
+    |> Plug.Conn.put_session(:user_id, user.id)
+    |> Plug.Conn.put_session(:tenant_id, tenant_id)
+    |> Plug.Conn.put_session(:user_token, token)
+    |> Plug.Conn.put_session(:live_socket_id, "users_sessions:#{user.id}")
+  end
 end
