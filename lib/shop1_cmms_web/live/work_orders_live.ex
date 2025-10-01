@@ -47,7 +47,7 @@ defmodule Shop1CmmsWeb.WorkOrdersLive do
     <!-- Desktop Work Orders Page -->
     <div class="h-full flex flex-col overflow-hidden">
       <!-- Toolbar -->
-      <div class="flex-shrink-0 h-10 bg-gray-100 border-b border-gray-300 flex items-center justify-between px-3">
+      <div class="flex-shrink-0 h-11 bg-gray-100 border-b border-gray-300 flex items-center justify-between px-3">
         <!-- Breadcrumb -->
         <nav class="flex items-center text-xs space-x-1">
           <.link href="/" class="text-gray-600 hover:text-gray-900">Home</.link>
@@ -56,7 +56,7 @@ defmodule Shop1CmmsWeb.WorkOrdersLive do
         </nav>
         
         <!-- Actions -->
-        <div class="flex items-center space-x-1">
+        <div class="flex items-center space-x-2">
           <.link navigate="/work_orders/new" class="btn-toolbar-primary">
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
@@ -205,7 +205,7 @@ defmodule Shop1CmmsWeb.WorkOrdersLive do
                   <td class="text-gray-600 text-xs"><%= wo.assigned_to_name || "-" %></td>
                   <td class="text-gray-600 text-xs"><%= if wo.scheduled_end_date, do: Calendar.strftime(wo.scheduled_end_date, "%b %d, %Y"), else: "-" %></td>
                   <td>
-                    <div class="flex items-center space-x-1">
+                    <div class="flex items-center space-x-2">
                       <.link navigate={"/work_orders/#{wo.id}"} class="p-1 hover:bg-gray-200 rounded" title="View">
                         <svg class="w-3.5 h-3.5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>

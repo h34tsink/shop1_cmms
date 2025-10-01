@@ -27,7 +27,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
     <!-- Desktop-Style Assets Page with Dense Table -->
     <div class="h-full flex flex-col overflow-hidden">
       <!-- Toolbar -->
-      <div class="flex-shrink-0 h-10 bg-gray-100 border-b border-gray-300 flex items-center justify-between px-3">
+      <div class="flex-shrink-0 h-11 bg-gray-100 border-b border-gray-300 flex items-center justify-between px-3">
         <!-- Breadcrumb -->
         <nav class="flex items-center text-xs space-x-1">
           <.link href="/" class="text-gray-600 hover:text-gray-900">Home</.link>
@@ -36,7 +36,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
         </nav>
         
         <!-- Quick Actions -->
-        <div class="flex items-center space-x-1">
+        <div class="flex items-center space-x-2">
           <.link 
             navigate={~p"/assets/new"}
             class="btn-toolbar-primary"
