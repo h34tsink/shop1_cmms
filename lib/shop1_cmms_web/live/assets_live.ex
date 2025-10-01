@@ -4,6 +4,255 @@ defmodule Shop1CmmsWeb.AssetsLive do
   import Shop1CmmsWeb.Components.Assets
 
   @impl true
+  def render(assigns) do
+    ~H"""
+    <%= if @live_action in [:new, :edit] && @show_modal do %>
+      <.modal id="asset-modal" show on_cancel={JS.patch(~p"/assets")}>
+        <:title><%= @page_title %></:title>
+        <.live_component
+          module={Shop1CmmsWeb.AssetFormLive}
+          id={@asset.id || :new}
+          title={@page_title}
+          action={@live_action}
+          asset={@asset}
+          asset_types={@asset_types}
+          asset_locations={@asset_locations}
+          tenant_id={@tenant_id}
+          user={@user}
+          patch={~p"/assets"}
+        />
+      </.modal>
+    <% end %>
+    
+    <!-- Desktop-Style Assets Page with Dense Table -->
+    <div class="h-full flex flex-col overflow-hidden">
+      <!-- Toolbar -->
+      <div class="flex-shrink-0 h-10 bg-gray-100 border-b border-gray-300 flex items-center justify-between px-3">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center text-xs space-x-1">
+          <.link href="/" class="text-gray-600 hover:text-gray-900">Home</.link>
+          <span class="text-gray-400">/</span>
+          <span class="text-gray-900 font-medium">Assets</span>
+        </nav>
+        
+        <!-- Quick Actions -->
+        <div class="flex items-center space-x-1">
+          <.link 
+            navigate={~p"/assets/new"}
+            class="btn-toolbar-primary"
+          >
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+            </svg>
+            <span>New Asset</span>
+          </.link>
+          <button class="btn-toolbar">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"></path>
+            </svg>
+            <span>Import</span>
+          </button>
+          <button class="btn-toolbar">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Export</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters Bar -->
+      <div class="flex-shrink-0 bg-white border-b border-gray-200 p-2">
+        <div class="flex items-center space-x-2">
+          <!-- Search -->
+          <div class="flex-1 max-w-md">
+            <form phx-change="search" phx-submit="search">
+              <div class="relative">
+                <input 
+                  type="text" 
+                  name="search[term]" 
+                  value={@search_term}
+                  placeholder="Search assets..." 
+                  class="block w-full pl-7 pr-2 py-1 text-xs border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                />
+                <svg class="absolute left-2 top-1.5 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+              </div>
+            </form>
+          </div>
+
+          <!-- Quick Filters -->
+          <select phx-change="filter_status" name="status" class="text-xs py-1 px-2 border-gray-300 rounded">
+            <option value="all">All Status</option>
+            <option value="operational" selected={@selected_status == "operational"}>Operational</option>
+            <option value="needs_maintenance" selected={@selected_status == "needs_maintenance"}>Needs Maintenance</option>
+            <option value="out_of_service" selected={@selected_status == "out_of_service"}>Out of Service</option>
+            <option value="retired" selected={@selected_status == "retired"}>Retired</option>
+          </select>
+
+          <select phx-change="filter_type" name="type" class="text-xs py-1 px-2 border-gray-300 rounded">
+            <option value="all">All Types</option>
+            <%= for asset_type <- @asset_types do %>
+              <option value={asset_type.id} selected={@selected_type == to_string(asset_type.id)}>
+                <%= asset_type.name %>
+              </option>
+            <% end %>
+          </select>
+
+          <select phx-change="filter_criticality" name="criticality" class="text-xs py-1 px-2 border-gray-300 rounded">
+            <option value="all">All Criticality</option>
+            <option value="critical" selected={@selected_criticality == "critical"}>Critical</option>
+            <option value="high" selected={@selected_criticality == "high"}>High</option>
+            <option value="medium" selected={@selected_criticality == "medium"}>Medium</option>
+            <option value="low" selected={@selected_criticality == "low"}>Low</option>
+          </select>
+
+          <!-- Results Count -->
+          <div class="text-xs text-gray-600 ml-auto">
+            <%= length(@filtered_assets) %> of <%= length(@assets) %> assets
+          </div>
+        </div>
+      </div>
+
+      <!-- Dense Table -->
+      <div class="flex-1 overflow-auto">
+        <%= if length(@filtered_assets) > 0 do %>
+          <table class="table-dense">
+            <thead>
+              <tr>
+                <th class="w-8">
+                  <input type="checkbox" class="rounded border-gray-300" />
+                </th>
+                <th>Asset Code</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Manufacturer</th>
+                <th>Model</th>
+                <th>Status</th>
+                <th>Criticality</th>
+                <th class="w-24">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <%= for asset <- @filtered_assets do %>
+                <tr 
+                  phx-click="select_asset" 
+                  phx-value-id={asset.id}
+                  data-context-menu="asset"
+                  data-context-id={asset.id}
+                >
+                  <td>
+                    <input type="checkbox" class="rounded border-gray-300" onclick="event.stopPropagation()" />
+                  </td>
+                  <td class="font-mono text-gray-600"><%= asset.asset_code %></td>
+                  <td class="font-medium text-gray-900"><%= asset.name %></td>
+                  <td><%= asset.asset_type.name %></td>
+                  <td class="text-gray-600"><%= asset.location.name %></td>
+                  <td class="text-gray-600"><%= asset.manufacturer || "-" %></td>
+                  <td class="text-gray-600"><%= asset.model_number || "-" %></td>
+                  <td>
+                    <span class={[
+                      "inline-block px-2 py-0.5 text-xs font-medium rounded",
+                      status_badge_class(asset.status)
+                    ]}>
+                      <%= format_status(asset.status) %>
+                    </span>
+                  </td>
+                  <td>
+                    <div class="flex items-center">
+                      <%= for _ <- 1..asset.criticality do %>
+                        <svg class="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                      <% end %>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="flex items-center space-x-1">
+                      <.link href={"/assets/#{asset.id}"} class="p-1 hover:bg-gray-200 rounded" title="View">
+                        <svg class="w-3.5 h-3.5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                        </svg>
+                      </.link>
+                      <.link navigate={"/assets/#{asset.id}/edit"} class="p-1 hover:bg-gray-200 rounded" title="Edit">
+                        <svg class="w-3.5 h-3.5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                        </svg>
+                      </.link>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <!-- Empty State -->
+          <div class="flex items-center justify-center h-full">
+            <div class="text-center py-12">
+              <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900">No assets found</h3>
+              <p class="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+                <%= if @search_term != "" or @selected_status != "all" or @selected_type != "all" do %>
+                  No assets match your current filters. Try adjusting your search criteria.
+                <% else %>
+                  Get started by adding your first asset to the system.
+                <% end %>
+              </p>
+              <div class="mt-6">
+                <%= if @search_term != "" or @selected_status != "all" or @selected_type != "all" do %>
+                  <button phx-click="clear_filters" class="btn-toolbar">
+                    Clear Filters
+                  </button>
+                <% else %>
+                  <.link navigate={~p"/assets/new"} class="btn-toolbar-primary">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>Add First Asset</span>
+                  </.link>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Table Footer -->
+      <%= if length(@filtered_assets) > 0 do %>
+        <div class="flex-shrink-0 h-8 bg-gray-50 border-t border-gray-300 flex items-center justify-between px-3 text-xs">
+          <div class="text-gray-600">
+            Showing <%= length(@filtered_assets) %> assets
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-gray-500">Page 1 of 1</span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    """
+  end
+
+  # Helper functions for template
+  defp status_badge_class(:operational), do: "bg-green-100 text-green-800"
+  defp status_badge_class(:needs_maintenance), do: "bg-orange-100 text-orange-800"
+  defp status_badge_class(:out_of_service), do: "bg-red-100 text-red-800"
+  defp status_badge_class(:retired), do: "bg-gray-100 text-gray-800"
+  defp status_badge_class(_), do: "bg-gray-100 text-gray-600"
+
+  defp format_status(:operational), do: "Operational"
+  defp format_status(:needs_maintenance), do: "Needs Maintenance"
+  defp format_status(:out_of_service), do: "Out of Service"
+  defp format_status(:retired), do: "Retired"
+  defp format_status(status), do: to_string(status) |> String.capitalize()
+
+  @impl true
   def mount(%{"id" => id}, _session, socket) when socket.assigns.live_action == :edit do
     current_user = socket.assigns.current_user
     current_tenant_id = socket.assigns.current_tenant_id
@@ -148,6 +397,22 @@ defmodule Shop1CmmsWeb.AssetsLive do
 
   def handle_event("toggle_advanced_filters", _params, socket) do
     {:noreply, assign(socket, :show_advanced_filters, !socket.assigns.show_advanced_filters)}
+  end
+
+  def handle_event("clear_filters", _params, socket) do
+    socket = socket
+    |> assign(:search_term, "")
+    |> assign(:selected_status, "all")
+    |> assign(:selected_type, "all")
+    |> assign(:selected_criticality, "all")
+    |> assign(:selected_manufacturer, "all")
+    |> apply_filters()
+    
+    {:noreply, socket}
+  end
+
+  def handle_event("select_asset", %{"id" => id}, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/assets/#{id}")}
   end
 
   def handle_event("filter_status", %{"status" => status}, socket) do

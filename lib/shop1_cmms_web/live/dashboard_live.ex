@@ -1,197 +1,100 @@
 defmodule Shop1CmmsWeb.DashboardLive do
   use Shop1CmmsWeb, :live_view
 
-  alias Shop1Cmms.{Auth, Tenants, Assets}
+  alias Shop1Cmms.{Assets, Tenants}
 
   @impl true
   def render(assigns) do
     ~H"""
-    <!-- Full-width Main content -->
-    <main class="w-full py-8 px-6 lg:px-8">
-      <!-- Enhanced Dashboard Header -->
-      <div class="mb-10">
-        <div class="lg:flex lg:items-center lg:justify-between">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center space-x-4">
-              <div class="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
+    <!-- Desktop Dashboard Layout -->
+    <div class="h-full flex flex-col p-3 gap-2 overflow-hidden">
+      <!-- Top Row: KPI Panels (Compact) -->
+      <div class="flex gap-2" style="height: 100px;">
+        <%= if @auth.view_work_orders do %>
+          <div class="panel flex-1">
+            <div class="panel-header">Work Orders</div>
+            <div class="panel-body flex items-center justify-between p-2">
               <div>
-                <h1 class="text-3xl font-bold text-gray-900 leading-tight">
-                  Welcome back, <%= String.split(@current_user.username, "@") |> List.first() |> String.capitalize() %>
-                </h1>
-                <div class="mt-1 flex items-center space-x-2 text-sm text-gray-500">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                  </svg>
-                  <span><%= @current_tenant.name %></span>
-                  <span class="text-gray-300">•</span>
-                  <span><%= Date.utc_today() |> Calendar.strftime("%B %d, %Y") %></span>
-                </div>
+                <div class="text-2xl font-bold text-gray-900"><%= @stats.open_work_orders %></div>
+                <div class="text-xs text-gray-500 mt-0.5">Open</div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm text-red-600 font-medium">0 Overdue</div>
+                <div class="text-xs text-gray-500 mt-0.5">0 Due Today</div>
               </div>
             </div>
           </div>
-          <div class="mt-6 lg:mt-0 lg:ml-4 flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-            <div class="flex items-center space-x-2 bg-green-50 text-green-700 px-4 py-2 rounded-xl border border-green-200">
-              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span class="text-sm font-medium">System Online</span>
+        <% end %>
+        
+        <%= if @auth.view_assets do %>
+          <.link href="/assets" class="panel flex-1 hover:shadow-lg transition-shadow cursor-pointer">
+            <div class="panel-header">Assets</div>
+            <div class="panel-body flex items-center justify-between p-2">
+              <div>
+                <div class="text-2xl font-bold text-gray-900"><%= @stats.total_assets %></div>
+                <div class="text-xs text-gray-500 mt-0.5">Total</div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm text-green-600 font-medium"><%= @stats.operational_assets %> Operational</div>
+                <div class="text-xs text-orange-600 mt-0.5"><%= @stats.maintenance_assets %> In Maintenance</div>
+              </div>
             </div>
-            <div class="flex items-center space-x-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl border border-blue-200">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-              </svg>
-              <span class="text-sm font-medium"><%= @stats.active_users %> Active Users</span>
+          </.link>
+        <% end %>
+        
+        <%= if @auth.manage_pm_templates do %>
+          <div class="panel flex-1">
+            <div class="panel-header">PM Compliance</div>
+            <div class="panel-body flex items-center justify-between p-2">
+              <div>
+                <div class="text-2xl font-bold text-gray-900">--</div>
+                <div class="text-xs text-gray-500 mt-0.5">This Month</div>
+              </div>
+              <div class="flex items-center">
+                <div class="text-sm text-gray-500">Coming Soon</div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+        
+        <div class="panel flex-1 bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-600">
+          <div class="panel-header bg-blue-600/50 border-blue-700 text-white">System Status</div>
+          <div class="panel-body flex items-center justify-between p-2">
+            <div>
+              <div class="text-2xl font-bold">100%</div>
+              <div class="text-xs opacity-90 mt-0.5">Uptime</div>
+            </div>
+            <div class="text-right">
+              <div class="flex items-center justify-end">
+                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-1"></div>
+                <span class="text-sm font-medium">Online</span>
+              </div>
+              <div class="text-xs opacity-90 mt-0.5"><%= @stats.active_users %> Users</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Enhanced Stats Overview -->
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-10">
-          <%= if @auth.view_work_orders do %>
-            <div class="group relative bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-              <div class="absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8 opacity-10">
-                <div class="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 rounded-full"></div>
-              </div>
-              <div class="relative p-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex-shrink-0">
-                    <div class="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-                      <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Work Orders</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1"><%= @stats.open_work_orders || 0 %></p>
-                  </div>
-                </div>
-                <div class="mt-4">
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-600">Priority tasks pending</span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Active
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          <% end %>
-
-          <%= if @auth.view_assets do %>
-            <.link href="/assets" class="group relative bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 block">
-              <div class="absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8 opacity-10">
-                <div class="w-full h-full bg-gradient-to-br from-green-400 to-green-600 rounded-full"></div>
-              </div>
-              <div class="relative p-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex-shrink-0">
-                    <div class="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-                      <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Assets</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1"><%= @stats.total_assets || 0 %></p>
-                  </div>
-                </div>
-                <div class="mt-4">
-                  <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center space-x-1">
-                      <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span class="text-gray-600"><%= @stats.operational_assets || 0 %> operational</span>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                      <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span class="text-gray-600"><%= @stats.maintenance_assets || 0 %> maintenance</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </.link>
-          <% end %>
-
-          <%= if @auth.manage_pm_templates do %>
-            <div class="group relative bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-              <div class="absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8 opacity-10">
-                <div class="w-full h-full bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full"></div>
-              </div>
-              <div class="relative p-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex-shrink-0">
-                    <div class="w-14 h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-                      <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">PM Tasks</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1"><%= @stats.due_pm_tasks || 0 %></p>
-                  </div>
-                </div>
-                <div class="mt-4">
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-600">Scheduled maintenance</span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      Pending
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          <% end %>
-
-          <!-- Additional summary card -->
-          <div class="group relative bg-gradient-to-r from-indigo-500 to-purple-600 overflow-hidden shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <div class="absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8 opacity-20">
-              <div class="w-full h-full bg-white rounded-full"></div>
-            </div>
-            <div class="relative p-6 text-white">
-              <div class="flex items-center justify-between">
-                <div class="flex-shrink-0">
-                  <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg">
-                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                  </div>
-                </div>
-                <div class="text-right">
-                  <p class="text-sm font-medium text-white/80 uppercase tracking-wide">Efficiency</p>
-                  <p class="text-3xl font-bold text-white mt-1">98.5%</p>
-                </div>
-              </div>
-              <div class="mt-4">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-white/80">System uptime</span>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
-                    Excellent
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Asset Breakdown Charts -->
+      <!-- Middle Row: Split View (Flexible height) -->
+      <div class="flex-1 flex gap-2 min-h-0">
+        <!-- Left Panel: Asset Status Breakdown (40%) -->
         <%= if @auth.view_assets and @stats.total_assets > 0 do %>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-            <!-- Asset Status Breakdown -->
-            <.link href="/assets" class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 block">
-              <div class="p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Asset Status</h3>
-                <div class="space-y-4">
+          <div class="panel flex flex-col" style="width: 40%;">
+            <div class="panel-header flex items-center justify-between">
+              <span>Asset Overview</span>
+              <.link href="/assets" class="text-blue-600 hover:text-blue-700 text-xs font-medium">View All →</.link>
+            </div>
+            <div class="flex-1 overflow-auto p-3">
+              <!-- Status Breakdown -->
+              <div class="mb-4">
+                <h4 class="text-xs font-semibold text-gray-700 uppercase mb-2">By Status</h4>
+                <div class="space-y-2">
                   <%= for {status, count} <- @stats.by_status do %>
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
                       <div class="flex items-center">
-                        <div class={"w-3 h-3 rounded-full mr-3 #{status_color(status)}"}>
+                        <div class={"w-2 h-2 rounded-full mr-2 #{status_color(status)}"}>
                         </div>
-                        <span class="text-sm font-medium text-gray-700 capitalize">
+                        <span class="text-xs font-medium text-gray-700 capitalize">
                           <%= String.replace(to_string(status), "_", " ") %>
                         </span>
                       </div>
@@ -205,19 +108,17 @@ defmodule Shop1CmmsWeb.DashboardLive do
                   <% end %>
                 </div>
               </div>
-            </.link>
-
-            <!-- Asset Criticality Breakdown -->
-            <.link href="/assets" class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 block">
-              <div class="p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Asset Criticality</h3>
-                <div class="space-y-4">
+              
+              <!-- Criticality Breakdown -->
+              <div>
+                <h4 class="text-xs font-semibold text-gray-700 uppercase mb-2">By Criticality</h4>
+                <div class="space-y-2">
                   <%= for {criticality, count} <- @stats.by_criticality do %>
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
                       <div class="flex items-center">
-                        <div class={"w-3 h-3 rounded-full mr-3 #{criticality_color(criticality)}"}>
+                        <div class={"w-2 h-2 rounded-full mr-2 #{criticality_color(criticality)}"}>
                         </div>
-                        <span class="text-sm font-medium text-gray-700 capitalize">
+                        <span class="text-xs font-medium text-gray-700 capitalize">
                           <%= String.replace(to_string(criticality), "_", " ") %>
                         </span>
                       </div>
@@ -231,235 +132,137 @@ defmodule Shop1CmmsWeb.DashboardLive do
                   <% end %>
                 </div>
               </div>
-            </.link>
+            </div>
           </div>
         <% end %>
 
-        <!-- Enhanced Quick Actions -->
-        <div class="bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl border border-gray-100/50 mb-10 overflow-hidden">
-          <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-8 py-6 border-b border-gray-100">
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-xl font-bold text-gray-900">Quick Actions</h3>
-                <p class="text-sm text-gray-600 mt-1">Get things done efficiently</p>
-              </div>
-              <div class="flex items-center space-x-2">
-                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span class="text-sm text-gray-500">Ready</span>
-              </div>
-            </div>
+        <!-- Right Panel: Recent Activity (60%) -->
+        <div class="panel flex-1 flex flex-col">
+          <div class="panel-header flex items-center justify-between">
+            <span>Recent Activity</span>
+            <span class="text-xs text-gray-500">Last 24 hours</span>
           </div>
-          <div class="p-8">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <%= if @auth.create_work_orders do %>
-                <button class="group relative overflow-hidden inline-flex items-center justify-center px-6 py-5 border border-transparent text-sm font-bold rounded-xl shadow-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-                  <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-                  <svg class="w-5 h-5 mr-3 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                  </svg>
-                  <span class="relative z-10">Create Work Order</span>
-                </button>
-              <% end %>
-
-              <%= if @auth.add_meter_readings do %>
-                <button class="group relative overflow-hidden inline-flex items-center justify-center px-6 py-5 border border-gray-200 text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 hover:border-blue-200 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                  </svg>
-                  Add Meter Reading
-                </button>
-              <% end %>
-
-              <%= if @auth.manage_assets do %>
-                <.link href="/assets" class="group relative overflow-hidden inline-flex items-center justify-center px-6 py-5 border border-gray-200 text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gradient-to-r hover:from-gray-50 hover:to-green-50 hover:border-green-200 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-                  </svg>
-                  Add Asset
-                </.link>
-              <% end %>
-
-              <%= if @auth.view_reports do %>
-                <button class="group relative overflow-hidden inline-flex items-center justify-center px-6 py-5 border border-gray-200 text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gradient-to-r hover:from-gray-50 hover:to-purple-50 hover:border-purple-200 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  View Reports
-                </button>
-              <% end %>
-            </div>
-          </div>
-        </div>
-
-        <!-- Enhanced Activity and Status Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <!-- Enhanced Recent Activity -->
-          <div class="lg:col-span-2 bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl border border-gray-100/50 overflow-hidden">
-            <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-8 py-6 border-b border-gray-100">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-xl font-bold text-gray-900">Recent Activity</h3>
-                  <p class="text-sm text-gray-600 mt-1">Stay updated with system events</p>
+          <div class="flex-1 overflow-auto">
+            <div class="p-3 space-y-3">
+              <!-- Activity Item -->
+              <div class="flex items-start space-x-3 p-3 bg-blue-50 rounded border border-blue-100">
+                <div class="flex-shrink-0">
+                  <div class="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
+                    </svg>
+                  </div>
                 </div>
-                <button class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200">
-                  View All
-                </button>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900">Dashboard loaded successfully</p>
+                  <p class="text-xs text-gray-600 mt-0.5">System initialized with <%= @stats.total_assets %> assets</p>
+                  <div class="flex items-center mt-1 space-x-2">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      System
+                    </span>
+                    <span class="text-xs text-gray-400">Just now</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="p-8">
-              <div class="space-y-6">
-                <!-- Enhanced activity items -->
-                <div class="group flex items-start space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-md transition-all duration-200">
+
+              <%= if @stats.total_assets > 0 do %>
+                <div class="flex items-start space-x-3 p-3 bg-green-50 rounded border border-green-100">
                   <div class="flex-shrink-0">
-                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow duration-200">
-                      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    <div class="w-8 h-8 bg-green-500 rounded flex items-center justify-center">
+                      <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                       </svg>
                     </div>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-gray-900">System initialized</p>
-                    <p class="text-sm text-gray-600 mt-1">CMMS dashboard loaded successfully with all modules active</p>
-                    <div class="flex items-center mt-2 space-x-2">
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        System
-                      </span>
-                      <span class="text-xs text-gray-400">Just now</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="group flex items-start space-x-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100 hover:shadow-md transition-all duration-200">
-                  <div class="flex-shrink-0">
-                    <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow duration-200">
-                      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-gray-900">Asset database ready</p>
-                    <p class="text-sm text-gray-600 mt-1"><%= @stats.total_assets %> assets loaded and available for management</p>
-                    <div class="flex items-center mt-2 space-x-2">
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <p class="text-sm font-medium text-gray-900">Asset database ready</p>
+                    <p class="text-xs text-gray-600 mt-0.5"><%= @stats.operational_assets %> assets operational, <%= @stats.maintenance_assets %> need attention</p>
+                    <div class="flex items-center mt-1 space-x-2">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                         Assets
                       </span>
                       <span class="text-xs text-gray-400">Today</span>
                     </div>
                   </div>
                 </div>
-
-                <%= if @stats.total_assets == 0 do %>
-                  <div class="text-center py-12">
-                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900">No recent activity</h3>
-                    <p class="mt-2 text-sm text-gray-500 max-w-md mx-auto">Get started by adding your first asset or creating a work order to see activity here.</p>
-                    <div class="mt-6">
-                      <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
-                        Get Started
-                      </button>
-                    </div>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          </div>
-
-          <!-- Enhanced System Status -->
-          <div class="bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl border border-gray-100/50 overflow-hidden">
-            <div class="bg-gradient-to-r from-gray-50 to-green-50 px-6 py-6 border-b border-gray-100">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-lg font-bold text-gray-900">System Status</h3>
-                  <p class="text-sm text-gray-600 mt-1">All systems operational</p>
-                </div>
-                <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-              </div>
-            </div>
-            <div class="p-6">
-              <div class="space-y-4">
-                <div class="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-100">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
-                      </svg>
-                    </div>
-                    <span class="text-sm font-medium text-gray-800">Database</span>
-                  </div>
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
-                    Online
-                  </span>
-                </div>
-
-                <div class="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-100">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-                      </svg>
-                    </div>
-                    <span class="text-sm font-medium text-gray-800">Assets Module</span>
-                  </div>
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </div>
-
-                <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-xl border border-yellow-100">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                      </svg>
-                    </div>
-                    <span class="text-sm font-medium text-gray-800">Work Orders</span>
-                  </div>
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
-                    Pending
-                  </span>
-                </div>
-
-                <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-xl border border-yellow-100">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </div>
-                    <span class="text-sm font-medium text-gray-800">PM Schedules</span>
-                  </div>
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
-                    Pending
-                  </span>
-                </div>
-
-                <div class="pt-4 mt-6 border-t border-gray-200">
-                  <div class="flex items-center justify-center space-x-2 text-xs text-gray-500">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <% else %>
+                <!-- Empty State -->
+                <div class="text-center py-12">
+                  <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>Last updated: <%= Time.utc_now() |> Time.truncate(:second) |> Time.to_string() %> UTC</span>
+                  </div>
+                  <h3 class="text-sm font-semibold text-gray-900">No recent activity</h3>
+                  <p class="mt-1 text-xs text-gray-500 max-w-md mx-auto">
+                    Get started by adding your first asset to see activity here.
+                  </p>
+                  <div class="mt-4">
+                    <.link href="/assets/new" class="btn-toolbar-primary">
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+                      </svg>
+                      <span>Add First Asset</span>
+                    </.link>
                   </div>
                 </div>
-              </div>
+              <% end %>
             </div>
           </div>
         </div>
-      </main>
+      </div>
+
+      <!-- Bottom Row: Quick Actions -->
+      <div class="panel" style="height: 80px;">
+        <div class="panel-header">Quick Actions</div>
+        <div class="panel-body p-2">
+          <div class="flex items-center space-x-2">
+            <%= if @auth.create_work_orders do %>
+              <button class="btn-toolbar-primary flex-1">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                  <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Create Work Order</span>
+              </button>
+            <% end %>
+            
+            <%= if @auth.manage_assets do %>
+              <.link href="/assets/new" class="btn-toolbar flex-1">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Add Asset</span>
+              </.link>
+            <% end %>
+            
+            <%= if @auth.view_assets do %>
+              <.link href="/assets" class="btn-toolbar flex-1">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+                </svg>
+                <span>View All Assets</span>
+              </.link>
+            <% end %>
+            
+            <%= if @auth.view_reports do %>
+              <button class="btn-toolbar flex-1">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+                </svg>
+                <span>View Reports</span>
+              </button>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
     """
   end
 
   @impl true
   def mount(_params, _session, socket) do
-    current_user = socket.assigns.current_user
     current_tenant_id = socket.assigns.current_tenant_id
-    current_tenant = socket.assigns.current_tenant
-    auth = socket.assigns.auth
 
     # Get real asset statistics
     asset_stats = Assets.get_asset_stats(current_tenant_id)
@@ -483,14 +286,6 @@ defmodule Shop1CmmsWeb.DashboardLive do
   def handle_event("show_preferences", _params, socket) do
     # TODO: Implement preferences modal
     {:noreply, put_flash(socket, :info, "Preferences coming soon!")}
-  end
-
-  # Helper function to check authorization
-  defp authorized?(user, tenant_id, action) do
-    case Shop1Cmms.Auth.authorize(user, action, nil, tenant_id) do
-      :ok -> true
-      _ -> false
-    end
   end
 
   # Helper functions for asset status colors
