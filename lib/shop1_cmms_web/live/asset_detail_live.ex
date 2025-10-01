@@ -169,121 +169,135 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Header -->
-      <div class="mb-8">
-        <nav class="flex mb-4" aria-label="Breadcrumb">
-          <ol role="list" class="flex items-center space-x-4">
-            <li>
-              <.link navigate={~p"/assets"} class="text-gray-400 hover:text-gray-500">
-                <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"></path>
-                </svg>
-              </.link>
-            </li>
-            <li>
-              <.link navigate={~p"/assets"} class="text-sm font-medium text-gray-500 hover:text-gray-700">
-                Assets
-              </.link>
-            </li>
-            <li>
-              <div class="flex items-center">
-                <svg class="w-5 h-5 flex-shrink-0 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                </svg>
-                <span class="ml-4 text-sm font-medium text-gray-500"><%= @asset.name %></span>
-              </div>
-            </li>
-          </ol>
+    <!-- Desktop Asset Detail Page -->
+    <div class="h-full flex flex-col overflow-hidden">
+      <!-- Toolbar -->
+      <div class="flex-shrink-0 h-10 bg-gray-100 border-b border-gray-300 flex items-center justify-between px-3">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center text-xs space-x-1">
+          <.link href="/" class="text-gray-600 hover:text-gray-900">Home</.link>
+          <span class="text-gray-400">/</span>
+          <.link href="/assets" class="text-gray-600 hover:text-gray-900">Assets</.link>
+          <span class="text-gray-400">/</span>
+          <span class="text-gray-900 font-medium truncate max-w-xs"><%= @asset.name %></span>
         </nav>
+        
+        <!-- Actions -->
+        <div class="flex items-center space-x-1">
+          <%= if @can_edit do %>
+            <button
+              phx-click="toggle_edit"
+              class={if @edit_mode, do: "btn-toolbar", else: "btn-toolbar-primary"}
+              title={if @edit_mode, do: "Cancel Edit", else: "Edit Asset"}
+            >
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <%= if @edit_mode do %>
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                <% else %>
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                <% end %>
+              </svg>
+              <span><%= if @edit_mode, do: "Cancel", else: "Edit" %></span>
+            </button>
+          <% end %>
+          
+          <button class="btn-toolbar">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+              <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Create WO</span>
+          </button>
+          
+          <button class="btn-toolbar">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Schedule PM</span>
+          </button>
+          
+          <button class="btn-toolbar">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
+            </svg>
+            <span>Assign</span>
+          </button>
+          
+          <button class="btn-toolbar">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Print</span>
+          </button>
+        </div>
+      </div>
 
+      <!-- Header Bar with Asset Info -->
+      <div class="flex-shrink-0 bg-white border-b border-gray-200 px-3 py-2">
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-4">
-            <h1 class="text-3xl font-bold text-gray-900"><%= @asset.name %></h1>
+          <div class="flex items-center space-x-3 min-w-0 flex-1">
+            <h1 class="text-lg font-bold text-gray-900 truncate"><%= @asset.name %></h1>
+            <span class="text-xs font-mono text-gray-600 flex-shrink-0"><%= @asset.asset_code %></span>
             <AssetComponents.status_badge status={@asset.status} />
             <AssetComponents.criticality_badge criticality={@asset.criticality} />
           </div>
-
-          <div class="flex items-center space-x-3">
-            <%= if @can_edit do %>
-              <button
-                phx-click="toggle_edit"
-                class={[
-                  "inline-flex items-center px-4 py-2 border shadow-sm text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2",
-                  if @edit_mode do
-                    "border-red-300 text-red-700 bg-red-50 hover:bg-red-100 focus:ring-red-500"
-                  else
-                    "border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-blue-500"
-                  end
-                ]}
-              >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <%= if @edit_mode do %>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                  <% else %>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                  <% end %>
-                </svg>
-                <%= if @edit_mode, do: "Cancel", else: "Edit" %>
-              </button>
-
-            <% end %>
-
-            <button
-              phx-click="delete_asset"
-              phx-value-id={@asset.id}
-              data-confirm="Are you sure you want to delete this asset? This action cannot be undone."
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-              </svg>
-              Delete
-            </button>
+          
+          <div class="flex items-center space-x-2 flex-shrink-0 text-xs text-gray-600">
+            <span><%= @asset.asset_type.name %></span>
+            <span class="text-gray-300">|</span>
+            <span><%= @asset.location.name %></span>
           </div>
         </div>
       </div>
 
-      <!-- Tabs -->
-      <div class="border-b border-gray-200 mb-6">
-        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+      <!-- Compact Tabs -->
+      <div class="flex-shrink-0 bg-gray-50 border-b border-gray-200">
+        <nav class="flex space-x-1 px-3" aria-label="Tabs">
           <button
             phx-click="change_tab"
             phx-value-tab="overview"
-            class={["py-2 px-1 border-b-2 font-medium text-sm",
-                   if(@active_tab == "overview",
-                      do: "border-blue-500 text-blue-600",
-                      else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300")]}
+            class={[
+              "px-3 py-1.5 text-xs font-medium border-b-2 transition-colors",
+              if(@active_tab == "overview",
+                do: "border-blue-500 text-blue-600 bg-white",
+                else: "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300")
+            ]}
           >
             Overview
           </button>
           <button
             phx-click="change_tab"
             phx-value-tab="work_orders"
-            class={["py-2 px-1 border-b-2 font-medium text-sm",
-                   if(@active_tab == "work_orders",
-                      do: "border-blue-500 text-blue-600",
-                      else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300")]}
+            class={[
+              "px-3 py-1.5 text-xs font-medium border-b-2 transition-colors",
+              if(@active_tab == "work_orders",
+                do: "border-blue-500 text-blue-600 bg-white",
+                else: "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300")
+            ]}
           >
             Work Orders (<%= length(@work_orders) %>)
           </button>
           <button
             phx-click="change_tab"
             phx-value-tab="maintenance"
-            class={["py-2 px-1 border-b-2 font-medium text-sm",
-                   if(@active_tab == "maintenance",
-                      do: "border-blue-500 text-blue-600",
-                      else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300")]}
+            class={[
+              "px-3 py-1.5 text-xs font-medium border-b-2 transition-colors",
+              if(@active_tab == "maintenance",
+                do: "border-blue-500 text-blue-600 bg-white",
+                else: "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300")
+            ]}
           >
             Maintenance History
           </button>
           <button
             phx-click="change_tab"
             phx-value-tab="documents"
-            class={["py-2 px-1 border-b-2 font-medium text-sm",
-                   if(@active_tab == "documents",
-                      do: "border-blue-500 text-blue-600",
-                      else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300")]}
+            class={[
+              "px-3 py-1.5 text-xs font-medium border-b-2 transition-colors",
+              if(@active_tab == "documents",
+                do: "border-blue-500 text-blue-600 bg-white",
+                else: "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300")
+            ]}
           >
             Documents
           </button>
@@ -291,7 +305,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
       </div>
 
       <!-- Tab Content -->
-      <div class="mt-6">
+      <div class="flex-1 overflow-auto p-3 bg-gray-50">
         <%= case @active_tab do %>
           <% "overview" -> %>
             <%= render_overview_tab(assigns) %>
@@ -342,7 +356,6 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
     <% end %>
     """
   end
-
   defp render_overview_tab(assigns) do
     ~H"""
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
