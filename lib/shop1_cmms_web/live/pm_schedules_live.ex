@@ -16,7 +16,9 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
      |> assign(:filter_status, "active")
      |> assign(:selected_schedule, nil)
      |> assign(:show_form, false)
-     |> load_pm_schedules(tenant_id)}
+     |> assign(:form, nil)
+     |> load_pm_schedules(tenant_id)
+     |> load_assets(tenant_id)}
   end
 
   @impl true
@@ -29,23 +31,29 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     |> assign(:page_title, "PM Schedules")
     |> assign(:show_form, false)
     |> assign(:selected_schedule, nil)
+    |> assign(:form, nil)
   end
 
   defp apply_action(socket, :new, _params) do
+    changeset = PmSchedule.changeset(%PmSchedule{tenant_id: socket.assigns.current_tenant_id}, %{})
+    
     socket
     |> assign(:page_title, "New PM Schedule")
     |> assign(:show_form, true)
     |> assign(:selected_schedule, %PmSchedule{})
+    |> assign(:form, to_form(changeset))
   end
 
   defp apply_action(socket, :edit, %{"id" => id}) do
     tenant_id = socket.assigns.current_tenant_id
     schedule = Maintenance.get_pm_schedule!(tenant_id, id)
+    changeset = PmSchedule.changeset(schedule, %{})
     
     socket
     |> assign(:page_title, "Edit PM Schedule")
     |> assign(:show_form, true)
     |> assign(:selected_schedule, schedule)
+    |> assign(:form, to_form(changeset))
   end
 
   @impl true
@@ -93,9 +101,62 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     end
   end
 
+  def handle_event("validate", %{"pm_schedule" => pm_params}, socket) do
+    changeset =
+      socket.assigns.selected_schedule
+      |> PmSchedule.changeset(pm_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, :form, to_form(changeset))}
+  end
+
+  def handle_event("save", %{"pm_schedule" => pm_params}, socket) do
+    save_pm_schedule(socket, socket.assigns.live_action, pm_params)
+  end
+
+  def handle_event("close_form", _params, socket) do
+    {:noreply, push_patch(socket, to: ~p"/pm-schedules")}
+  end
+
+  defp save_pm_schedule(socket, :new, pm_params) do
+    tenant_id = socket.assigns.current_tenant_id
+    pm_params = Map.put(pm_params, "tenant_id", tenant_id)
+
+    case Maintenance.create_pm_schedule(pm_params) do
+      {:ok, _pm_schedule} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "PM Schedule created successfully")
+         |> push_patch(to: ~p"/pm-schedules")}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
+    end
+  end
+
+  defp save_pm_schedule(socket, :edit, pm_params) do
+    tenant_id = socket.assigns.current_tenant_id
+
+    case Maintenance.update_pm_schedule(socket.assigns.selected_schedule, pm_params) do
+      {:ok, _pm_schedule} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "PM Schedule updated successfully")
+         |> push_patch(to: ~p"/pm-schedules")}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
+    end
+  end
+
   defp load_pm_schedules(socket, tenant_id) do
     schedules = Maintenance.list_pm_schedules(tenant_id)
     assign(socket, :schedules, schedules) |> filter_schedules()
+  end
+
+  defp load_assets(socket, tenant_id) do
+    assets = Assets.list_assets(tenant_id)
+    assign(socket, :assets, assets)
   end
 
   defp filter_schedules(socket) do
@@ -449,6 +510,151 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
         </div>
       </div>
     </div>
+
+    <!-- Modal Form -->
+    <%= if @show_form do %>
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <!-- Modal Header -->
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-xl font-bold text-gray-900"><%= @page_title %></h2>
+            <button
+              type="button"
+              phx-click="close_form"
+              class="text-gray-400 hover:text-gray-500"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="flex-1 overflow-y-auto px-6 py-6">
+            <.form for={@form} phx-change="validate" phx-submit="save">
+              <div class="space-y-6">
+                <!-- Basic Information -->
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule Number <span class="text-red-500">*</span>
+                    </label>
+                    <.input field={@form[:schedule_number]} type="text" required />
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Asset <span class="text-red-500">*</span>
+                    </label>
+                    <.input field={@form[:asset_id]} type="select" options={Enum.map(@assets, &{&1.name, &1.id})} prompt="Select an asset" required />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Title <span class="text-red-500">*</span>
+                  </label>
+                  <.input field={@form[:title]} type="text" required />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <.input field={@form[:description]} type="textarea" rows="3" />
+                </div>
+
+                <!-- Scheduling -->
+                <div class="border-t pt-4">
+                  <h3 class="text-lg font-medium text-gray-900 mb-4">Scheduling</h3>
+                  
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Frequency <span class="text-red-500">*</span>
+                      </label>
+                      <.input field={@form[:frequency]} type="select" options={Enum.map(PmSchedule.frequency_values(), &{PmSchedule.frequency_label(&1), &1})} prompt="Select frequency" required />
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Frequency Interval
+                      </label>
+                      <.input field={@form[:frequency_interval]} type="number" min="1" />
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Next Due Date
+                      </label>
+                      <.input field={@form[:next_due_date]} type="datetime-local" />
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Estimated Duration (hours)
+                      </label>
+                      <.input field={@form[:estimated_duration]} type="number" step="0.5" min="0" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Work Instructions -->
+                <div class="border-t pt-4">
+                  <h3 class="text-lg font-medium text-gray-900 mb-4">Work Instructions</h3>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Work Instructions
+                    </label>
+                    <.input field={@form[:work_instructions]} type="textarea" rows="6" />
+                  </div>
+                </div>
+
+                <!-- Safety -->
+                <div class="border-t pt-4">
+                  <h3 class="text-lg font-medium text-gray-900 mb-4">Safety Information</h3>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Safety Notes
+                    </label>
+                    <.input field={@form[:safety_notes]} type="textarea" rows="3" />
+                  </div>
+                </div>
+
+                <!-- Status -->
+                <div class="border-t pt-4">
+                  <label class="flex items-center">
+                    <.input field={@form[:is_active]} type="checkbox" />
+                    <span class="ml-2 text-sm font-medium text-gray-700">Active Schedule</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t">
+                <button
+                  type="button"
+                  phx-click="close_form"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                >
+                  <%= if @selected_schedule.id, do: "Update", else: "Create" %> PM Schedule
+                </button>
+              </div>
+            </.form>
+          </div>
+        </div>
+      </div>
+    <% end %>
     """
   end
 end
