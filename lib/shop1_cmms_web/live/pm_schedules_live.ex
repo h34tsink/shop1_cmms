@@ -17,6 +17,11 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
      |> assign(:selected_schedule, nil)
      |> assign(:show_form, false)
      |> assign(:form, nil)
+     |> assign(:work_instruction_lines, [])
+     |> assign(:checklist_items, [])
+     |> assign(:components, [])
+     |> assign(:documents, [])
+     |> assign(:asset_search, "")
      |> load_pm_schedules(tenant_id)
      |> load_assets(tenant_id)}
   end
@@ -42,6 +47,10 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     |> assign(:show_form, true)
     |> assign(:selected_schedule, %PmSchedule{})
     |> assign(:form, to_form(changeset))
+    |> assign(:work_instruction_lines, [])
+    |> assign(:checklist_items, [])
+    |> assign(:components, [])
+    |> assign(:documents, [])
   end
 
   defp apply_action(socket, :edit, %{"id" => id}) do
@@ -49,11 +58,26 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     schedule = Maintenance.get_pm_schedule!(tenant_id, id)
     changeset = PmSchedule.changeset(schedule, %{})
     
+    # Parse work instructions into lines
+    work_instruction_lines = 
+      if schedule.work_instructions do
+        schedule.work_instructions
+        |> String.split("\n")
+        |> Enum.with_index(1)
+        |> Enum.map(fn {line, idx} -> %{id: idx, text: line} end)
+      else
+        []
+      end
+    
     socket
     |> assign(:page_title, "Edit PM Schedule")
     |> assign(:show_form, true)
     |> assign(:selected_schedule, schedule)
     |> assign(:form, to_form(changeset))
+    |> assign(:work_instruction_lines, work_instruction_lines)
+    |> assign(:checklist_items, schedule.checklist_items || [])
+    |> assign(:components, schedule.components || [])
+    |> assign(:documents, schedule.documents || [])
   end
 
   @impl true
@@ -118,9 +142,82 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     {:noreply, push_patch(socket, to: ~p"/pm-schedules")}
   end
 
+  # Work Instruction Line Management
+  def handle_event("add_instruction_line", _params, socket) do
+    lines = socket.assigns.work_instruction_lines
+    next_id = if Enum.empty?(lines), do: 1, else: Enum.max_by(lines, & &1.id).id + 1
+    new_line = %{id: next_id, text: ""}
+    {:noreply, assign(socket, :work_instruction_lines, lines ++ [new_line])}
+  end
+
+  def handle_event("update_instruction_line", %{"id" => id, "text" => text}, socket) do
+    id = String.to_integer(id)
+    lines = 
+      Enum.map(socket.assigns.work_instruction_lines, fn line ->
+        if line.id == id, do: %{line | text: text}, else: line
+      end)
+    {:noreply, assign(socket, :work_instruction_lines, lines)}
+  end
+
+  def handle_event("remove_instruction_line", %{"id" => id}, socket) do
+    id = String.to_integer(id)
+    lines = Enum.reject(socket.assigns.work_instruction_lines, &(&1.id == id))
+    {:noreply, assign(socket, :work_instruction_lines, lines)}
+  end
+
+  def handle_event("move_instruction_up", %{"id" => id}, socket) do
+    id = String.to_integer(id)
+    lines = socket.assigns.work_instruction_lines
+    idx = Enum.find_index(lines, &(&1.id == id))
+    
+    if idx && idx > 0 do
+      lines = swap_elements(lines, idx, idx - 1)
+      {:noreply, assign(socket, :work_instruction_lines, lines)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("move_instruction_down", %{"id" => id}, socket) do
+    id = String.to_integer(id)
+    lines = socket.assigns.work_instruction_lines
+    idx = Enum.find_index(lines, &(&1.id == id))
+    
+    if idx && idx < length(lines) - 1 do
+      lines = swap_elements(lines, idx, idx + 1)
+      {:noreply, assign(socket, :work_instruction_lines, lines)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  # Equipment Search
+  def handle_event("search_assets", %{"search" => query}, socket) do
+    {:noreply, assign(socket, :asset_search, query)}
+  end
+
+  defp swap_elements(list, idx1, idx2) do
+    elem1 = Enum.at(list, idx1)
+    elem2 = Enum.at(list, idx2)
+    list
+    |> List.replace_at(idx1, elem2)
+    |> List.replace_at(idx2, elem1)
+  end
+
   defp save_pm_schedule(socket, :new, pm_params) do
     tenant_id = socket.assigns.current_tenant_id
-    pm_params = Map.put(pm_params, "tenant_id", tenant_id)
+    
+    # Combine work instruction lines into a single text field
+    work_instructions = 
+      socket.assigns.work_instruction_lines
+      |> Enum.map(& &1.text)
+      |> Enum.filter(&(String.trim(&1) != ""))
+      |> Enum.join("\n")
+    
+    pm_params = 
+      pm_params
+      |> Map.put("tenant_id", tenant_id)
+      |> Map.put("work_instructions", work_instructions)
 
     case Maintenance.create_pm_schedule(pm_params) do
       {:ok, _pm_schedule} ->
@@ -135,7 +232,14 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
   end
 
   defp save_pm_schedule(socket, :edit, pm_params) do
-    tenant_id = socket.assigns.current_tenant_id
+    # Combine work instruction lines into a single text field
+    work_instructions = 
+      socket.assigns.work_instruction_lines
+      |> Enum.map(& &1.text)
+      |> Enum.filter(&(String.trim(&1) != ""))
+      |> Enum.join("\n")
+    
+    pm_params = Map.put(pm_params, "work_instructions", work_instructions)
 
     case Maintenance.update_pm_schedule(socket.assigns.selected_schedule, pm_params) do
       {:ok, _pm_schedule} ->
@@ -196,6 +300,18 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
       end)
     
     assign(socket, :filtered_schedules, filtered)
+  end
+
+  defp filtered_assets(assigns) do
+    search = String.downcase(assigns.asset_search)
+    if search == "" do
+      assigns.assets
+    else
+      Enum.filter(assigns.assets, fn asset ->
+        String.contains?(String.downcase(asset.name || ""), search) or
+        String.contains?(String.downcase(asset.asset_number || ""), search)
+      end)
+    end
   end
 
   @impl true
@@ -525,157 +641,301 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     <!-- Modal Form -->
     <%= if @show_form do %>
       <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[92vh] overflow-hidden flex flex-col">
           <!-- Modal Header -->
-          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 class="text-xl font-bold text-gray-900"><%= @page_title %></h2>
+          <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+            <div>
+              <h2 class="text-lg font-bold text-gray-900"><%= @page_title %></h2>
+              <%= if @selected_schedule.id do %>
+                <p class="text-xs text-gray-500 mt-0.5">Schedule #: <span class="font-mono font-medium text-blue-600"><%= @selected_schedule.schedule_number %></span></p>
+              <% else %>
+                <p class="text-xs text-green-600 mt-0.5">Schedule number will be auto-generated (PM-NNNNNNNN)</p>
+              <% end %>
+            </div>
             <button
               type="button"
               phx-click="close_form"
-              class="text-gray-400 hover:text-gray-500"
+              class="text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
 
           <!-- Modal Body -->
-          <div class="flex-1 overflow-y-auto px-6 py-6">
+          <div class="flex-1 overflow-y-auto">
             <.form for={@form} phx-change="validate" phx-submit="save">
-              <div class="space-y-6">
-                <!-- Basic Information -->
-                <%= if @selected_schedule.id do %>
-                  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <div class="flex items-center gap-2">
-                      <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="grid grid-cols-2 gap-4 p-4">
+                <!-- Left Column -->
+                <div class="space-y-4">
+                  <!-- Basic Information Card -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                      <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                       </svg>
+                      Basic Information
+                    </h3>
+                    
+                    <div class="space-y-3">
                       <div>
-                        <p class="text-sm font-medium text-blue-900">Schedule Number</p>
-                        <p class="text-lg font-bold text-blue-700"><%= @selected_schedule.schedule_number %></p>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                          Equipment <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                          <input
+                            type="text"
+                            placeholder="Search equipment..."
+                            phx-keyup="search_assets"
+                            phx-debounce="300"
+                            name="search"
+                            value={@asset_search}
+                            class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-1"
+                          />
+                          <.input field={@form[:asset_id]} type="select" options={Enum.map(filtered_assets(assigns), &{"#{&1.name} (#{&1.asset_number})", &1.id})} prompt="Select equipment" required class="text-sm" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                          Title <span class="text-red-500">*</span>
+                        </label>
+                        <.input field={@form[:title]} type="text" required class="text-sm" placeholder="e.g., Monthly CNC Maintenance" />
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                          Description
+                        </label>
+                        <.input field={@form[:description]} type="textarea" rows="2" class="text-sm" placeholder="Brief description of this PM schedule" />
                       </div>
                     </div>
                   </div>
-                <% else %>
-                  <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                    <div class="flex items-center gap-2">
-                      <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+
+                  <!-- Scheduling Card -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                      <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                       </svg>
-                      <p class="text-sm text-green-700">
-                        <span class="font-medium">Schedule Number will be auto-generated</span> in format: PM-00000001
-                      </p>
+                      Scheduling
+                    </h3>
+                    
+                    <div class="space-y-3">
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700 mb-1">
+                            Frequency <span class="text-red-500">*</span>
+                          </label>
+                          <.input field={@form[:frequency]} type="select" options={Enum.map(PmSchedule.frequency_values(), &{PmSchedule.frequency_label(&1), &1})} prompt="Select" required class="text-sm" />
+                        </div>
+
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700 mb-1">
+                            Interval
+                          </label>
+                          <.input field={@form[:frequency_interval]} type="number" min="1" class="text-sm" placeholder="1" />
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700 mb-1">
+                            Next Due Date
+                          </label>
+                          <.input field={@form[:next_due_date]} type="datetime-local" class="text-sm" />
+                        </div>
+
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700 mb-1">
+                            Est. Duration (hrs)
+                          </label>
+                          <.input field={@form[:estimated_duration]} type="number" step="0.5" min="0" class="text-sm" placeholder="2.5" />
+                        </div>
+                      </div>
+
+                      <div class="pt-2 border-t">
+                        <label class="flex items-center">
+                          <.input field={@form[:is_active]} type="checkbox" class="rounded" />
+                          <span class="ml-2 text-xs font-medium text-gray-700">Active Schedule</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
-                <% end %>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Equipment <span class="text-red-500">*</span>
-                  </label>
-                  <.input field={@form[:asset_id]} type="select" options={Enum.map(@assets, &{&1.name, &1.id})} prompt="Select equipment" required />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Title <span class="text-red-500">*</span>
-                  </label>
-                  <.input field={@form[:title]} type="text" required />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <.input field={@form[:description]} type="textarea" rows="3" />
-                </div>
-
-                <!-- Scheduling -->
-                <div class="border-t pt-4">
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">Scheduling</h3>
-                  
-                  <div class="grid grid-cols-2 gap-4">
+                  <!-- Safety Information Card -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                      <svg class="w-4 h-4 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                      </svg>
+                      Safety Information
+                    </h3>
+                    
                     <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Frequency <span class="text-red-500">*</span>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">
+                        Safety Notes
                       </label>
-                      <.input field={@form[:frequency]} type="select" options={Enum.map(PmSchedule.frequency_values(), &{PmSchedule.frequency_label(&1), &1})} prompt="Select frequency" required />
-                    </div>
-
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Frequency Interval
-                      </label>
-                      <.input field={@form[:frequency_interval]} type="number" min="1" />
-                    </div>
-                  </div>
-
-                  <div class="grid grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Next Due Date
-                      </label>
-                      <.input field={@form[:next_due_date]} type="datetime-local" />
-                    </div>
-
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Estimated Duration (hours)
-                      </label>
-                      <.input field={@form[:estimated_duration]} type="number" step="0.5" min="0" />
+                      <.input field={@form[:safety_notes]} type="textarea" rows="3" class="text-sm" placeholder="Important safety considerations and PPE requirements" />
                     </div>
                   </div>
                 </div>
 
-                <!-- Work Instructions -->
-                <div class="border-t pt-4">
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">Work Instructions</h3>
-                  
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                      Work Instructions
-                    </label>
-                    <.input field={@form[:work_instructions]} type="textarea" rows="6" />
+                <!-- Right Column -->
+                <div class="space-y-4">
+                  <!-- Work Instructions Card -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <h3 class="text-sm font-semibold text-gray-900 flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        </svg>
+                        Work Instructions
+                      </h3>
+                      <button
+                        type="button"
+                        phx-click="add_instruction_line"
+                        class="px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                      >
+                        + Add Step
+                      </button>
+                    </div>
+                    
+                    <div class="space-y-2 max-h-64 overflow-y-auto">
+                      <%= if Enum.empty?(@work_instruction_lines) do %>
+                        <div class="text-center py-6 text-xs text-gray-400 bg-gray-50 rounded border border-dashed border-gray-300">
+                          <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                          </svg>
+                          <p>No work instructions yet</p>
+                          <p class="text-gray-400">Click "+ Add Step" to create step-by-step instructions</p>
+                        </div>
+                      <% else %>
+                        <%= for {line, index} <- Enum.with_index(@work_instruction_lines, 1) do %>
+                          <div class="flex items-start gap-2 group">
+                            <div class="flex flex-col gap-0.5 mt-1.5">
+                              <%= if index > 1 do %>
+                                <button
+                                  type="button"
+                                  phx-click="move_instruction_up"
+                                  phx-value-id={line.id}
+                                  class="text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Move Up"
+                                >
+                                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                  </svg>
+                                </button>
+                              <% end %>
+                              <%= if index < length(@work_instruction_lines) do %>
+                                <button
+                                  type="button"
+                                  phx-click="move_instruction_down"
+                                  phx-value-id={line.id}
+                                  class="text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Move Down"
+                                >
+                                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                  </svg>
+                                </button>
+                              <% end %>
+                            </div>
+                            <span class="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full text-xs font-medium mt-1">
+                              <%= index %>
+                            </span>
+                            <input
+                              type="text"
+                              value={line.text}
+                              phx-blur="update_instruction_line"
+                              phx-value-id={line.id}
+                              phx-debounce="500"
+                              name="text"
+                              placeholder="Enter instruction step..."
+                              class="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <button
+                              type="button"
+                              phx-click="remove_instruction_line"
+                              phx-value-id={line.id}
+                              class="flex-shrink-0 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Remove"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                              </svg>
+                            </button>
+                          </div>
+                        <% end %>
+                      <% end %>
+                    </div>
                   </div>
-                </div>
 
-                <!-- Safety -->
-                <div class="border-t pt-4">
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">Safety Information</h3>
-                  
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                      Safety Notes
-                    </label>
-                    <.input field={@form[:safety_notes]} type="textarea" rows="3" />
+                  <!-- Documents Card (Placeholder for future implementation) -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <h3 class="text-sm font-semibold text-gray-900 flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Documents & Attachments
+                      </h3>
+                      <span class="px-2 py-0.5 text-xs font-medium text-gray-500 bg-gray-100 rounded">Coming Soon</span>
+                    </div>
+                    
+                    <div class="text-center py-4 text-xs text-gray-400 bg-gray-50 rounded border border-dashed border-gray-300">
+                      <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                      </svg>
+                      <p>Document management coming soon</p>
+                      <p class="text-gray-400 text-[10px] mt-1">Attach manuals, procedures, and certificates</p>
+                    </div>
                   </div>
-                </div>
 
-                <!-- Status -->
-                <div class="border-t pt-4">
-                  <label class="flex items-center">
-                    <.input field={@form[:is_active]} type="checkbox" />
-                    <span class="ml-2 text-sm font-medium text-gray-700">Active Schedule</span>
-                  </label>
+                  <!-- Quick Notes (using safety notes for now) -->
+                  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <div class="flex items-start gap-2">
+                      <svg class="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <div class="flex-1">
+                        <p class="text-xs font-medium text-yellow-900 mb-1">Tips for Creating PM Schedules</p>
+                        <ul class="text-[10px] text-yellow-700 space-y-0.5 list-disc list-inside">
+                          <li>Be specific with work instruction steps</li>
+                          <li>Include all safety requirements upfront</li>
+                          <li>Set realistic time estimates</li>
+                          <li>Document all required tools and parts</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <!-- Modal Footer -->
-              <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t">
-                <button
-                  type="button"
-                  phx-click="close_form"
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                >
-                  <%= if @selected_schedule.id, do: "Update", else: "Create" %> PM Schedule
-                </button>
+              <div class="flex items-center justify-between gap-3 px-4 py-3 border-t border-gray-200 bg-gray-50">
+                <div class="text-xs text-gray-500">
+                  <span class="font-medium"><span class="text-red-500">*</span></span> Required fields
+                </div>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    phx-click="close_form"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <%= if @selected_schedule.id, do: "Update Schedule", else: "Create Schedule" %>
+                  </button>
+                </div>
               </div>
             </.form>
           </div>
