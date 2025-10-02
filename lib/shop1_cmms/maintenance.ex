@@ -6,7 +6,8 @@ defmodule Shop1Cmms.Maintenance do
   import Ecto.Query, warn: false
   alias Shop1Cmms.Repo
 
-  alias Shop1Cmms.Maintenance.{PmSchedule, PmScheduleComponent, PmChecklistItem, AssetDocument}
+  alias Shop1Cmms.Maintenance.{PmSchedule, PmScheduleComponent, PmChecklistItem, AssetDocument, PmExecution}
+  alias Shop1Cmms.Accounts.User
 
   ## PM Schedules
 
@@ -283,5 +284,252 @@ defmodule Shop1Cmms.Maintenance do
     }
     
     update_pm_schedule(schedule, attrs)
+  end
+
+  ## PM Executions
+
+  @doc """
+  Returns the list of PM executions for a tenant.
+  
+  ## Options
+    * `:schedule_id` - Filter by PM schedule
+    * `:asset_id` - Filter by asset
+    * `:status` - Filter by status
+    * `:from_date` - Filter executions after this date
+    * `:to_date` - Filter executions before this date
+  """
+  def list_pm_executions(tenant_id, filters \\ %{}) do
+    query = from(e in PmExecution,
+      where: e.tenant_id == ^tenant_id,
+      preload: [:pm_schedule, :asset, :component, :completed_by_user],
+      order_by: [desc: e.execution_date]
+    )
+
+    query
+    |> apply_pm_execution_filters(filters)
+    |> Repo.all()
+  end
+
+  defp apply_pm_execution_filters(query, filters) do
+    Enum.reduce(filters, query, fn
+      {:schedule_id, schedule_id}, query when not is_nil(schedule_id) ->
+        where(query, [e], e.pm_schedule_id == ^schedule_id)
+      
+      {:asset_id, asset_id}, query when not is_nil(asset_id) ->
+        where(query, [e], e.asset_id == ^asset_id)
+      
+      {:status, status}, query when not is_nil(status) ->
+        where(query, [e], e.status == ^status)
+      
+      {:from_date, from_date}, query when not is_nil(from_date) ->
+        where(query, [e], e.execution_date >= ^from_date)
+      
+      {:to_date, to_date}, query when not is_nil(to_date) ->
+        where(query, [e], e.execution_date <= ^to_date)
+      
+      _, query -> query
+    end)
+  end
+
+  @doc """
+  Returns the list of PM executions for a specific PM schedule.
+  """
+  def list_pm_executions_for_schedule(tenant_id, schedule_id) do
+    from(e in PmExecution,
+      where: e.tenant_id == ^tenant_id and e.pm_schedule_id == ^schedule_id,
+      preload: [:completed_by_user, :asset, :component],
+      order_by: [desc: e.execution_date]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns the list of PM executions for a specific asset.
+  """
+  def list_pm_executions_for_asset(tenant_id, asset_id) do
+    from(e in PmExecution,
+      where: e.tenant_id == ^tenant_id and e.asset_id == ^asset_id,
+      preload: [:pm_schedule, :completed_by_user, :component],
+      order_by: [desc: e.execution_date]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a single PM execution.
+  """
+  def get_pm_execution!(tenant_id, id) do
+    from(e in PmExecution,
+      where: e.tenant_id == ^tenant_id and e.id == ^id,
+      preload: [:pm_schedule, :asset, :component, :completed_by_user, :work_order]
+    )
+    |> Repo.one!()
+  end
+
+  @doc """
+  Creates a PM execution record.
+  Generates the next execution number automatically.
+  """
+  def create_pm_execution(attrs \\ %{}) do
+    attrs = Map.put_new_lazy(attrs, :execution_number, fn ->
+      generate_pm_execution_number(attrs[:tenant_id])
+    end)
+
+    %PmExecution{}
+    |> PmExecution.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a PM execution.
+  """
+  def update_pm_execution(%PmExecution{} = execution, attrs) do
+    execution
+    |> PmExecution.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Completes a PM execution and updates related PM schedule statistics.
+  """
+  def complete_pm_execution(%PmExecution{} = execution, attrs) do
+    Repo.transaction(fn ->
+      # Update execution with completion data
+      case execution
+           |> PmExecution.completion_changeset(attrs)
+           |> Repo.update() do
+        {:ok, updated_execution} ->
+          # Update PM schedule statistics
+          update_pm_schedule_stats(updated_execution.pm_schedule_id)
+          
+          # Update PM schedule last completed date and next due date
+          schedule = Repo.get!(PmSchedule, updated_execution.pm_schedule_id)
+          complete_pm_schedule(schedule, updated_execution.completed_date)
+          
+          updated_execution
+        
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+  end
+
+  @doc """
+  Deletes a PM execution.
+  """
+  def delete_pm_execution(%PmExecution{} = execution) do
+    Repo.delete(execution)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking PM execution changes.
+  """
+  def change_pm_execution(%PmExecution{} = execution, attrs \\ %{}) do
+    PmExecution.changeset(execution, attrs)
+  end
+
+  @doc """
+  Generates the next PM execution number.
+  Format: PMX-NNNNNNNN
+  """
+  def generate_pm_execution_number(tenant_id) do
+    # Get the last execution number for this tenant
+    last_execution = from(e in PmExecution,
+      where: e.tenant_id == ^tenant_id,
+      select: e.execution_number,
+      order_by: [desc: e.execution_number],
+      limit: 1
+    )
+    |> Repo.one()
+
+    case last_execution do
+      nil ->
+        "PMX-00000001"
+      
+      last_number ->
+        # Extract number part and increment
+        number_part = last_number |> String.replace("PMX-", "") |> String.to_integer()
+        next_number = number_part + 1
+        "PMX-#{String.pad_leading("#{next_number}", 8, "0")}"
+    end
+  end
+
+  @doc """
+  Gets PM execution statistics for a PM schedule.
+  Returns completion rate, average duration, etc.
+  """
+  def get_pm_execution_stats(tenant_id, schedule_id) do
+    executions = list_pm_executions_for_schedule(tenant_id, schedule_id)
+    
+    total_count = length(executions)
+    completed_count = Enum.count(executions, fn e -> e.status == :completed end)
+    
+    avg_duration = if completed_count > 0 do
+      executions
+      |> Enum.filter(fn e -> e.status == :completed && e.actual_duration_minutes end)
+      |> Enum.map(fn e -> e.actual_duration_minutes end)
+      |> case do
+        [] -> 0
+        durations -> Enum.sum(durations) / length(durations)
+      end
+    else
+      0
+    end
+
+    %{
+      total_executions: total_count,
+      completed: completed_count,
+      in_progress: Enum.count(executions, fn e -> e.status == :in_progress end),
+      incomplete: Enum.count(executions, fn e -> e.status == :incomplete end),
+      cancelled: Enum.count(executions, fn e -> e.status == :cancelled end),
+      completion_rate: if(total_count > 0, do: completed_count / total_count * 100, else: 0),
+      average_duration_minutes: trunc(avg_duration)
+    }
+  end
+
+  @doc """
+  Updates PM schedule statistics based on execution history.
+  """
+  def update_pm_schedule_stats(schedule_id) do
+    schedule = Repo.get!(PmSchedule, schedule_id)
+    stats = get_pm_execution_stats(schedule.tenant_id, schedule_id)
+    
+    update_pm_schedule(schedule, %{
+      total_completions: stats.completed,
+      completion_rate: Decimal.from_float(stats.completion_rate)
+    })
+  end
+
+  @doc """
+  Gets combined maintenance history for an asset (PM executions + Work Orders).
+  Returns a unified timeline of all maintenance activities.
+  """
+  def get_asset_maintenance_history(tenant_id, asset_id) do
+    # PM Executions
+    pm_executions = from(e in PmExecution,
+      where: e.tenant_id == ^tenant_id and e.asset_id == ^asset_id,
+      join: s in assoc(e, :pm_schedule),
+      left_join: u in assoc(e, :completed_by_user),
+      select: %{
+        type: "PM Execution",
+        date: e.execution_date,
+        completed_date: e.completed_date,
+        title: s.title,
+        identifier: e.execution_number,
+        status: e.status,
+        technician: u.name,
+        technician_id: e.completed_by_user_id,
+        duration_minutes: e.actual_duration_minutes,
+        notes: e.tech_notes,
+        id: e.id,
+        record_type: "pm_execution"
+      }
+    )
+    |> Repo.all()
+
+    # Work Orders (we'll add this when we implement work order history)
+    # For now, just return PM executions
+    pm_executions
+    |> Enum.sort_by(fn item -> item.date end, {:desc, DateTime})
   end
 end

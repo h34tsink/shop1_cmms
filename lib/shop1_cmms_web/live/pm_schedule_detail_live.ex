@@ -328,6 +328,13 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
               <%= length(@schedule.documents) %>
             </span>
           </button>
+          <button
+            phx-click="switch_tab"
+            phx-value-tab="history"
+            class={"py-4 px-1 border-b-2 font-medium text-sm #{if @active_tab == "history", do: "border-blue-500 text-blue-600", else: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}"}
+          >
+            Execution History
+          </button>
         </nav>
       </div>
 
@@ -345,6 +352,13 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
               <.render_components schedule={@schedule} />
             <% "documents" -> %>
               <.render_documents schedule={@schedule} />
+            <% "history" -> %>
+              <.live_component
+                module={Shop1CmmsWeb.PmSchedulesLive.HistoryComponent}
+                id="pm-execution-history"
+                pm_schedule={@schedule}
+                tenant_id={@current_tenant_id}
+              />
           <% end %>
         </div>
       </div>
