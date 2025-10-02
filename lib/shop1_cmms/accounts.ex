@@ -6,7 +6,7 @@ defmodule Shop1Cmms.Accounts do
 
   import Ecto.Query, warn: false
   alias Shop1Cmms.Repo
-  alias Shop1Cmms.Accounts.{User, UserDetails, CMMSUserRole, UserTenantAssignment}
+  alias Shop1Cmms.Accounts.{User, CMMSUserRole, UserTenantAssignment}
   alias Shop1Cmms.Tenants.{Tenant, Site}
 
   ## Database getters (working with existing Shop1FinishLine structure)
@@ -161,22 +161,21 @@ defmodule Shop1Cmms.Accounts do
   def list_tenant_users(tenant_id, opts \\ []) do
     query = from(u in User,
       join: uta in UserTenantAssignment, on: uta.user_id == u.id,
-      left_join: ud in UserDetails, on: ud.id == u.id,
       where: uta.tenant_id == ^tenant_id and uta.is_active == true and u.is_active == true,
-      select: %{user: u, details: ud, assignment: uta},
-      order_by: [ud.full_name, ud.display_name, u.username]
+      select: %{user: u, assignment: uta},
+      order_by: [u.username]
     )
 
     query = case Keyword.get(opts, :site_id) do
       nil -> query
       site_id ->
-        from([u, uta, ud] in query,
+        from([u, uta] in query,
           where: is_nil(uta.default_site_id) or uta.default_site_id == ^site_id
         )
     end
 
     query = case Keyword.get(opts, :cmms_enabled_only) do
-      true -> from([u, uta, ud] in query, where: u.cmms_enabled == true)
+      true -> from([u, uta] in query, where: u.cmms_enabled == true)
       _ -> query
     end
 

@@ -73,6 +73,9 @@ defmodule Shop1CmmsWeb.Router do
       live "/pm-schedules/:id", PmScheduleDetailLive, :show
       live "/pm-schedules/:id/edit", PmSchedulesLive, :edit
 
+      # Maintenance History
+      live "/maintenance-history", MaintenanceHistoryLive, :index
+
       # Reports (coming soon)
       # live "/reports", ReportLive.Index, :index
       # live "/reports/:type", ReportLive.Show, :show
