@@ -16,7 +16,7 @@ defmodule Shop1Cmms.MaintenanceFixtures do
     {:ok, pm_schedule} =
       attrs
       |> Enum.into(%{
-        schedule_number: "PM-#{System.unique_integer([:positive])}",
+        # schedule_number is auto-generated, don't provide it unless explicitly set
         title: "Test PM Schedule",
         description: "Test PM Description",
         frequency: :monthly,

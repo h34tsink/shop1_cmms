@@ -62,6 +62,7 @@ defmodule Shop1Cmms.Maintenance.PmSchedule do
       :last_completed_date, :next_due_date, :is_active,
       :asset_id, :created_by, :updated_by, :tenant_id
     ])
+    |> maybe_generate_schedule_number()
     |> validate_required([:schedule_number, :title, :frequency, :asset_id, :tenant_id])
     |> validate_inclusion(:frequency, @frequency_values)
     |> validate_length(:title, min: 3, max: 255)
@@ -70,6 +71,41 @@ defmodule Shop1Cmms.Maintenance.PmSchedule do
     |> validate_number(:estimated_duration, greater_than_or_equal_to: 0)
     |> unique_constraint([:schedule_number, :tenant_id])
     |> validate_meter_based_fields()
+  end
+
+  defp maybe_generate_schedule_number(changeset) do
+    schedule_number = get_field(changeset, :schedule_number)
+    tenant_id = get_field(changeset, :tenant_id)
+    
+    # Only generate if schedule_number is nil or empty, and we have a tenant_id
+    if (is_nil(schedule_number) or schedule_number == "") and not is_nil(tenant_id) do
+      put_change(changeset, :schedule_number, generate_schedule_number(tenant_id))
+    else
+      changeset
+    end
+  end
+
+  defp generate_schedule_number(tenant_id) do
+    # Get the last schedule number for this tenant
+    last_schedule = from(pm in __MODULE__,
+                        where: pm.tenant_id == ^tenant_id,
+                        where: like(pm.schedule_number, "PM-%"),
+                        order_by: [desc: pm.schedule_number],
+                        limit: 1)
+                    |> Shop1Cmms.Repo.one()
+
+    next_number = case last_schedule do
+      nil -> 1
+      %{schedule_number: schedule_number} ->
+        # Extract number from format PM-NNNNNNNN
+        case Regex.run(~r/PM-(\d+)/, schedule_number) do
+          [_, num_str] -> String.to_integer(num_str) + 1
+          _ -> 1
+        end
+    end
+
+    # Format as PM-NNNNNNNN (8 digits, supports up to 99,999,999 schedules)
+    "PM-#{String.pad_leading(Integer.to_string(next_number), 8, "0")}"
   end
 
   defp validate_meter_based_fields(changeset) do

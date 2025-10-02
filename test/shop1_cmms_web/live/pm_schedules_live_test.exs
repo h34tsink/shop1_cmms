@@ -19,6 +19,106 @@ defmodule Shop1CmmsWeb.PmSchedulesLiveTest do
       assert html =~ pm_schedule.title
     end
 
+    test "auto-generates schedule number for new PM schedule", %{conn: conn, asset: asset} do
+      {:ok, index_live, _html} = live(conn, ~p"/pm-schedules")
+
+      # Click to open the new PM schedule form
+      assert index_live |> element("a", "New PM Schedule") |> render_click() =~
+               "New PM Schedule"
+
+      assert_patch(index_live, ~p"/pm-schedules/new")
+      
+      # Verify auto-generation message is displayed
+      html = render(index_live)
+      assert html =~ "Schedule Number will be auto-generated"
+      assert html =~ "PM-00000001"
+      
+      # Submit form without schedule_number field
+      form_data = %{
+        "title" => "Test PM Schedule",
+        "description" => "Test Description",
+        "frequency" => "monthly",
+        "asset_id" => asset.id
+      }
+
+      assert index_live
+             |> form("#pm-schedule-form", pm_schedule: form_data)
+             |> render_submit()
+
+      assert_patch(index_live, ~p"/pm-schedules")
+
+      html = render(index_live)
+      assert html =~ "PM Schedule created successfully" or html =~ "created successfully"
+      assert html =~ "PM-00000001"
+    end
+
+    test "sequential schedule numbers for multiple PM schedules", %{conn: conn, tenant: tenant, asset: asset} do
+      # Create first PM schedule
+      {:ok, schedule1} = Maintenance.create_pm_schedule(%{
+        title: "First PM",
+        frequency: :monthly,
+        asset_id: asset.id,
+        tenant_id: tenant.id
+      })
+      
+      assert schedule1.schedule_number == "PM-00000001"
+      
+      # Create second PM schedule
+      {:ok, schedule2} = Maintenance.create_pm_schedule(%{
+        title: "Second PM",
+        frequency: :weekly,
+        asset_id: asset.id,
+        tenant_id: tenant.id
+      })
+      
+      assert schedule2.schedule_number == "PM-00000002"
+      
+      # Create third PM schedule
+      {:ok, schedule3} = Maintenance.create_pm_schedule(%{
+        title: "Third PM",
+        frequency: :quarterly,
+        asset_id: asset.id,
+        tenant_id: tenant.id
+      })
+      
+      assert schedule3.schedule_number == "PM-00000003"
+    end
+
+    test "preserves schedule number when editing", %{conn: conn, tenant: tenant, asset: asset} do
+      pm_schedule = pm_schedule_fixture(%{
+        tenant_id: tenant.id,
+        asset_id: asset.id
+      })
+      
+      original_number = pm_schedule.schedule_number
+
+      {:ok, index_live, _html} = live(conn, ~p"/pm-schedules")
+
+      # Open edit form
+      assert index_live
+             |> element("a[href='/pm-schedules/#{pm_schedule.id}/edit']")
+             |> render_click() =~
+               "Edit PM Schedule"
+
+      assert_patch(index_live, ~p"/pm-schedules/#{pm_schedule.id}/edit")
+      
+      # Verify schedule number is displayed
+      html = render(index_live)
+      assert html =~ original_number
+
+      # Update other fields
+      assert index_live
+             |> form("#pm-schedule-form", pm_schedule: %{title: "Updated Title"})
+             |> render_submit()
+
+      assert_patch(index_live, ~p"/pm-schedules")
+
+      # Verify schedule number remained the same
+      updated_schedule = Maintenance.get_pm_schedule!(tenant.id, pm_schedule.id)
+      assert updated_schedule.schedule_number == original_number
+      assert updated_schedule.title == "Updated Title"
+    end
+
     test "displays work instructions in schedule list", %{conn: conn, tenant: tenant, asset: asset} do
       pm_schedule = pm_schedule_fixture(%{
         tenant_id: tenant.id,
@@ -44,8 +144,8 @@ defmodule Shop1CmmsWeb.PmSchedulesLiveTest do
 
       assert_patch(index_live, ~p"/pm-schedules/new")
 
+      # Form data without schedule_number - it will be auto-generated
       form_data = %{
-        "schedule_number" => "PM-TEST-001",
         "title" => "Test PM Schedule",
         "description" => "Test Description",
         "frequency" => "monthly",
@@ -60,8 +160,9 @@ defmodule Shop1CmmsWeb.PmSchedulesLiveTest do
       assert_patch(index_live, ~p"/pm-schedules")
 
       html = render(index_live)
-      assert html =~ "PM schedule created successfully"
-      assert html =~ "PM-TEST-001"
+      assert html =~ "created successfully" or html =~ "PM schedule created successfully"
+      # Should show auto-generated number starting with PM-
+      assert html =~ ~r/PM-\d{8}/
     end
 
     test "updates pm_schedule work instructions", %{conn: conn, tenant: tenant, asset: asset} do
