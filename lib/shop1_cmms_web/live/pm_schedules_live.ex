@@ -22,6 +22,8 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
      |> assign(:components, [])
      |> assign(:documents, [])
      |> assign(:asset_search, "")
+     |> assign(:sort_by, :schedule_number)
+     |> assign(:sort_direction, :asc)
      |> load_pm_schedules(tenant_id)
      |> load_assets(tenant_id)}
   end
@@ -196,6 +198,30 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     {:noreply, assign(socket, :asset_search, query)}
   end
 
+  def handle_event("sort", %{"by" => field}, socket) do
+    field_atom = String.to_existing_atom(field)
+    
+    {sort_direction, sort_by} = 
+      if socket.assigns.sort_by == field_atom do
+        # Toggle direction if same field
+        new_direction = if socket.assigns.sort_direction == :asc, do: :desc, else: :asc
+        {new_direction, field_atom}
+      else
+        # New field, default to ascending
+        {:asc, field_atom}
+      end
+    
+    {:noreply, 
+     socket
+     |> assign(:sort_by, sort_by)
+     |> assign(:sort_direction, sort_direction)
+     |> filter_schedules()}
+  end
+
+  def handle_event("view_schedule", %{"id" => id}, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/pm-schedules/#{id}")}
+  end
+
   defp swap_elements(list, idx1, idx2) do
     elem1 = Enum.at(list, idx1)
     elem2 = Enum.at(list, idx2)
@@ -268,6 +294,8 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     search_query = socket.assigns.search_query |> String.downcase()
     frequency = socket.assigns.filter_frequency
     status = socket.assigns.filter_status
+    sort_by = socket.assigns.sort_by
+    sort_direction = socket.assigns.sort_direction
     
     filtered =
       schedules
@@ -298,6 +326,21 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
         
         search_match and frequency_match and status_match
       end)
+      |> Enum.sort_by(
+        fn schedule ->
+          case sort_by do
+            :schedule_number -> schedule.schedule_number || ""
+            :title -> schedule.title || ""
+            :asset -> if schedule.asset, do: schedule.asset.name, else: ""
+            :frequency -> schedule.frequency
+            :last_completed -> schedule.last_completed_date || ~U[1970-01-01 00:00:00Z]
+            :next_due -> schedule.next_due_date || ~U[9999-12-31 23:59:59Z]
+            :status -> schedule.is_active
+            _ -> schedule.schedule_number || ""
+          end
+        end,
+        sort_direction
+      )
     
     assign(socket, :filtered_schedules, filtered)
   end
@@ -312,6 +355,36 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
         String.contains?(String.downcase(asset.asset_number || ""), search)
       end)
     end
+  end
+
+  defp sortable_header(assigns) do
+    ~H"""
+    <th 
+      scope="col" 
+      phx-click="sort" 
+      phx-value-by={@field}
+      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+    >
+      <div class="flex items-center gap-1">
+        <span><%= @label %></span>
+        <%= if @current_sort == @field do %>
+          <%= if @direction == :asc do %>
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+            </svg>
+          <% else %>
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          <% end %>
+        <% else %>
+          <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+          </svg>
+        <% end %>
+      </div>
+    </th>
+    """
   end
 
   @impl true
@@ -475,27 +548,13 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Schedule #
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Title
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Asset
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Frequency
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Last Completed
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Next Due
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
+                  <.sortable_header field={:schedule_number} label="Schedule #" current_sort={@sort_by} direction={@sort_direction} />
+                  <.sortable_header field={:title} label="Title" current_sort={@sort_by} direction={@sort_direction} />
+                  <.sortable_header field={:asset} label="Equipment" current_sort={@sort_by} direction={@sort_direction} />
+                  <.sortable_header field={:frequency} label="Frequency" current_sort={@sort_by} direction={@sort_direction} />
+                  <.sortable_header field={:last_completed} label="Last Completed" current_sort={@sort_by} direction={@sort_direction} />
+                  <.sortable_header field={:next_due} label="Next Due" current_sort={@sort_by} direction={@sort_direction} />
+                  <.sortable_header field={:status} label="Status" current_sort={@sort_by} direction={@sort_direction} />
                   <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -519,7 +578,7 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
                   </tr>
                 <% else %>
                   <%= for schedule <- @filtered_schedules do %>
-                    <tr class="hover:bg-gray-50">
+                    <tr class="hover:bg-gray-50 cursor-pointer transition-colors" phx-click="view_schedule" phx-value-id={schedule.id}>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900">
                           <%= schedule.schedule_number %>
@@ -579,7 +638,7 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
                           <%= if schedule.is_active, do: "Active", else: "Inactive" %>
                         </span>
                       </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onclick="event.stopPropagation()">
                         <div class="flex items-center justify-end gap-2">
                           <%= if schedule.is_active do %>
                             <button
