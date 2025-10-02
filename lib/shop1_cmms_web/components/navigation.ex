@@ -46,10 +46,10 @@ defmodule Shop1CmmsWeb.Components.Navigation do
           
           <!-- Assets Section -->
           <%= if @auth.view_assets do %>
-            <.nav_group label="Assets" expanded={true}>
+            <.nav_group label="Equipment" expanded={true}>
               <.nav_item 
                 href="/assets" 
-                label="All Assets" 
+                label="All Equipment" 
                 icon="box"
                 indent={true}
                 active={String.starts_with?(@current_path, "/assets")}
