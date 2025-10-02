@@ -43,7 +43,7 @@ defmodule Shop1Cmms.Maintenance.PmSchedule do
     # Associations
     has_many :components, Shop1Cmms.Maintenance.PmScheduleComponent
     has_many :checklist_items, Shop1Cmms.Maintenance.PmChecklistItem
-    has_many :documents, Shop1Cmms.Maintenance.AssetDocument
+    has_many :documents, Shop1Cmms.Maintenance.AssetDocument, foreign_key: :pm_schedule_id
     
     # Multi-tenancy
     field :tenant_id, :integer

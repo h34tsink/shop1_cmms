@@ -16,7 +16,7 @@ defmodule Shop1Cmms.Maintenance do
   def list_pm_schedules(tenant_id) do
     PmSchedule
     |> where([pm], pm.tenant_id == ^tenant_id)
-    |> preload([:asset, :components, :checklist_items])
+    |> preload([:asset, :components, :checklist_items, :documents])
     |> order_by([pm], [desc: pm.inserted_at])
     |> Repo.all()
   end

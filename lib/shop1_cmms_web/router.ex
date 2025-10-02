@@ -70,6 +70,7 @@ defmodule Shop1CmmsWeb.Router do
       # Preventive Maintenance
       live "/pm-schedules", PmSchedulesLive, :index
       live "/pm-schedules/new", PmSchedulesLive, :new
+      live "/pm-schedules/:id", PmScheduleDetailLive, :show
       live "/pm-schedules/:id/edit", PmSchedulesLive, :edit
 
       # Reports (coming soon)
