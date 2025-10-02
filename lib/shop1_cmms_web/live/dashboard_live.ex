@@ -77,7 +77,7 @@ defmodule Shop1CmmsWeb.DashboardLive do
 
       <!-- Middle Row: Split View (Flexible height) -->
       <div class="flex-1 flex gap-2 min-h-0 overflow-hidden">
-        <!-- Left Panel: Asset Status Breakdown (40%) -->
+        <!-- Left Panel: Equipment Status Breakdown (40%) -->
         <%= if @auth.view_assets and @stats.total_assets > 0 do %>
           <div class="panel flex flex-col min-w-0 overflow-hidden" style="width: 40%;">
             <div class="panel-header flex items-center justify-between flex-shrink-0">

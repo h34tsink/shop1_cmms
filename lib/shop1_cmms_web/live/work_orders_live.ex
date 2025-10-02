@@ -184,7 +184,7 @@ defmodule Shop1CmmsWeb.WorkOrdersLive do
               <tr>
                 <th class="w-20">WO#</th>
                 <th>Title</th>
-                <th>Asset</th>
+                <th>Equipment</th>
                 <th>Type</th>
                 <th>Priority</th>
                 <th>Status</th>

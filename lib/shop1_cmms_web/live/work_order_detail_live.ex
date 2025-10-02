@@ -229,13 +229,13 @@ defmodule Shop1CmmsWeb.WorkOrderDetailLive do
           <p class="text-xs text-gray-700 whitespace-pre-wrap"><%= @work_order.description || "No description provided." %></p>
         </div>
 
-        <!-- Asset Information -->
+        <!-- Equipment Information -->
         <%= if @work_order.asset do %>
           <div class="bg-white rounded border border-gray-200 p-3">
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Asset Information</h3>
+            <h3 class="text-sm font-semibold text-gray-900 mb-2">Equipment Information</h3>
             <dl class="space-y-1 text-xs">
               <div class="flex justify-between">
-                <dt class="text-gray-600">Asset:</dt>
+                <dt class="text-gray-600">Equipment:</dt>
                 <dd class="font-medium">
                   <.link navigate={"/assets/#{@work_order.asset.id}"} class="text-blue-600 hover:text-blue-800">
                     <%= @work_order.asset.name %>

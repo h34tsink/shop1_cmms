@@ -61,7 +61,7 @@ defmodule Shop1CmmsWeb.Router do
       live "/work_orders/:id", WorkOrderDetailLive, :show
       live "/work_orders/:id/edit", WorkOrdersLive, :edit
 
-      # Assets
+      # Equipment
       live "/assets", AssetsLive, :index
       live "/assets/new", AssetsLive, :new
       live "/assets/:id", AssetDetailLive, :show
