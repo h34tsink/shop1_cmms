@@ -32,11 +32,11 @@ defmodule Shop1CmmsWeb.AssetsLive do
         <nav class="flex items-center text-xs space-x-1">
           <.link href="/" class="text-gray-600 hover:text-gray-900">Home</.link>
           <span class="text-gray-400">/</span>
-          <span class="text-gray-900 font-medium">Assets</span>
+          <span class="text-gray-900 font-medium">Equipment</span>
         </nav>
         
         <!-- Quick Actions -->
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center gap-2">
           <.link 
             navigate={~p"/assets/new"}
             class="btn-toolbar-primary"
@@ -44,7 +44,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
             </svg>
-            <span>New Asset</span>
+            <span>New Equipment</span>
           </.link>
           <button class="btn-toolbar">
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -72,7 +72,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
                   type="text" 
                   name="search[term]" 
                   value={@search_term}
-                  placeholder="Search assets..." 
+                  placeholder="Search equipment..." 
                   class="block w-full pl-7 pr-2 py-1 text-xs border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                 />
                 <svg class="absolute left-2 top-1.5 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,9 +86,10 @@ defmodule Shop1CmmsWeb.AssetsLive do
           <select phx-change="filter_status" name="status" class="text-xs py-1 px-2 border-gray-300 rounded">
             <option value="all">All Status</option>
             <option value="operational" selected={@selected_status == "operational"}>Operational</option>
-            <option value="needs_maintenance" selected={@selected_status == "needs_maintenance"}>Needs Maintenance</option>
-            <option value="out_of_service" selected={@selected_status == "out_of_service"}>Out of Service</option>
+            <option value="maintenance" selected={@selected_status == "maintenance"}>Maintenance</option>
+            <option value="repair" selected={@selected_status == "repair"}>Repair</option>
             <option value="retired" selected={@selected_status == "retired"}>Retired</option>
+            <option value="disposed" selected={@selected_status == "disposed"}>Disposed</option>
           </select>
 
           <select phx-change="filter_type" name="type" class="text-xs py-1 px-2 border-gray-300 rounded">
@@ -110,7 +111,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
 
           <!-- Results Count -->
           <div class="text-xs text-gray-600 ml-auto">
-            <%= length(@filtered_assets) %> of <%= length(@assets) %> assets
+            <%= length(@filtered_assets) %> of <%= length(@assets) %> equipment
           </div>
         </div>
       </div>
@@ -124,7 +125,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
                 <th class="w-8">
                   <input type="checkbox" class="rounded border-gray-300" />
                 </th>
-                <th>Asset Code</th>
+                <th>Equipment #</th>
                 <th>Name</th>
                 <th>Type</th>
                 <th>Location</th>
@@ -197,12 +198,12 @@ defmodule Shop1CmmsWeb.AssetsLive do
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
                 </svg>
               </div>
-              <h3 class="text-lg font-semibold text-gray-900">No assets found</h3>
+              <h3 class="text-lg font-semibold text-gray-900">No equipment found</h3>
               <p class="mt-2 text-sm text-gray-500 max-w-md mx-auto">
                 <%= if @search_term != "" or @selected_status != "all" or @selected_type != "all" do %>
-                  No assets match your current filters. Try adjusting your search criteria.
+                  No equipment matches your current filters. Try adjusting your search criteria.
                 <% else %>
-                  Get started by adding your first asset to the system.
+                  Get started by adding your first equipment to the system.
                 <% end %>
               </p>
               <div class="mt-6">
@@ -215,7 +216,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
                     </svg>
-                    <span>Add First Asset</span>
+                    <span>Add First Equipment</span>
                   </.link>
                 <% end %>
               </div>
@@ -228,7 +229,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
       <%= if length(@filtered_assets) > 0 do %>
         <div class="flex-shrink-0 h-8 bg-gray-50 border-t border-gray-300 flex items-center justify-between px-3 text-xs">
           <div class="text-gray-600">
-            Showing <%= length(@filtered_assets) %> assets
+            Showing <%= length(@filtered_assets) %> equipment
           </div>
           <div class="flex items-center space-x-2">
             <span class="text-gray-500">Page 1 of 1</span>
@@ -241,22 +242,23 @@ defmodule Shop1CmmsWeb.AssetsLive do
 
   # Helper functions for template
   defp status_badge_class(:operational), do: "bg-green-100 text-green-800"
-  defp status_badge_class(:needs_maintenance), do: "bg-orange-100 text-orange-800"
-  defp status_badge_class(:out_of_service), do: "bg-red-100 text-red-800"
+  defp status_badge_class(:maintenance), do: "bg-yellow-100 text-yellow-800"
+  defp status_badge_class(:repair), do: "bg-orange-100 text-orange-800"
   defp status_badge_class(:retired), do: "bg-gray-100 text-gray-800"
+  defp status_badge_class(:disposed), do: "bg-red-100 text-red-800"
   defp status_badge_class(_), do: "bg-gray-100 text-gray-600"
 
   defp format_status(:operational), do: "Operational"
-  defp format_status(:needs_maintenance), do: "Needs Maintenance"
-  defp format_status(:out_of_service), do: "Out of Service"
+  defp format_status(:maintenance), do: "Maintenance"
+  defp format_status(:repair), do: "Repair"
   defp format_status(:retired), do: "Retired"
+  defp format_status(:disposed), do: "Disposed"
   defp format_status(status), do: to_string(status) |> String.capitalize()
 
-  defp criticality_to_number(:critical), do: 5
-  defp criticality_to_number(:high), do: 4
-  defp criticality_to_number(:medium), do: 3
-  defp criticality_to_number(:low), do: 2
-  defp criticality_to_number(:minimal), do: 1
+  defp criticality_to_number(:critical), do: 4
+  defp criticality_to_number(:high), do: 3
+  defp criticality_to_number(:medium), do: 2
+  defp criticality_to_number(:low), do: 1
   defp criticality_to_number(_), do: 0
 
   @impl true
