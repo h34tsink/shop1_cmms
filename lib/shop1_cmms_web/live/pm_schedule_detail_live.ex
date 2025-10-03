@@ -925,7 +925,7 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
                 <%!-- Right Column: Skills, Tools, PPE --%>
                 <div class="space-y-3">
                   <%!-- Required Skills --%>
-                  <%= if not Enum.empty?(@schedule.required_skills) do %>
+                  <%= if @schedule.required_skills && not Enum.empty?(@schedule.required_skills) do %>
                     <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
                       <dt class="text-xs font-semibold text-gray-700 uppercase mb-2">Required Skills</dt>
                       <dd class="flex flex-wrap gap-1">
@@ -939,7 +939,7 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
                   <% end %>
 
                   <%!-- Required Tools --%>
-                  <%= if not Enum.empty?(@schedule.required_tools) do %>
+                  <%= if @schedule.required_tools && not Enum.empty?(@schedule.required_tools) do %>
                     <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
                       <dt class="text-xs font-semibold text-gray-700 uppercase mb-2">Required Tools</dt>
                       <dd class="flex flex-wrap gap-1">
@@ -953,7 +953,7 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
                   <% end %>
 
                   <%!-- PPE Required --%>
-                  <%= if not Enum.empty?(@schedule.ppe_required) do %>
+                  <%= if @schedule.ppe_required && not Enum.empty?(@schedule.ppe_required) do %>
                     <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
                       <dt class="text-xs font-semibold text-gray-700 uppercase mb-2">PPE Required</dt>
                       <dd class="flex flex-wrap gap-1">
