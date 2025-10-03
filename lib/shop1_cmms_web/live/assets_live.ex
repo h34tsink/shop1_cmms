@@ -1,6 +1,7 @@
 defmodule Shop1CmmsWeb.AssetsLive do
   use Shop1CmmsWeb, :live_view
   alias Shop1Cmms.Assets
+  alias Shop1Cmms.Exports
   import Shop1CmmsWeb.Components.Assets
 
   @impl true
@@ -550,9 +551,30 @@ defmodule Shop1CmmsWeb.AssetsLive do
   end
 
   def handle_event("export", %{"format" => format}, socket) do
-    # TODO: Implement actual export functionality
-    # For now, just show a flash message
-    {:noreply, put_flash(socket, :info, "Export to #{String.upcase(format)} coming soon")}
+    case format do
+      "csv" ->
+        csv_content = Exports.export_assets_to_csv(socket.assigns.filtered_assets)
+        timestamp = DateTime.utc_now() |> Calendar.strftime("%Y%m%d_%H%M%S")
+        filename = "assets_export_#{timestamp}.csv"
+        
+        {:noreply,
+         socket
+         |> push_event("download", %{
+           data: csv_content,
+           filename: filename,
+           mime: "text/csv"
+         })
+         |> put_flash(:info, "Exporting #{length(socket.assigns.filtered_assets)} assets to CSV...")}
+      
+      "xlsx" ->
+        {:noreply, put_flash(socket, :info, "Excel export coming soon - use CSV for now")}
+      
+      "pdf" ->
+        {:noreply, put_flash(socket, :info, "PDF export coming soon - use CSV for now")}
+      
+      _ ->
+        {:noreply, put_flash(socket, :error, "Unknown export format")}
+    end
   end
 
   def handle_event("import", _params, socket) do

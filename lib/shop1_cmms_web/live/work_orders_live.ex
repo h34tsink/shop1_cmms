@@ -3,6 +3,7 @@ defmodule Shop1CmmsWeb.WorkOrdersLive do
 
   alias Shop1Cmms.WorkOrders
   alias Shop1Cmms.Assets
+  alias Shop1Cmms.Exports
 
   @impl true
   def mount(_params, _session, socket) do
@@ -348,7 +349,30 @@ defmodule Shop1CmmsWeb.WorkOrdersLive do
   end
 
   def handle_event("export", %{"format" => format}, socket) do
-    {:noreply, put_flash(socket, :info, "Export to #{String.upcase(format)} coming soon")}
+    case format do
+      "csv" ->
+        csv_content = Exports.export_work_orders_to_csv(socket.assigns.filtered_work_orders)
+        timestamp = DateTime.utc_now() |> Calendar.strftime("%Y%m%d_%H%M%S")
+        filename = "work_orders_export_#{timestamp}.csv"
+        
+        {:noreply,
+         socket
+         |> push_event("download", %{
+           data: csv_content,
+           filename: filename,
+           mime: "text/csv"
+         })
+         |> put_flash(:info, "Exporting #{length(socket.assigns.filtered_work_orders)} work orders to CSV...")}
+      
+      "xlsx" ->
+        {:noreply, put_flash(socket, :info, "Excel export coming soon - use CSV for now")}
+      
+      "pdf" ->
+        {:noreply, put_flash(socket, :info, "PDF export coming soon - use CSV for now")}
+      
+      _ ->
+        {:noreply, put_flash(socket, :error, "Unknown export format")}
+    end
   end
 
   def handle_event("print", _params, socket) do

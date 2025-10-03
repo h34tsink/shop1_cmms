@@ -3,6 +3,7 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
   alias Shop1Cmms.Maintenance
   alias Shop1Cmms.Assets
   alias Shop1Cmms.Maintenance.PmSchedule
+  alias Shop1Cmms.Exports
 
   @impl true
   def mount(_params, _session, socket) do
@@ -224,7 +225,30 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
   end
 
   def handle_event("export", %{"format" => format}, socket) do
-    {:noreply, put_flash(socket, :info, "Export to #{String.upcase(format)} coming soon")}
+    case format do
+      "csv" ->
+        csv_content = Exports.export_pm_schedules_to_csv(socket.assigns.filtered_schedules)
+        timestamp = DateTime.utc_now() |> Calendar.strftime("%Y%m%d_%H%M%S")
+        filename = "pm_schedules_export_#{timestamp}.csv"
+        
+        {:noreply,
+         socket
+         |> push_event("download", %{
+           data: csv_content,
+           filename: filename,
+           mime: "text/csv"
+         })
+         |> put_flash(:info, "Exporting #{length(socket.assigns.filtered_schedules)} PM schedules to CSV...")}
+      
+      "xlsx" ->
+        {:noreply, put_flash(socket, :info, "Excel export coming soon - use CSV for now")}
+      
+      "pdf" ->
+        {:noreply, put_flash(socket, :info, "PDF export coming soon - use CSV for now")}
+      
+      _ ->
+        {:noreply, put_flash(socket, :error, "Unknown export format")}
+    end
   end
 
   defp swap_elements(list, idx1, idx2) do

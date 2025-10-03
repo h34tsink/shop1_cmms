@@ -141,8 +141,33 @@ defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
   end
 
   def handle_event("export", %{"format" => format}, socket) do
-    # TODO: Implement export functionality
-    {:noreply, put_flash(socket, :info, "Export to #{format} coming soon")}
+    case format do
+      "csv" ->
+        csv_content = Exports.export_maintenance_history_to_csv(socket.assigns.history)
+        timestamp = DateTime.utc_now() |> Calendar.strftime("%Y%m%d_%H%M%S")
+        filename = "maintenance_history_export_#{timestamp}.csv"
+        
+        {:noreply,
+         socket
+         |> push_event("download", %{
+           data: csv_content,
+           filename: filename,
+           mime: "text/csv"
+         })
+         |> put_flash(:info, "Exporting #{length(socket.assigns.history)} history records to CSV...")}
+      
+      "excel" ->
+        {:noreply, put_flash(socket, :info, "Excel export coming soon - use CSV for now")}
+      
+      "pdf" ->
+        {:noreply, put_flash(socket, :info, "PDF export coming soon - use CSV for now")}
+      
+      "html" ->
+        {:noreply, put_flash(socket, :info, "HTML export coming soon - use CSV for now")}
+      
+      _ ->
+        {:noreply, put_flash(socket, :error, "Unknown export format")}
+    end
   end
 
   def handle_event("view_detail", %{"id" => id, "type" => type}, socket) do

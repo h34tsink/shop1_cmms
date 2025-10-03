@@ -31,7 +31,14 @@ Alpine.plugin(collapse)
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken}
+  params: {_csrf_token: csrfToken},
+  dom: {
+    onBeforeElUpdated(from, to) {
+      if (from._x_dataStack) {
+        window.Alpine.clone(from, to)
+      }
+    }
+  }
 })
 
 // Show progress bar on live navigation and form submits
@@ -48,16 +55,28 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
-// Initialize Alpine.js after LiveView is ready
+// Initialize Alpine.js BEFORE LiveView connects
 window.Alpine = Alpine
+Alpine.start()
 
-// Make sure Alpine.js reinitializes when LiveView patches DOM
-window.addEventListener("phx:update", () => {
+// Reinitialize Alpine when LiveView updates DOM
+window.addEventListener("phx:page-loading-stop", () => {
   Alpine.initTree(document.body)
 })
 
-// Start Alpine.js
-Alpine.start()
+// Handle download events for file exports
+window.addEventListener("phx:download", (event) => {
+  const {data, filename, mime} = event.detail
+  const blob = new Blob([data], { type: mime })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(url)
+})
 
 // ============================================
 // DESKTOP UI ENHANCEMENTS
