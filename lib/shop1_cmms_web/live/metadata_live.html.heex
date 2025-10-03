@@ -61,22 +61,56 @@
 
       <!-- Search Bar -->
       <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
-        <.form :let={f} for={%{}} as={:search} phx-change="search" class="w-full max-w-md">
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
+        <div class="flex items-center gap-4">
+          <.form :let={f} for={%{}} as={:search} phx-change="search" class="flex-1 max-w-md">
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+              <.input
+                field={f[:query]}
+                value={@search_query}
+                type="text"
+                placeholder={"Search #{String.downcase(@metadata_config.title)}..."}
+                class="block w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
-            <.input
-              field={f[:query]}
-              value={@search_query}
-              type="text"
-              placeholder={"Search #{String.downcase(@metadata_config.title)}..."}
-              class="block w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            />
+          </.form>
+          
+          <%= if @metadata_type == "pm_tags" do %>
+            <div class="flex items-center gap-2">
+              <label class="text-sm font-medium text-gray-700">Filter by type:</label>
+              <.form :let={f} for={%{}} as={:filter} phx-change="filter_tag_type">
+                <.input
+                  field={f[:type]}
+                  type="select"
+                  value={@tag_type_filter}
+                  options={[
+                    {"All Types", "all"},
+                    {"Skills", "skill"},
+                    {"Tools", "tool"},
+                    {"PPE", "ppe"}
+                  ]}
+                  class={[
+                    "text-sm rounded focus:ring-blue-500 focus:border-blue-500",
+                    if(@tag_type_filter != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
+                  ]}
+                />
+              </.form>
+            </div>
+          <% end %>
+          
+          <!-- Results Count -->
+          <div class="text-sm text-gray-600">
+            <span class="font-medium"><%= length(@items) %></span>
+            <%= if length(@items) == 1, do: "item", else: "items" %>
+            <%= if @search_query != "" or (@metadata_type == "pm_tags" and @tag_type_filter != "all") do %>
+              <span class="text-gray-400">filtered</span>
+            <% end %>
           </div>
-        </.form>
+        </div>
       </div>
 
       <!-- Items Table -->
@@ -133,10 +167,49 @@
               <% end %>
 
               <%= if @metadata_type == "pm_tags" do %>
-                <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th 
+                  phx-click="sort" 
+                  phx-value-field="name"
+                  class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                >
+                  <div class="flex items-center">
+                    Name
+                    <%= if @sort_field == "name" do %>
+                      <svg class={"ml-1 w-4 h-4 #{if @sort_order == "asc", do: "transform rotate-180"}"} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                      </svg>
+                    <% end %>
+                  </div>
+                </th>
+                <th 
+                  phx-click="sort" 
+                  phx-value-field="tag_type"
+                  class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                >
+                  <div class="flex items-center">
+                    Type
+                    <%= if @sort_field == "tag_type" do %>
+                      <svg class={"ml-1 w-4 h-4 #{if @sort_order == "asc", do: "transform rotate-180"}"} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                      </svg>
+                    <% end %>
+                  </div>
+                </th>
                 <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage</th>
+                <th 
+                  phx-click="sort" 
+                  phx-value-field="usage_count"
+                  class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                >
+                  <div class="flex items-center">
+                    Usage
+                    <%= if @sort_field == "usage_count" do %>
+                      <svg class={"ml-1 w-4 h-4 #{if @sort_order == "asc", do: "transform rotate-180"}"} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                      </svg>
+                    <% end %>
+                  </div>
+                </th>
                 <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <% end %>
 
@@ -423,21 +496,37 @@
 
 <!-- Modal -->
 <%= if @show_modal do %>
-  <div class="fixed inset-0 z-50 overflow-y-auto" phx-click="close_modal">
+  <div class="fixed inset-0 z-50 overflow-y-auto" id="modal-overlay">
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-      <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+      <!-- Backdrop -->
+      <div
+        class="fixed inset-0 transition-opacity"
+        aria-hidden="true"
+        phx-click="close_modal"
+      >
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
 
-      <div 
-        class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl sm:w-full"
-        phx-click-away="close_modal"
+      <!-- Modal Panel -->
+      <div
+        class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl sm:w-full z-10 relative"
       >
         <!-- Modal Header -->
         <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-          <h3 class="text-lg font-semibold text-gray-900">
-            <%= if @form_action == :new, do: "New", else: "Edit" %> <%= @metadata_config.singular %>
-          </h3>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">
+              <%= if @form_action == :new, do: "New", else: "Edit" %> <%= @metadata_config.singular %>
+            </h3>
+            <button
+              type="button"
+              phx-click="close_modal"
+              class="text-gray-400 hover:text-gray-500 focus:outline-none"
+            >
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Modal Body -->
@@ -467,3 +556,4 @@
     </div>
   </div>
 <% end %>
+

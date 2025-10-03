@@ -539,7 +539,10 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
           <select
             phx-change="filter_frequency"
             name="frequency"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            class={[
+              "px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+              if(@filter_frequency != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
+            ]}
           >
             <option value="all">All Frequencies</option>
             <%= for freq <- PmSchedule.frequency_values() do %>
@@ -553,7 +556,10 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
           <select
             phx-change="filter_status"
             name="status"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            class={[
+              "px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+              if(@filter_status != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
+            ]}
           >
             <option value="active" selected={@filter_status == "active"}>Active</option>
             <option value="inactive" selected={@filter_status == "inactive"}>Inactive</option>
@@ -561,6 +567,15 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
             <option value="due_soon" selected={@filter_status == "due_soon"}>Due Soon</option>
             <option value="all" selected={@filter_status == "all"}>All Status</option>
           </select>
+          
+          <!-- Results Count -->
+          <div class="text-sm text-gray-600">
+            <span class="font-medium"><%= length(@filtered_schedules) %></span>
+            <%= if length(@filtered_schedules) == 1, do: "schedule", else: "schedules" %>
+            <%= if @search_query != "" or @filter_frequency != "all" or @filter_status != "all" do %>
+              <span class="text-gray-400">filtered</span>
+            <% end %>
+          </div>
         </div>
       </div>
 

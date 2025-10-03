@@ -100,7 +100,10 @@ defmodule Shop1CmmsWeb.AssetsLive do
           </div>
 
           <!-- Quick Filters -->
-          <select phx-change="filter_status" name="status" class="text-xs py-1 px-2 border-gray-300 rounded">
+          <select phx-change="filter_status" name="status" class={[
+            "text-xs py-1 px-2 rounded",
+            if(@selected_status != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
+          ]}>
             <option value="all">All Status</option>
             <option value="operational" selected={@selected_status == "operational"}>Operational</option>
             <option value="maintenance" selected={@selected_status == "maintenance"}>Maintenance</option>
@@ -109,7 +112,10 @@ defmodule Shop1CmmsWeb.AssetsLive do
             <option value="disposed" selected={@selected_status == "disposed"}>Disposed</option>
           </select>
 
-          <select phx-change="filter_type" name="type" class="text-xs py-1 px-2 border-gray-300 rounded">
+          <select phx-change="filter_type" name="type" class={[
+            "text-xs py-1 px-2 rounded",
+            if(@selected_type != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
+          ]}>
             <option value="all">All Types</option>
             <%= for asset_type <- @asset_types do %>
               <option value={asset_type.id} selected={@selected_type == to_string(asset_type.id)}>
@@ -118,7 +124,10 @@ defmodule Shop1CmmsWeb.AssetsLive do
             <% end %>
           </select>
 
-          <select phx-change="filter_criticality" name="criticality" class="text-xs py-1 px-2 border-gray-300 rounded">
+          <select phx-change="filter_criticality" name="criticality" class={[
+            "text-xs py-1 px-2 rounded",
+            if(@selected_criticality != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
+          ]}>
             <option value="all">All Criticality</option>
             <option value="critical" selected={@selected_criticality == "critical"}>Critical</option>
             <option value="high" selected={@selected_criticality == "high"}>High</option>

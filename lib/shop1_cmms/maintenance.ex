@@ -17,6 +17,18 @@ defmodule Shop1Cmms.Maintenance do
   def list_pm_tags(tenant_id, opts \\ []) do
     query = PmTag.by_tenant(tenant_id)
     
+    # Handle tag_type filter (string or atom)
+    query =
+      case opts[:tag_type] do
+        type when type in ["skill", "tool", "ppe"] -> 
+          PmTag.by_type(query, String.to_existing_atom(type))
+        type when type in [:skill, :tool, :ppe] -> 
+          PmTag.by_type(query, type)
+        _ -> 
+          query
+      end
+    
+    # Handle legacy :type option
     query =
       case opts[:type] do
         type when type in [:skill, :tool, :ppe] -> PmTag.by_type(query, type)
@@ -30,9 +42,28 @@ defmodule Shop1Cmms.Maintenance do
         query
       end
     
+    # Handle search
     query =
-      case opts[:order_by] do
-        :usage -> PmTag.order_by_usage(query)
+      if opts[:search] && opts[:search] != "" do
+        PmTag.search(query, opts[:search])
+      else
+        query
+      end
+    
+    # Handle sorting
+    query =
+      case {opts[:sort_by], opts[:sort_order]} do
+        {"name", "desc"} -> order_by(query, [t], desc: t.name)
+        {"name", _} -> order_by(query, [t], asc: t.name)
+        {"tag_type", "desc"} -> order_by(query, [t], desc: t.tag_type)
+        {"tag_type", _} -> order_by(query, [t], asc: t.tag_type)
+        {"usage_count", "desc"} -> order_by(query, [t], desc: t.usage_count)
+        {"usage_count", _} -> order_by(query, [t], asc: t.usage_count)
+        {nil, _} ->
+          case opts[:order_by] do
+            :usage -> PmTag.order_by_usage(query)
+            _ -> PmTag.order_by_name(query)
+          end
         _ -> PmTag.order_by_name(query)
       end
     

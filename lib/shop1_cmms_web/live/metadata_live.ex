@@ -78,6 +78,8 @@ defmodule Shop1CmmsWeb.MetadataLive do
      |> assign(:form_action, :new)
      |> assign(:selected_item, nil)
      |> assign(:tag_type_filter, "all")
+     |> assign(:sort_field, nil)
+     |> assign(:sort_order, "asc")
      |> load_metadata_items(tenant_id)}
   end
 
@@ -94,6 +96,8 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp apply_action(socket, :index, _params) do
     socket
     |> assign(:page_title, socket.assigns.metadata_config.title)
+    |> assign(:show_modal, false)
+    |> assign(:selected_item, nil)
   end
 
   defp apply_action(socket, :new, _params) do
@@ -124,6 +128,35 @@ defmodule Shop1CmmsWeb.MetadataLive do
      socket
      |> assign(:search_query, query)
      |> load_metadata_items(tenant_id, query)}
+  end
+
+  def handle_event("filter_tag_type", %{"filter" => %{"type" => type}}, socket) do
+    require Logger
+    Logger.debug("Filter tag type: #{type}, current: #{socket.assigns.tag_type_filter}")
+    
+    tenant_id = socket.assigns.current_tenant.id
+    search_query = socket.assigns.search_query
+    
+    socket = socket
+     |> assign(:tag_type_filter, type)
+     |> load_metadata_items(tenant_id, search_query)
+    
+    Logger.debug("Items after filter: #{length(socket.assigns.items)}")
+    
+    {:noreply, socket}
+  end
+
+  def handle_event("sort", %{"field" => field}, socket) do
+    current_sort = socket.assigns[:sort_field]
+    current_order = socket.assigns[:sort_order] || "asc"
+    
+    new_order = if current_sort == field and current_order == "asc", do: "desc", else: "asc"
+    
+    {:noreply,
+     socket
+     |> assign(:sort_field, field)
+     |> assign(:sort_order, new_order)
+     |> load_metadata_items(socket.assigns.current_tenant.id, socket.assigns.search_query)}
   end
 
   def handle_event("new", _params, socket) do
@@ -226,6 +259,26 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp load_metadata_items(socket, tenant_id, search_query \\ "") do
     opts = [active_only: true]
     opts = if search_query != "", do: Keyword.put(opts, :search, search_query), else: opts
+    
+    # Add tag type filter for PM tags
+    tag_type_filter = Map.get(socket.assigns, :tag_type_filter, "all")
+    opts = if socket.assigns.metadata_type == "pm_tags" and tag_type_filter != "all" do
+      Keyword.put(opts, :tag_type, tag_type_filter)
+    else
+      opts
+    end
+    
+    # Add sorting
+    sort_field = Map.get(socket.assigns, :sort_field)
+    sort_order = Map.get(socket.assigns, :sort_order, "asc")
+    
+    opts = if sort_field do
+      opts
+      |> Keyword.put(:sort_by, sort_field)
+      |> Keyword.put(:sort_order, sort_order)
+    else
+      opts
+    end
 
     # Choose the right context module
     context_module = 
@@ -237,7 +290,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
     
     items = apply(context_module, socket.assigns.metadata_config.context_fn, [tenant_id, opts])
     assign(socket, :items, items)
-  end  # Context function helpers
+  end# Context function helpers
   defp get_metadata_item("manufacturers", tenant_id, id), do: Metadata.get_manufacturer!(tenant_id, id)
   defp get_metadata_item("departments", tenant_id, id), do: Metadata.get_department!(tenant_id, id)
   defp get_metadata_item("suppliers", tenant_id, id), do: Metadata.get_supplier!(tenant_id, id)
@@ -778,3 +831,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
     """
   end
 end
+
+
+
+
