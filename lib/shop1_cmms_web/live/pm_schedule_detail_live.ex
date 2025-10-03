@@ -1,6 +1,6 @@
 defmodule Shop1CmmsWeb.PmScheduleDetailLive do
   use Shop1CmmsWeb, :live_view
-  alias Shop1Cmms.Maintenance
+  alias Shop1Cmms.{Maintenance, Metadata}
   alias Shop1Cmms.Maintenance.{PmSchedule, PmScheduleComponent, PmChecklistItem, AssetDocument}
   alias Shop1Cmms.Assets
 
@@ -72,13 +72,17 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
       {:noreply, socket}
     else
       # Entering edit mode - create form
-      changeset = Maintenance.change_pm_schedule(socket.assigns.schedule)
-      work_instructions_list = parse_work_instructions(socket.assigns.schedule.work_instructions)
+      schedule = socket.assigns.schedule
+      changeset = Maintenance.change_pm_schedule(schedule)
+      work_instructions_list = parse_work_instructions(schedule.work_instructions)
 
       socket = socket
       |> assign(:edit_mode, true)
       |> assign(:form, to_form(changeset))
       |> assign(:work_instructions_list, work_instructions_list)
+      |> assign(:required_skills, schedule.required_skills || [])
+      |> assign(:required_tools, schedule.required_tools || [])
+      |> assign(:ppe_required, schedule.ppe_required || [])
 
       {:noreply, socket}
     end
@@ -151,11 +155,20 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
     |> Enum.join("\n")
     
     schedule_params = Map.put(schedule_params, "work_instructions", work_instructions_text)
+    
+    # Add tags from assigns
+    schedule_params = schedule_params
+    |> Map.put("required_skills", Map.get(socket.assigns, :required_skills, []))
+    |> Map.put("required_tools", Map.get(socket.assigns, :required_tools, []))
+    |> Map.put("ppe_required", Map.get(socket.assigns, :ppe_required, []))
 
     case Maintenance.update_pm_schedule(socket.assigns.schedule, schedule_params) do
       {:ok, updated_schedule} ->
-        # Reload schedule with details to get fresh data
+        # Create/update PM tags with usage tracking
         tenant_id = socket.assigns.current_tenant_id
+        Metadata.track_pm_tags(tenant_id, schedule_params)
+        
+        # Reload schedule with details to get fresh data
         schedule = Maintenance.get_pm_schedule!(tenant_id, updated_schedule.id)
 
         socket = socket
@@ -170,6 +183,19 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
       {:error, changeset} ->
         {:noreply, assign(socket, :form, to_form(changeset))}
     end
+  end
+
+  # Tag update handlers
+  def handle_info({:tag_added, field_name, tag}, socket) do
+    current_tags = Map.get(socket.assigns, String.to_existing_atom(field_name), [])
+    updated_tags = (current_tags ++ [tag]) |> Enum.uniq()
+    {:noreply, assign(socket, String.to_existing_atom(field_name), updated_tags)}
+  end
+
+  def handle_info({:tag_removed, field_name, tag}, socket) do
+    current_tags = Map.get(socket.assigns, String.to_existing_atom(field_name), [])
+    updated_tags = Enum.reject(current_tags, &(&1 == tag))
+    {:noreply, assign(socket, String.to_existing_atom(field_name), updated_tags)}
   end
 
   # Component Events
@@ -798,6 +824,47 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
               
               <div class="border border-gray-300 rounded p-2 bg-gray-50">
                 <.input field={@form[:safety_notes]} label="Safety Notes" type="textarea" rows="2" class="text-sm" />
+              </div>
+
+              <%!-- Tag Inputs for Skills, Tools, PPE --%>
+              <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">Requirements</h4>
+                <div class="space-y-3">
+                  <!-- Required Skills -->
+                  <.live_component
+                    module={Shop1CmmsWeb.TagInputComponent}
+                    id="skills-input-detail"
+                    tags={Map.get(assigns, :required_skills, [])}
+                    tag_type={:skill}
+                    field_name="required_skills"
+                    label="Required Skills"
+                    placeholder="Type skills (e.g., LOTO, Mechanical, Electrical)..."
+                    tenant_id={assigns[:current_tenant_id]}
+                  />
+                  
+                  <!-- Required Tools -->
+                  <.live_component
+                    module={Shop1CmmsWeb.TagInputComponent}
+                    id="tools-input-detail"
+                    tags={Map.get(assigns, :required_tools, [])}
+                    tag_type={:tool}
+                    field_name="required_tools"
+                    label="Required Tools"
+                    placeholder="Type tools (e.g., Torque Wrench, Multimeter)..."
+                    tenant_id={assigns[:current_tenant_id]}
+                  />
+                  
+                  <!-- PPE Required -->
+                  <.live_component
+                    module={Shop1CmmsWeb.TagInputComponent}
+                    id="ppe-input-detail"
+                    tags={Map.get(assigns, :ppe_required, [])}
+                    tag_type={:ppe}
+                    field_name="ppe_required"
+                    placeholder="Type PPE (e.g., Safety Glasses, Gloves)..."
+                    tenant_id={assigns[:current_tenant_id]}
+                  />
+                </div>
               </div>
 
               <%!-- Action buttons --%>

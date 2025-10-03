@@ -237,6 +237,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp get_metadata_item("custom_fields", tenant_id, id), do: Metadata.get_custom_field!(tenant_id, id)
   defp get_metadata_item("asset_types", tenant_id, id), do: Assets.get_asset_type!(tenant_id, id)
   defp get_metadata_item("asset_locations", tenant_id, id), do: Assets.get_asset_location!(tenant_id, id)
+  defp get_metadata_item("pm_tags", tenant_id, id), do: Metadata.get_pm_tag!(id)
 
   # These function definitions are moved to be grouped together at the end of the file
 
