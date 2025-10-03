@@ -50,6 +50,10 @@ defmodule Shop1Cmms.Tenants.Tenant do
     from(t in query, where: t.code == ^code)
   end
 
+  def by_name(query \\ __MODULE__, name) do
+    from(t in query, where: t.name == ^name)
+  end
+
   def with_sites(query \\ __MODULE__) do
     from(t in query, preload: :sites)
   end

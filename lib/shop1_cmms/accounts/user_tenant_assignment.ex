@@ -60,6 +60,11 @@ defmodule Shop1Cmms.Accounts.UserTenantAssignment do
     from(a in query, where: a.default_site_id == ^site_id)
   end
 
+  # Alias for compatibility
+  def for_site(query \\ __MODULE__, site_id) do
+    with_site(query, site_id)
+  end
+
   def with_preloads(query \\ __MODULE__) do
     from(a in query, preload: [:user, :tenant, :default_site])
   end

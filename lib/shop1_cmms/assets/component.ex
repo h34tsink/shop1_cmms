@@ -20,7 +20,8 @@ defmodule Shop1Cmms.Assets.Component do
     field :status, Ecto.Enum, values: [:active, :inactive, :maintenance, :failed], default: :active
 
     belongs_to :asset, Shop1Cmms.Assets.Asset
-    has_many :pm_schedules, Shop1Cmms.Maintenance.PmSchedule
+    # Note: Components are linked to PM schedules through pm_schedule_components join table
+    # has_many :pm_schedules, Shop1Cmms.Maintenance.PmSchedule  # REMOVED: Invalid association
     has_many :pm_executions, Shop1Cmms.Maintenance.PmExecution
 
     field :tenant_id, :integer
