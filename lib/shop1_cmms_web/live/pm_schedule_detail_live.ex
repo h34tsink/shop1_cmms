@@ -723,8 +723,77 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
                 <.input field={@form[:description]} label="Description" type="textarea" rows="2" class="text-sm" />
               </div>
               
-              <div class="border border-gray-300 rounded p-2 bg-gray-50">
-                <.input field={@form[:work_instructions]} label="Work Instructions" type="textarea" rows="4" class="text-sm" />
+              <%!-- Work Instructions - List with Add/Remove/Reorder --%>
+              <div class="border border-gray-300 rounded p-3 bg-gray-50">
+                <div class="flex items-center justify-between mb-2">
+                  <label class="block text-xs font-medium text-gray-700">Work Instructions</label>
+                  <button
+                    type="button"
+                    phx-click="add_instruction"
+                    class="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                  >
+                    + Add Step
+                  </button>
+                </div>
+                
+                <%= if Enum.empty?(@work_instructions_list) do %>
+                  <p class="text-xs text-gray-500 italic">No work instructions. Click "+ Add Step" to add one.</p>
+                <% else %>
+                  <div class="space-y-2">
+                    <%= for {item, idx} <- Enum.with_index(@work_instructions_list) do %>
+                      <div class="flex items-center gap-2 bg-white border border-gray-200 rounded p-2">
+                        <span class="text-xs font-medium text-gray-500 w-8"><%= idx + 1 %>.</span>
+                        <input
+                          type="text"
+                          value={item.text}
+                          phx-blur="update_instruction"
+                          phx-value-id={item.id}
+                          placeholder="Enter instruction step..."
+                          class="flex-1 text-sm border-2 border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:ring-0"
+                        />
+                        <div class="flex gap-1">
+                          <%= if idx > 0 do %>
+                            <button
+                              type="button"
+                              phx-click="move_instruction_up"
+                              phx-value-id={item.id}
+                              class="p-1 text-gray-400 hover:text-gray-600"
+                              title="Move up"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                              </svg>
+                            </button>
+                          <% end %>
+                          <%= if idx < length(@work_instructions_list) - 1 do %>
+                            <button
+                              type="button"
+                              phx-click="move_instruction_down"
+                              phx-value-id={item.id}
+                              class="p-1 text-gray-400 hover:text-gray-600"
+                              title="Move down"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                              </svg>
+                            </button>
+                          <% end %>
+                          <button
+                            type="button"
+                            phx-click="remove_instruction"
+                            phx-value-id={item.id}
+                            class="p-1 text-red-400 hover:text-red-600"
+                            title="Remove"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                <% end %>
               </div>
               
               <div class="border border-gray-300 rounded p-2 bg-gray-50">
@@ -832,6 +901,91 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
                 <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
                   <dt class="text-xs font-semibold text-gray-700 uppercase mb-1">Description</dt>
                   <dd class="text-sm text-gray-900 whitespace-pre-wrap"><%= @schedule.description %></dd>
+                </div>
+              <% end %>
+
+              <%!-- Work Instructions --%>
+              <%= if @schedule.work_instructions do %>
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <dt class="text-xs font-semibold text-gray-700 uppercase mb-2">Work Instructions</dt>
+                  <dd class="text-sm text-gray-900">
+                    <ol class="list-decimal list-inside space-y-1">
+                      <%= for line <- String.split(@schedule.work_instructions, "\n") do %>
+                        <%= if String.trim(line) != "" do %>
+                          <li><%= String.trim(line) %></li>
+                        <% end %>
+                      <% end %>
+                    </ol>
+                  </dd>
+                </div>
+              <% end %>
+
+              <%!-- Required Skills --%>
+              <%= if not Enum.empty?(@schedule.required_skills) do %>
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <dt class="text-xs font-semibold text-gray-700 uppercase mb-2">Required Skills</dt>
+                  <dd class="flex flex-wrap gap-1">
+                    <%= for skill <- @schedule.required_skills do %>
+                      <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                        <%= skill %>
+                      </span>
+                    <% end %>
+                  </dd>
+                </div>
+              <% end %>
+
+              <%!-- Required Tools --%>
+              <%= if not Enum.empty?(@schedule.required_tools) do %>
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <dt class="text-xs font-semibold text-gray-700 uppercase mb-2">Required Tools</dt>
+                  <dd class="flex flex-wrap gap-1">
+                    <%= for tool <- @schedule.required_tools do %>
+                      <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                        <%= tool %>
+                      </span>
+                    <% end %>
+                  </dd>
+                </div>
+              <% end %>
+
+              <%!-- Required Parts --%>
+              <%= if @schedule.required_parts && map_size(@schedule.required_parts) > 0 do %>
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <dt class="text-xs font-semibold text-gray-700 uppercase mb-2">Required Parts</dt>
+                  <dd class="text-sm text-gray-900">
+                    <ul class="space-y-1">
+                      <%= for {part_name, quantity} <- @schedule.required_parts do %>
+                        <li class="flex items-center justify-between">
+                          <span><%= String.replace(part_name, "_", " ") |> String.capitalize() %></span>
+                          <span class="font-medium"><%= quantity %></span>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </dd>
+                </div>
+              <% end %>
+
+              <%!-- PPE Required --%>
+              <%= if not Enum.empty?(@schedule.ppe_required) do %>
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <dt class="text-xs font-semibold text-gray-700 uppercase mb-2">PPE Required</dt>
+                  <dd class="flex flex-wrap gap-1">
+                    <%= for ppe <- @schedule.ppe_required do %>
+                      <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                        <%= ppe %>
+                      </span>
+                    <% end %>
+                  </dd>
+                </div>
+              <% end %>
+
+              <%!-- Meter-based info --%>
+              <%= if @schedule.meter_threshold do %>
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <dt class="text-xs font-semibold text-gray-700 uppercase mb-2">Meter-Based Trigger</dt>
+                  <dd class="text-sm text-gray-900">
+                    Trigger at: <span class="font-medium"><%= @schedule.meter_threshold %> <%= @schedule.meter_unit %></span>
+                  </dd>
                 </div>
               <% end %>
 
