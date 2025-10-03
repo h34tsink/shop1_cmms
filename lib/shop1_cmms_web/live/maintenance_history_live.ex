@@ -268,7 +268,7 @@ defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
           duration: e.actual_duration_minutes,
           cost: fragment("0::numeric"),
           notes: e.tech_notes,
-          reference_id: fragment("?::varchar", e.pm_schedule_id)
+          reference_id: fragment("?::varchar", e.id)
         }
       )
 

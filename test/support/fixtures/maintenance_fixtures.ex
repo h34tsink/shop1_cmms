@@ -79,6 +79,29 @@ defmodule Shop1Cmms.MaintenanceFixtures do
   end
 
   @doc """
+  Generate a PM execution.
+  """
+  def pm_execution_fixture(attrs \\ %{}) do
+    tenant_id = attrs[:tenant_id] || raise "tenant_id is required"
+    pm_schedule_id = attrs[:pm_schedule_id] || raise "pm_schedule_id is required"
+    asset_id = attrs[:asset_id] || raise "asset_id is required"
+
+    execution_attrs =
+      attrs
+      |> Enum.into(%{
+        execution_number: "PMX-#{String.pad_leading("#{System.unique_integer([:positive])}", 8, "0")}",
+        execution_date: DateTime.utc_now(),
+        status: :scheduled,
+        tenant_id: tenant_id,
+        pm_schedule_id: pm_schedule_id,
+        asset_id: asset_id
+      })
+
+    {:ok, execution} = Maintenance.create_pm_execution(execution_attrs)
+    execution
+  end
+
+  @doc """
   Generate an asset document.
   """
   def asset_document_fixture(attrs \\ %{}) do

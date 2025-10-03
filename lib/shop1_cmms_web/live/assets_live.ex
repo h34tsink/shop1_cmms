@@ -46,18 +46,34 @@ defmodule Shop1CmmsWeb.AssetsLive do
             </svg>
             <span>New Equipment</span>
           </.link>
-          <button class="btn-toolbar">
+          <button phx-click="import" class="btn-toolbar" title="Import equipment data">
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"></path>
             </svg>
             <span>Import</span>
           </button>
-          <button class="btn-toolbar">
-            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-            </svg>
-            <span>Export</span>
-          </button>
+          <div x-data="{ open: false }" class="relative inline-block">
+            <button @click="open = !open" class="btn-toolbar" title="Export equipment data">
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+              </svg>
+              <span>Export</span>
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              </svg>
+            </button>
+            <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-48 bg-white border border-gray-300 rounded shadow-lg z-50">
+              <button phx-click="export" phx-value-format="csv" @click="open = false" class="block w-full text-left px-4 py-2 text-xs hover:bg-gray-100 transition-colors">
+                <span class="font-medium">Export as CSV</span>
+              </button>
+              <button phx-click="export" phx-value-format="xlsx" @click="open = false" class="block w-full text-left px-4 py-2 text-xs hover:bg-gray-100 transition-colors">
+                <span class="font-medium">Export as Excel</span>
+              </button>
+              <button phx-click="export" phx-value-format="pdf" @click="open = false" class="block w-full text-left px-4 py-2 text-xs hover:bg-gray-100 transition-colors">
+                <span class="font-medium">Export as PDF</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -125,14 +141,58 @@ defmodule Shop1CmmsWeb.AssetsLive do
                 <th class="w-8">
                   <input type="checkbox" class="rounded border-gray-300" />
                 </th>
-                <th>Equipment #</th>
-                <th>Name</th>
+                <th phx-click="sort" phx-value-field="asset_number" class="cursor-pointer hover:bg-gray-100">
+                  <div class="flex items-center gap-1">
+                    Equipment #
+                    <%= if @sort_field == "asset_number" do %>
+                      <%= if @sort_direction == :asc do %>
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                      <% else %>
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </th>
+                <th phx-click="sort" phx-value-field="name" class="cursor-pointer hover:bg-gray-100">
+                  <div class="flex items-center gap-1">
+                    Name
+                    <%= if @sort_field == "name" do %>
+                      <%= if @sort_direction == :asc do %>
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                      <% else %>
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </th>
                 <th>Type</th>
                 <th>Location</th>
                 <th>Manufacturer</th>
                 <th>Model</th>
-                <th>Status</th>
-                <th>Criticality</th>
+                <th phx-click="sort" phx-value-field="status" class="cursor-pointer hover:bg-gray-100">
+                  <div class="flex items-center gap-1">
+                    Status
+                    <%= if @sort_field == "status" do %>
+                      <%= if @sort_direction == :asc do %>
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                      <% else %>
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </th>
+                <th phx-click="sort" phx-value-field="criticality" class="cursor-pointer hover:bg-gray-100">
+                  <div class="flex items-center gap-1">
+                    Criticality
+                    <%= if @sort_field == "criticality" do %>
+                      <%= if @sort_direction == :asc do %>
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                      <% else %>
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </th>
                 <th class="w-24">Actions</th>
               </tr>
             </thead>
@@ -292,6 +352,8 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> assign(:view_mode, "grid")
     |> assign(:live_action, :edit)
     |> assign(:show_modal, true)
+    |> assign(:sort_field, "name")
+    |> assign(:sort_direction, :asc)
 
     {:ok, socket}
   end
@@ -327,6 +389,8 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> assign(:view_mode, "grid")
     |> assign(:live_action, :new)
     |> assign(:show_modal, true)
+    |> assign(:sort_field, "name")
+    |> assign(:sort_direction, :asc)
 
     {:ok, socket}
   end
@@ -361,6 +425,8 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> assign(:view_mode, "grid")  # grid, list, kanban
     |> assign(:live_action, :index)
     |> assign(:show_modal, false)
+    |> assign(:sort_field, "name")
+    |> assign(:sort_direction, :asc)
 
     {:ok, socket}
   end
@@ -465,6 +531,35 @@ defmodule Shop1CmmsWeb.AssetsLive do
     {:noreply, socket}
   end
 
+  def handle_event("sort", %{"field" => field}, socket) do
+    field_atom = String.to_existing_atom(field)
+    
+    sort_direction = 
+      if socket.assigns.sort_field == field_atom do
+        if socket.assigns.sort_direction == :asc, do: :desc, else: :asc
+      else
+        :asc
+      end
+    
+    socket = socket
+    |> assign(:sort_field, field_atom)
+    |> assign(:sort_direction, sort_direction)
+    |> apply_filters()
+
+    {:noreply, socket}
+  end
+
+  def handle_event("export", %{"format" => format}, socket) do
+    # TODO: Implement actual export functionality
+    # For now, just show a flash message
+    {:noreply, put_flash(socket, :info, "Export to #{String.upcase(format)} coming soon")}
+  end
+
+  def handle_event("import", _params, socket) do
+    # TODO: Implement import functionality
+    {:noreply, put_flash(socket, :info, "Import functionality coming soon")}
+  end
+
   def handle_event("clear_filters", _params, socket) do
     socket = socket
     |> assign(:selected_status, "all")
@@ -523,9 +618,20 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> filter_by_manufacturer(socket.assigns.selected_manufacturer)
     |> filter_by_search(socket.assigns.search_term)
     |> filter_by_date_range(socket.assigns.date_from, socket.assigns.date_to)
+    |> sort_assets(socket.assigns.sort_field, socket.assigns.sort_direction)
 
     assign(socket, :filtered_assets, filtered_assets)
   end
+
+  defp sort_assets(assets, :name, :asc), do: Enum.sort_by(assets, & &1.name)
+  defp sort_assets(assets, :name, :desc), do: Enum.sort_by(assets, & &1.name, :desc)
+  defp sort_assets(assets, :asset_number, :asc), do: Enum.sort_by(assets, & &1.asset_number)
+  defp sort_assets(assets, :asset_number, :desc), do: Enum.sort_by(assets, & &1.asset_number, :desc)
+  defp sort_assets(assets, :status, :asc), do: Enum.sort_by(assets, & &1.status)
+  defp sort_assets(assets, :status, :desc), do: Enum.sort_by(assets, & &1.status, :desc)
+  defp sort_assets(assets, :criticality, :asc), do: Enum.sort_by(assets, &criticality_to_number(&1.criticality))
+  defp sort_assets(assets, :criticality, :desc), do: Enum.sort_by(assets, &criticality_to_number(&1.criticality), :desc)
+  defp sort_assets(assets, _, _), do: assets
 
   defp filter_by_status(assets, "all"), do: assets
   defp filter_by_status(assets, status) do

@@ -2,6 +2,11 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+/* Alpine.js cloak */
+[x-cloak] {
+  display: none !important;
+}
+
 /* Reset default browser margins and padding */
 * {
   margin: 0;

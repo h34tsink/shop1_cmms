@@ -223,6 +223,10 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     {:noreply, push_navigate(socket, to: ~p"/pm-schedules/#{id}")}
   end
 
+  def handle_event("export", %{"format" => format}, socket) do
+    {:noreply, put_flash(socket, :info, "Export to #{String.upcase(format)} coming soon")}
+  end
+
   defp swap_elements(list, idx1, idx2) do
     elem1 = Enum.at(list, idx1)
     elem2 = Enum.at(list, idx2)
@@ -403,6 +407,29 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
           </div>
           
           <div class="flex items-center gap-3">
+            <div x-data="{ open: false }" class="relative inline-block">
+              <button @click="open = !open" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Export
+                <svg class="w-4 h-4 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              </button>
+              <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+                <button phx-click="export" phx-value-format="csv" @click="open = false" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors rounded-t-lg">
+                  <span class="font-medium">Export as CSV</span>
+                </button>
+                <button phx-click="export" phx-value-format="xlsx" @click="open = false" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors">
+                  <span class="font-medium">Export as Excel</span>
+                </button>
+                <button phx-click="export" phx-value-format="pdf" @click="open = false" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors rounded-b-lg">
+                  <span class="font-medium">Export as PDF</span>
+                </button>
+              </div>
+            </div>
+            
             <.link
               patch={~p"/pm-schedules/new"}
               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
