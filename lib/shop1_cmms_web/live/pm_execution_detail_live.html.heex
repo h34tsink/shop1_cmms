@@ -100,13 +100,12 @@
                 <div>
                   <p class="text-sm font-medium text-gray-500">Frequency</p>
                   <p class="mt-1 text-sm text-gray-900">
-                    Every <%= @execution.pm_schedule.frequency_value %>
-                    <%= String.capitalize(to_string(@execution.pm_schedule.frequency_unit)) %>
+                    <%= format_frequency(@execution.pm_schedule) %>
                   </p>
                 </div>
                 <div>
-                  <p class="text-sm font-medium text-gray-500">Priority</p>
-                  <p class="mt-1 text-sm text-gray-900"><%= String.capitalize(to_string(@execution.pm_schedule.priority)) %></p>
+                  <p class="text-sm font-medium text-gray-500">Estimated Duration</p>
+                  <p class="mt-1 text-sm text-gray-900"><%= format_decimal_duration(@execution.pm_schedule.estimated_duration) %></p>
                 </div>
               </div>
               <div class="pt-4">

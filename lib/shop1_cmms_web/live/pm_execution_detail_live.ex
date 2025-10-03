@@ -66,6 +66,37 @@ defmodule Shop1CmmsWeb.PmExecutionDetailLive do
     "#{hours}h #{mins}m"
   end
 
+  defp format_decimal_duration(nil), do: "N/A"
+  defp format_decimal_duration(%Decimal{} = hours) do
+    hours_int = Decimal.to_integer(hours)
+    "#{hours_int}h"
+  end
+  defp format_decimal_duration(hours) when is_number(hours) do
+    "#{hours}h"
+  end
+
+  defp format_frequency(%{frequency: frequency, frequency_interval: interval}) do
+    frequency_label = case frequency do
+      :daily -> "Daily"
+      :weekly -> "Weekly"
+      :biweekly -> "Bi-weekly"
+      :monthly -> "Monthly"
+      :quarterly -> "Quarterly"
+      :semiannual -> "Semi-annual"
+      :annual -> "Annual"
+      :biennial -> "Biennial"
+      :meter_based -> "Meter-based"
+      :condition_based -> "Condition-based"
+      _ -> to_string(frequency)
+    end
+
+    if interval && interval > 1 do
+      "Every #{interval} - #{frequency_label}"
+    else
+      frequency_label
+    end
+  end
+
   defp status_badge_class(status) do
     case status do
       :completed -> "bg-green-100 text-green-800"
