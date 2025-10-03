@@ -747,121 +747,124 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
                 <.input field={@form[:description]} label="Description" type="textarea" rows="2" class="text-sm" />
               </div>
               
-              <%!-- Work Instructions - List with Add/Remove/Reorder --%>
-              <div class="border border-gray-300 rounded p-3 bg-gray-50">
-                <div class="flex items-center justify-between mb-2">
-                  <label class="block text-xs font-medium text-gray-700">Work Instructions</label>
-                  <button
-                    type="button"
-                    phx-click="add_instruction"
-                    class="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
-                  >
-                    + Add Step
-                  </button>
-                </div>
-                
-                <%= if Enum.empty?(@work_instructions_list) do %>
-                  <p class="text-xs text-gray-500 italic">No work instructions. Click "+ Add Step" to add one.</p>
-                <% else %>
-                  <div class="space-y-2">
-                    <%= for {item, idx} <- Enum.with_index(@work_instructions_list) do %>
-                      <div class="flex items-center gap-2 bg-white border border-gray-200 rounded p-2">
-                        <span class="text-xs font-medium text-gray-500 w-8"><%= idx + 1 %>.</span>
-                        <input
-                          type="text"
-                          value={item.text}
-                          phx-blur="update_instruction"
-                          phx-value-id={item.id}
-                          placeholder="Enter instruction step..."
-                          class="flex-1 text-sm border-2 border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:ring-0"
-                        />
-                        <div class="flex gap-1">
-                          <%= if idx > 0 do %>
-                            <button
-                              type="button"
-                              phx-click="move_instruction_up"
-                              phx-value-id={item.id}
-                              class="p-1 text-gray-400 hover:text-gray-600"
-                              title="Move up"
-                            >
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
-                              </svg>
-                            </button>
-                          <% end %>
-                          <%= if idx < length(@work_instructions_list) - 1 do %>
-                            <button
-                              type="button"
-                              phx-click="move_instruction_down"
-                              phx-value-id={item.id}
-                              class="p-1 text-gray-400 hover:text-gray-600"
-                              title="Move down"
-                            >
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                              </svg>
-                            </button>
-                          <% end %>
-                          <button
-                            type="button"
-                            phx-click="remove_instruction"
-                            phx-value-id={item.id}
-                            class="p-1 text-red-400 hover:text-red-600"
-                            title="Remove"
-                          >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    <% end %>
-                  </div>
-                <% end %>
-              </div>
-              
               <div class="border border-gray-300 rounded p-2 bg-gray-50">
                 <.input field={@form[:safety_notes]} label="Safety Notes" type="textarea" rows="2" class="text-sm" />
               </div>
 
-              <%!-- Tag Inputs for Skills, Tools, PPE --%>
-              <div class="border border-gray-200 rounded-lg p-3 bg-white">
-                <h4 class="text-sm font-semibold text-gray-700 mb-3">Requirements</h4>
-                <div class="space-y-3">
-                  <!-- Required Skills -->
-                  <.live_component
-                    module={Shop1CmmsWeb.TagInputComponent}
-                    id="skills-input-detail"
-                    tags={Map.get(assigns, :required_skills, [])}
-                    tag_type={:skill}
-                    field_name="required_skills"
-                    label="Required Skills"
-                    placeholder="Type skills (e.g., LOTO, Mechanical, Electrical)..."
-                    tenant_id={assigns[:current_tenant_id]}
-                  />
+              <%!-- 2-Column Layout: Work Instructions + Requirements --%>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <%!-- Work Instructions - List with Add/Remove/Reorder --%>
+                <div class="border border-gray-300 rounded p-3 bg-gray-50">
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="block text-xs font-medium text-gray-700">Work Instructions</label>
+                    <button
+                      type="button"
+                      phx-click="add_instruction"
+                      class="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                    >
+                      + Add Step
+                    </button>
+                  </div>
                   
-                  <!-- Required Tools -->
-                  <.live_component
-                    module={Shop1CmmsWeb.TagInputComponent}
-                    id="tools-input-detail"
-                    tags={Map.get(assigns, :required_tools, [])}
-                    tag_type={:tool}
-                    field_name="required_tools"
-                    label="Required Tools"
-                    placeholder="Type tools (e.g., Torque Wrench, Multimeter)..."
-                    tenant_id={assigns[:current_tenant_id]}
-                  />
-                  
-                  <!-- PPE Required -->
-                  <.live_component
-                    module={Shop1CmmsWeb.TagInputComponent}
-                    id="ppe-input-detail"
-                    tags={Map.get(assigns, :ppe_required, [])}
-                    tag_type={:ppe}
-                    field_name="ppe_required"
-                    placeholder="Type PPE (e.g., Safety Glasses, Gloves)..."
-                    tenant_id={assigns[:current_tenant_id]}
-                  />
+                  <%= if Enum.empty?(@work_instructions_list) do %>
+                    <p class="text-xs text-gray-500 italic">No work instructions. Click "+ Add Step" to add one.</p>
+                  <% else %>
+                    <div class="space-y-2">
+                      <%= for {item, idx} <- Enum.with_index(@work_instructions_list) do %>
+                        <div class="flex items-center gap-2 bg-white border border-gray-200 rounded p-2">
+                          <span class="text-xs font-medium text-gray-500 w-8"><%= idx + 1 %>.</span>
+                          <input
+                            type="text"
+                            value={item.text}
+                            phx-blur="update_instruction"
+                            phx-value-id={item.id}
+                            placeholder="Enter instruction step..."
+                            class="flex-1 text-sm border-2 border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:ring-0"
+                          />
+                          <div class="flex gap-1">
+                            <%= if idx > 0 do %>
+                              <button
+                                type="button"
+                                phx-click="move_instruction_up"
+                                phx-value-id={item.id}
+                                class="p-1 text-gray-400 hover:text-gray-600"
+                                title="Move up"
+                              >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                </svg>
+                              </button>
+                            <% end %>
+                            <%= if idx < length(@work_instructions_list) - 1 do %>
+                              <button
+                                type="button"
+                                phx-click="move_instruction_down"
+                                phx-value-id={item.id}
+                                class="p-1 text-gray-400 hover:text-gray-600"
+                                title="Move down"
+                              >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                              </button>
+                            <% end %>
+                            <button
+                              type="button"
+                              phx-click="remove_instruction"
+                              phx-value-id={item.id}
+                              class="p-1 text-red-400 hover:text-red-600"
+                              title="Remove"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+
+                <%!-- Tag Inputs for Skills, Tools, PPE --%>
+                <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                  <h4 class="text-sm font-semibold text-gray-700 mb-3">Requirements</h4>
+                  <div class="space-y-3">
+                    <!-- Required Skills -->
+                    <.live_component
+                      module={Shop1CmmsWeb.TagInputComponent}
+                      id="skills-input-detail"
+                      tags={Map.get(assigns, :required_skills, [])}
+                      tag_type={:skill}
+                      field_name="required_skills"
+                      label="Required Skills"
+                      placeholder="Type skills (e.g., LOTO, Mechanical, Electrical)..."
+                      tenant_id={assigns[:current_tenant_id]}
+                    />
+                    
+                    <!-- Required Tools -->
+                    <.live_component
+                      module={Shop1CmmsWeb.TagInputComponent}
+                      id="tools-input-detail"
+                      tags={Map.get(assigns, :required_tools, [])}
+                      tag_type={:tool}
+                      field_name="required_tools"
+                      label="Required Tools"
+                      placeholder="Type tools (e.g., Torque Wrench, Multimeter)..."
+                      tenant_id={assigns[:current_tenant_id]}
+                    />
+                    
+                    <!-- PPE Required -->
+                    <.live_component
+                      module={Shop1CmmsWeb.TagInputComponent}
+                      id="ppe-input-detail"
+                      tags={Map.get(assigns, :ppe_required, [])}
+                      tag_type={:ppe}
+                      field_name="ppe_required"
+                      placeholder="Type PPE (e.g., Safety Glasses, Gloves)..."
+                      tenant_id={assigns[:current_tenant_id]}
+                    />
+                  </div>
                 </div>
               </div>
 
