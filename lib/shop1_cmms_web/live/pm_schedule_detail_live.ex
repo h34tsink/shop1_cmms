@@ -164,11 +164,8 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
 
     case Maintenance.update_pm_schedule(socket.assigns.schedule, schedule_params) do
       {:ok, updated_schedule} ->
-        # Create/update PM tags with usage tracking
-        tenant_id = socket.assigns.current_tenant_id
-        Metadata.track_pm_tags(tenant_id, schedule_params)
-        
         # Reload schedule with details to get fresh data
+        tenant_id = socket.assigns.current_tenant_id
         schedule = Maintenance.get_pm_schedule!(tenant_id, updated_schedule.id)
 
         socket = socket
@@ -185,13 +182,14 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
     end
   end
 
-  # Tag update handlers
+  @impl true
   def handle_info({:tag_added, field_name, tag}, socket) do
     current_tags = Map.get(socket.assigns, String.to_existing_atom(field_name), [])
     updated_tags = (current_tags ++ [tag]) |> Enum.uniq()
     {:noreply, assign(socket, String.to_existing_atom(field_name), updated_tags)}
   end
 
+  @impl true
   def handle_info({:tag_removed, field_name, tag}, socket) do
     current_tags = Map.get(socket.assigns, String.to_existing_atom(field_name), [])
     updated_tags = Enum.reject(current_tags, &(&1 == tag))
