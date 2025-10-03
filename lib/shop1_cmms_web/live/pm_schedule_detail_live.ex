@@ -338,15 +338,20 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
               </svg>
               Complete PM
             </button>
-            <.link
-              patch={~p"/pm-schedules/#{@schedule.id}/edit"}
-              class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+            <button
+              type="button"
+              phx-click="toggle_edit"
+              class={if @edit_mode, do: "inline-flex items-center px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition-colors", else: "inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"}
             >
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                <%= if @edit_mode do %>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                <% else %>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                <% end %>
               </svg>
-              Edit
-            </.link>
+              <%= if @edit_mode, do: "Cancel", else: "Edit" %>
+            </button>
           </div>
         </div>
       </div>
@@ -413,7 +418,7 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
         <div class="px-6 py-6">
           <%= case @active_tab do %>
             <% "overview" -> %>
-              <.render_overview schedule={@schedule} />
+              <.render_overview schedule={@schedule} edit_mode={@edit_mode} form={@form} assets={@assets} />
             <% "instructions" -> %>
               <.render_instructions schedule={@schedule} />
             <% "checklist" -> %>
@@ -590,137 +595,244 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
 
   defp render_overview(assigns) do
     ~H"""
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- Main Info -->
-      <div class="lg:col-span-2 space-y-6">
-        <!-- Details Card -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Details</h3>
-          <dl class="grid grid-cols-2 gap-4">
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Equipment</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @schedule.asset.name %></dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Equipment Number</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @schedule.asset.asset_number %></dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Frequency</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= PmSchedule.frequency_label(@schedule.frequency) %></dd>
-            </div>
-            <%= if @schedule.estimated_duration do %>
-              <div>
-                <dt class="text-sm font-medium text-gray-500">Estimated Duration</dt>
-                <dd class="mt-1 text-sm text-gray-900"><%= @schedule.estimated_duration %> hours</dd>
-              </div>
-            <% end %>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Last Completed</dt>
-              <dd class="mt-1 text-sm text-gray-900">
-                <%= if @schedule.last_completed_date do %>
-                  <%= Calendar.strftime(@schedule.last_completed_date, "%b %d, %Y at %I:%M %p") %>
-                <% else %>
-                  <span class="text-gray-400">Never</span>
-                <% end %>
-              </dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Next Due</dt>
-              <dd class="mt-1 text-sm text-gray-900">
-                <%= if @schedule.next_due_date do %>
-                  <%= Calendar.strftime(@schedule.next_due_date, "%b %d, %Y at %I:%M %p") %>
-                <% else %>
-                  <span class="text-gray-400">Not scheduled</span>
-                <% end %>
-              </dd>
-            </div>
-          </dl>
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 class="text-base font-semibold text-gray-900 mb-4">PM Schedule Information</h3>
 
-          <%= if @schedule.description do %>
-            <div class="mt-6 pt-6 border-t">
-              <dt class="text-sm font-medium text-gray-500 mb-2">Description</dt>
-              <dd class="text-sm text-gray-900"><%= @schedule.description %></dd>
+          <%= if @edit_mode and not is_nil(@form) do %>
+            <%!-- Edit Mode - Compact Bordered Form --%>
+            <.form for={@form} phx-change="validate" phx-submit="save" class="space-y-4">
+              <%!-- Hidden fields --%>
+              <.input field={@form[:tenant_id]} type="hidden" />
+              <.input field={@form[:asset_id]} type="hidden" />
+
+              <%!-- Compact 3-column grid with borders --%>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:title]} label="Title" type="text" required class="text-sm" />
+                </div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:schedule_number]} label="Schedule Number" type="text" required class="text-sm" />
+                </div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input 
+                    field={@form[:frequency]} 
+                    label="Frequency" 
+                    type="select" 
+                    options={Enum.map(PmSchedule.frequency_values(), &{PmSchedule.frequency_label(&1), &1})}
+                    required 
+                    class="text-sm" 
+                  />
+                </div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:frequency_interval]} label="Every (Interval)" type="number" min="1" class="text-sm" />
+                </div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:estimated_duration]} label="Est. Duration (hrs)" type="number" step="0.5" min="0" class="text-sm" />
+                </div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Active Status</label>
+                  <.input field={@form[:is_active]} type="checkbox" label="Is Active" />
+                </div>
+              </div>
+
+              <%!-- Full-width fields --%>
+              <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                <.input field={@form[:description]} label="Description" type="textarea" rows="2" class="text-sm" />
+              </div>
+              
+              <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                <.input field={@form[:work_instructions]} label="Work Instructions" type="textarea" rows="4" class="text-sm" />
+              </div>
+              
+              <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                <.input field={@form[:safety_notes]} label="Safety Notes" type="textarea" rows="2" class="text-sm" />
+              </div>
+
+              <%!-- Action buttons --%>
+              <div class="flex justify-end space-x-2 pt-3 border-t">
+                <button
+                  type="button"
+                  phx-click="toggle_edit"
+                  class="px-3 py-1.5 text-sm bg-gray-300 hover:bg-gray-400 text-gray-800 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </.form>
+          <% else %>
+            <%!-- Read-only View - Compact --%>
+            <div class="space-y-4">
+              <%!-- Basic Information --%>
+              <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                <h4 class="text-xs font-semibold text-gray-700 uppercase mb-2">Basic Information</h4>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <dt class="text-xs text-gray-500">Schedule Number</dt>
+                    <dd class="text-sm font-medium text-gray-900 font-mono"><%= @schedule.schedule_number %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-gray-500">Equipment</dt>
+                    <dd class="text-sm text-gray-900"><%= @schedule.asset.name %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-gray-500">Equipment Number</dt>
+                    <dd class="text-sm text-gray-900 font-mono"><%= @schedule.asset.asset_number %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-gray-500">Frequency</dt>
+                    <dd class="text-sm text-gray-900">
+                      <%= if @schedule.frequency_interval > 1 do %>
+                        Every <%= @schedule.frequency_interval %> - <%= PmSchedule.frequency_label(@schedule.frequency) %>
+                      <% else %>
+                        <%= PmSchedule.frequency_label(@schedule.frequency) %>
+                      <% end %>
+                    </dd>
+                  </div>
+                  <%= if @schedule.estimated_duration do %>
+                    <div>
+                      <dt class="text-xs text-gray-500">Estimated Duration</dt>
+                      <dd class="text-sm text-gray-900"><%= @schedule.estimated_duration %> hours</dd>
+                    </div>
+                  <% end %>
+                  <div>
+                    <dt class="text-xs text-gray-500">Status</dt>
+                    <dd class="text-sm">
+                      <span class={"inline-flex px-2 py-0.5 text-xs font-medium rounded-full #{PmSchedule.status_color(@schedule.is_active)}"}>
+                        <%= if @schedule.is_active, do: "Active", else: "Inactive" %>
+                      </span>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <%!-- Schedule Dates --%>
+              <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                <h4 class="text-xs font-semibold text-gray-700 uppercase mb-2">Schedule</h4>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <dt class="text-xs text-gray-500">Last Completed</dt>
+                    <dd class="text-sm text-gray-900">
+                      <%= if @schedule.last_completed_date do %>
+                        <%= Calendar.strftime(@schedule.last_completed_date, "%m/%d/%Y %I:%M %p") %>
+                      <% else %>
+                        <span class="text-gray-400">Never</span>
+                      <% end %>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-gray-500">Next Due</dt>
+                    <dd class="text-sm">
+                      <%= if @schedule.next_due_date do %>
+                        <span class={cond do
+                          DateTime.compare(@schedule.next_due_date, DateTime.utc_now()) == :lt -> "text-red-600 font-semibold"
+                          DateTime.diff(@schedule.next_due_date, DateTime.utc_now(), :day) <= 7 -> "text-orange-600 font-semibold"
+                          true -> "text-gray-900"
+                        end}>
+                          <%= Calendar.strftime(@schedule.next_due_date, "%m/%d/%Y %I:%M %p") %>
+                        </span>
+                      <% else %>
+                        <span class="text-gray-400">Not scheduled</span>
+                      <% end %>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <%!-- Description --%>
+              <%= if @schedule.description do %>
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <dt class="text-xs font-semibold text-gray-700 uppercase mb-1">Description</dt>
+                  <dd class="text-sm text-gray-900 whitespace-pre-wrap"><%= @schedule.description %></dd>
+                </div>
+              <% end %>
+
+              <%!-- Safety Notes --%>
+              <%= if @schedule.safety_notes do %>
+                <div class="border border-yellow-200 rounded-lg p-3 bg-yellow-50">
+                  <div class="flex items-start">
+                    <svg class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <div class="flex-1">
+                      <dt class="text-xs font-semibold text-yellow-900 uppercase mb-1">Safety Notes</dt>
+                      <dd class="text-sm text-yellow-800 whitespace-pre-wrap"><%= @schedule.safety_notes %></dd>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
             </div>
           <% end %>
         </div>
-
-        <!-- Safety Notes -->
-        <%= if @schedule.safety_notes do %>
-          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-            <div class="flex items-start">
-              <svg class="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-              </svg>
-              <div class="flex-1">
-                <h3 class="text-sm font-semibold text-yellow-900 mb-2">Safety Notes</h3>
-                <p class="text-sm text-yellow-800"><%= @schedule.safety_notes %></p>
-              </div>
-            </div>
-          </div>
-        <% end %>
       </div>
 
       <!-- Sidebar -->
-      <div class="space-y-6">
+      <div class="space-y-4">
         <!-- Status Card -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Status</h3>
-          <div class="space-y-4">
-            <div>
-              <span class={"inline-flex px-3 py-1 text-sm font-medium rounded-full #{PmSchedule.status_color(@schedule.is_active)}"}>
-                <%= if @schedule.is_active, do: "Active", else: "Inactive" %>
-              </span>
-            </div>
-
-            <%= if @schedule.next_due_date do %>
-              <div>
+        <%= if not @edit_mode do %>
+          <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Schedule Status</h3>
+            <div class="space-y-2">
+              <%= if @schedule.next_due_date do %>
                 <%= cond do %>
                   <% DateTime.compare(@schedule.next_due_date, DateTime.utc_now()) == :lt -> %>
-                    <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800">
-                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                       </svg>
                       Overdue
                     </span>
                   <% DateTime.diff(@schedule.next_due_date, DateTime.utc_now(), :day) <= 7 -> %>
-                    <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-orange-100 text-orange-800">
-                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                       </svg>
                       Due Soon
                     </span>
                   <% true -> %>
-                    <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800">
-                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                       </svg>
                       On Track
                     </span>
                 <% end %>
-              </div>
-            <% end %>
+              <% end %>
+            </div>
           </div>
-        </div>
 
-        <!-- Quick Stats -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">Checklist Items</span>
-              <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.checklist_items) %></span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">Components</span>
-              <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.components) %></span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">Documents</span>
-              <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.documents) %></span>
+          <!-- Quick Stats -->
+          <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Quick Stats</h3>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-600">Checklist Items</span>
+                <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.checklist_items) %></span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-600">Components</span>
+                <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.components) %></span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-600">Documents</span>
+                <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.documents) %></span>
+              </div>
             </div>
           </div>
-        </div>
+        <% end %>
       </div>
     </div>
     """
