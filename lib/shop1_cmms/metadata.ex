@@ -1,7 +1,7 @@
 defmodule Shop1Cmms.Metadata do
   @moduledoc """
   The Metadata context for managing manufacturers, departments, suppliers,
-  priority codes, maintenance categories, and custom fields.
+  priority codes, maintenance categories, PM tags (skills, tools, PPE), and custom fields.
   """
 
   import Ecto.Query, warn: false
@@ -9,7 +9,7 @@ defmodule Shop1Cmms.Metadata do
 
   alias Shop1Cmms.Metadata.{
     Manufacturer, Department, Supplier, PriorityCode,
-    MaintenanceCategory, CustomField, CustomFieldValue
+    MaintenanceCategory, CustomField, CustomFieldValue, PmTag
   }
 
   ## Manufacturers
@@ -504,4 +504,95 @@ defmodule Shop1Cmms.Metadata do
   Returns available entity types for custom fields.
   """
   def custom_field_entity_types, do: CustomField.entity_types()
+
+  ## PM Tags (Skills, Tools, PPE)
+
+  @doc """
+  Returns the list of PM tags for a tenant, optionally filtered by type.
+  """
+  def list_pm_tags(tenant_id, opts \\ []) do
+    query = PmTag
+    |> PmTag.by_tenant(tenant_id)
+    |> PmTag.ordered()
+
+    query = if type = opts[:type], do: PmTag.by_type(query, type), else: query
+    query = if opts[:active_only], do: PmTag.active(query), else: query
+    query = if search_term = opts[:search], do: PmTag.search(query, search_term), else: query
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Gets a single PM tag.
+  """
+  def get_pm_tag!(id), do: Repo.get!(PmTag, id)
+
+  @doc """
+  Gets a single PM tag for a tenant.
+  """
+  def get_pm_tag!(tenant_id, id) do
+    PmTag
+    |> PmTag.by_tenant(tenant_id)
+    |> Repo.get!(id)
+  end
+
+  @doc """
+  Creates a PM tag.
+  """
+  def create_pm_tag(attrs \\ %{}) do
+    %PmTag{}
+    |> PmTag.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a PM tag.
+  """
+  def update_pm_tag(%PmTag{} = pm_tag, attrs) do
+    pm_tag
+    |> PmTag.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a PM tag.
+  """
+  def delete_pm_tag(%PmTag{} = pm_tag) do
+    Repo.delete(pm_tag)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking PM tag changes.
+  """
+  def change_pm_tag(%PmTag{} = pm_tag, attrs \\ %{}) do
+    PmTag.changeset(pm_tag, attrs)
+  end
+
+  @doc """
+  Gets or creates a PM tag by name and type.
+  Auto-creates if it doesn't exist and increments usage count.
+  """
+  def get_or_create_pm_tag(tenant_id, tag_name, tag_type) do
+    tag_name = String.trim(tag_name)
+    
+    case Repo.get_by(PmTag, tenant_id: tenant_id, tag_type: tag_type, name: tag_name) do
+      nil ->
+        # Create new tag
+        create_pm_tag(%{
+          name: tag_name,
+          tag_type: tag_type,
+          tenant_id: tenant_id,
+          usage_count: 1
+        })
+      
+      tag ->
+        # Increment usage count
+        update_pm_tag(tag, %{usage_count: tag.usage_count + 1})
+    end
+  end
+
+  @doc """
+  Returns available PM tag types.
+  """
+  def pm_tag_types, do: PmTag.tag_types()
 end
