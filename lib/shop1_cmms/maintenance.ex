@@ -274,16 +274,43 @@ defmodule Shop1Cmms.Maintenance do
 
   @doc """
   Marks a PM schedule as completed and updates the next due date.
+  Creates a PM execution record for the history.
   """
-  def complete_pm_schedule(%PmSchedule{} = schedule, completed_at \\ nil) do
+  def complete_pm_schedule(%PmSchedule{} = schedule, completed_at \\ nil, user_id \\ nil) do
     completed_at = completed_at || DateTime.utc_now()
     
-    attrs = %{
-      last_completed_date: completed_at,
-      next_due_date: calculate_next_due_date(%{schedule | last_completed_date: completed_at})
-    }
-    
-    update_pm_schedule(schedule, attrs)
+    Repo.transaction(fn ->
+      # Create PM execution record for history
+      execution_attrs = %{
+        execution_number: generate_pm_execution_number(schedule.tenant_id),
+        execution_date: completed_at,
+        completed_date: completed_at,
+        status: :completed,
+        pm_schedule_id: schedule.id,
+        asset_id: schedule.asset_id,
+        completed_by_user_id: user_id,
+        tenant_id: schedule.tenant_id,
+        tech_notes: "PM completed via schedule",
+        actual_duration_minutes: schedule.estimated_duration || 0
+      }
+      
+      case create_pm_execution(execution_attrs) do
+        {:ok, _execution} ->
+          # Update schedule with new dates
+          attrs = %{
+            last_completed_date: completed_at,
+            next_due_date: calculate_next_due_date(%{schedule | last_completed_date: completed_at})
+          }
+          
+          case update_pm_schedule(schedule, attrs) do
+            {:ok, updated_schedule} -> updated_schedule
+            {:error, changeset} -> Repo.rollback(changeset)
+          end
+          
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
   end
 
   ## PM Executions

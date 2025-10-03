@@ -113,9 +113,10 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
 
   def handle_event("complete_schedule", %{"id" => id}, socket) do
     tenant_id = socket.assigns.current_tenant_id
+    user_id = socket.assigns.current_user_id
     schedule = Maintenance.get_pm_schedule!(tenant_id, id)
     
-    case Maintenance.complete_pm_schedule(schedule) do
+    case Maintenance.complete_pm_schedule(schedule, nil, user_id) do
       {:ok, _} ->
         {:noreply,
          socket

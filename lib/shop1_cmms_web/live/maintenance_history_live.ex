@@ -20,8 +20,13 @@ defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
       |> assign(:search_query, "")
       |> assign(:page, 1)
       |> assign(:per_page, 50)
-      |> load_history()
+      |> assign(:equipment_options, [])
+      |> assign(:technician_options, [])
+      |> assign(:history, [])
+      |> assign(:total_count, 0)
+      |> assign(:total_pages, 0)
       |> load_filter_options()
+      |> load_history()
 
     {:ok, socket}
   end
@@ -76,12 +81,60 @@ defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
     {:noreply, socket}
   end
 
+  def handle_event("sort", %{"field" => field}, socket) do
+    current_sort = socket.assigns.sort_by
+    new_order =
+      if current_sort == field && socket.assigns.sort_order == "asc", do: "desc", else: "asc"
+
+    socket =
+      socket
+      |> assign(:sort_by, field)
+      |> assign(:sort_order, new_order)
+      |> load_history()
+
+    {:noreply, socket}
+  end
+
   def handle_event("paginate", %{"page" => page}, socket) do
     {page_num, _} = Integer.parse(page)
 
     socket =
       socket
       |> assign(:page, page_num)
+      |> load_history()
+
+    {:noreply, socket}
+  end
+
+  def handle_event("change_page", %{"page" => page}, socket) do
+    {page_num, _} = Integer.parse(page)
+
+    socket =
+      socket
+      |> assign(:page, page_num)
+      |> load_history()
+
+    {:noreply, socket}
+  end
+
+  def handle_event("change_per_page", %{"per_page" => per_page}, socket) do
+    {per_page_num, _} = Integer.parse(per_page)
+
+    socket =
+      socket
+      |> assign(:per_page, per_page_num)
+      |> assign(:page, 1)
+      |> load_history()
+
+    {:noreply, socket}
+  end
+
+  def handle_event("reset_filters", _params, socket) do
+    socket =
+      socket
+      |> assign(:filters, default_filters())
+      |> assign(:search_query, "")
+      |> assign(:page, 1)
       |> load_history()
 
     {:noreply, socket}
@@ -198,24 +251,24 @@ defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
         left_join: a in Shop1Cmms.Assets.Asset,
         on: e.asset_id == a.id,
         left_join: u in Shop1Cmms.Accounts.User,
-        on: e.completed_by_user_id == u.id,
+        on: fragment("? = ?::bigint", e.completed_by_user_id, u.id),
         where: not is_nil(e.tenant_id) and e.tenant_id == ^tenant_id and e.status == :completed,
         select: %{
-          id: type(e.id, :string),
-          type: type(^"PM", :string),
+          id: fragment("?::varchar", e.id),
+          type: ^"PM",
           date: e.execution_date,
           completed_date: e.completed_date,
           title: e.execution_number,
           description: fragment("COALESCE(?, 'N/A') || ' - ' || COALESCE(?, 'Unknown')", ps.title, a.name),
-          status: type(^"completed", :string),
-          equipment_id: type(e.asset_id, :string),
+          status: ^"completed",
+          equipment_id: fragment("?::varchar", e.asset_id),
           equipment_name: coalesce(a.name, "Unknown"),
-          technician_id: e.completed_by_user_id,
+          technician_id: fragment("?::bigint", e.completed_by_user_id),
           technician_name: coalesce(u.username, "Unknown"),
           duration: e.actual_duration_minutes,
-          cost: type(^Decimal.new("0"), :decimal),
+          cost: fragment("0::numeric"),
           notes: e.tech_notes,
-          reference_id: type(e.pm_schedule_id, :string)
+          reference_id: fragment("?::varchar", e.pm_schedule_id)
         }
       )
 
@@ -225,24 +278,25 @@ defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
         left_join: a in Shop1Cmms.Assets.Asset,
         on: w.asset_id == a.id,
         left_join: u in Shop1Cmms.Accounts.User,
-        on: w.assigned_to == u.id,
-        where: not is_nil(w.tenant_id) and w.tenant_id == ^tenant_id and w.status == :completed,
+        on: fragment("? = ?::bigint", w.assigned_to, u.id),
+        where: not is_nil(w.tenant_id) and w.tenant_id == ^tenant_id,
+        where: fragment("?::text = 'completed'", w.status),
         select: %{
-          id: type(w.id, :string),
-          type: type(^"Work Order", :string),
+          id: fragment("?::varchar", w.id),
+          type: ^"Work Order",
           date: w.actual_start_date,
           completed_date: w.actual_end_date,
           title: w.title,
           description: w.description,
-          status: type(^"completed", :string),
-          equipment_id: type(w.asset_id, :string),
+          status: fragment("?::varchar", w.status),
+          equipment_id: fragment("?::varchar", w.asset_id),
           equipment_name: coalesce(a.name, "Unknown"),
-          technician_id: w.assigned_to,
+          technician_id: fragment("?::bigint", w.assigned_to),
           technician_name: coalesce(u.username, "Unknown"),
-          duration: fragment("CAST(? * 60 AS integer)", w.actual_hours),
-          cost: coalesce(w.actual_cost, type(^Decimal.new("0"), :decimal)),
+          duration: fragment("COALESCE(CAST(? * 60 AS integer), 0)", w.actual_hours),
+          cost: coalesce(w.actual_cost, fragment("0::numeric")),
           notes: w.completion_notes,
-          reference_id: type(w.id, :string)
+          reference_id: fragment("?::varchar", w.id)
         }
       )
 
@@ -368,6 +422,14 @@ defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
     from([history: h] in query, order_by: [asc: h.type, desc: h.date])
   end
 
+  defp apply_sorting(query, "title", "desc") do
+    from([history: h] in query, order_by: [desc: h.title, desc: h.date])
+  end
+
+  defp apply_sorting(query, "title", "asc") do
+    from([history: h] in query, order_by: [asc: h.title, desc: h.date])
+  end
+
   defp apply_sorting(query, "equipment", "desc") do
     from([history: h] in query, order_by: [desc: h.equipment_name, desc: h.date])
   end
@@ -382,6 +444,22 @@ defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
 
   defp apply_sorting(query, "technician", "asc") do
     from([history: h] in query, order_by: [asc: h.technician_name, desc: h.date])
+  end
+
+  defp apply_sorting(query, "duration", "desc") do
+    from([history: h] in query, order_by: [desc: h.duration, desc: h.date])
+  end
+
+  defp apply_sorting(query, "duration", "asc") do
+    from([history: h] in query, order_by: [asc: h.duration, desc: h.date])
+  end
+
+  defp apply_sorting(query, "status", "desc") do
+    from([history: h] in query, order_by: [desc: h.status, desc: h.date])
+  end
+
+  defp apply_sorting(query, "status", "asc") do
+    from([history: h] in query, order_by: [asc: h.status, desc: h.date])
   end
 
   defp apply_sorting(query, _, _) do
