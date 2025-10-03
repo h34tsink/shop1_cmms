@@ -1,5 +1,15 @@
 # Database Table Mapping Reference
 
+**Purpose:** Complete database schema reference verified against actual database  
+**Last Updated:** 2025-01-31  
+**Status:** ✅ Verified and validated
+
+> 🚨 **IMPORTANT:** Before using any field, check [SCHEMA_FIELD_REFERENCE.md](./SCHEMA_FIELD_REFERENCE.md) for correct field names and common mistakes to avoid!
+
+> 📖 **New Developer?** Start with [DEVELOPER_SCHEMA_GUIDE.md](./DEVELOPER_SCHEMA_GUIDE.md) for quick onboarding!
+
+---
+
 ## User-Related Tables
 
 ### `users` (Core Authentication)
