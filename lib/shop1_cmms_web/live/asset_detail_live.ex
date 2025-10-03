@@ -358,209 +358,223 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
   end
   defp render_overview_tab(assigns) do
     ~H"""
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- Asset Details -->
       <div class="lg:col-span-2">
-        <div class="bg-white shadow rounded-lg p-6">
-          <h2 class="text-lg font-medium text-gray-900 mb-6">Asset Information</h2>
+        <div class="bg-white shadow rounded-lg p-4">
+          <h2 class="text-base font-semibold text-gray-900 mb-4">Asset Information</h2>
 
           <%= if @edit_mode and not is_nil(@form) and not is_nil(@manufacturers) and not is_nil(@asset) do %>
-            <.form for={@form} phx-change="validate" phx-submit="save" class="space-y-6">
+            <.form for={@form} phx-change="validate" phx-submit="save" class="space-y-4">
               <!-- Hidden fields for required values -->
               <.input field={@form[:tenant_id]} type="hidden" />
               <.input field={@form[:asset_type_id]} type="hidden" />
 
-              <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+              <!-- Compact 3-column grid with borders -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <!-- Basic Information -->
-                <div>
-                  <.input field={@form[:name]} label="Asset Name" type="text" required />
-                </div>
-                <div>
-                  <.input field={@form[:asset_number]} label="Asset Number" type="text" required />
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:name]} label="Asset Name" type="text" required class="text-sm" />
                 </div>
                 
-                <!-- Identification -->
-                <div>
-                  <.input field={@form[:serial_number]} label="Serial Number" type="text" />
-                </div>
-                <div>
-                  <.input field={@form[:barcode]} label="Barcode" type="text" />
-                </div>
-                <div>
-                  <.input field={@form[:qr_code]} label="QR Code" type="text" />
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:asset_number]} label="Asset Number" type="text" required class="text-sm" />
                 </div>
                 
-                <!-- Manufacturer & Model -->
-                <div>
-                  <div class="flex items-end gap-2">
-                    <div class="flex-1">
-                      <.input
-                        field={@form[:manufacturer]}
-                        label="Manufacturer"
-                        type="select"
-                        options={manufacturer_options(@manufacturers, @asset.manufacturer || "")}
-                        prompt="Select manufacturer..."
-                      />
-                    </div>
-                    <div>
-                      <.button
-                        type="button"
-                        phx-click="show_manufacturer_modal"
-                        class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2"
-                      >
-                        + New
-                      </.button>
-                    </div>
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:serial_number]} label="Serial Number" type="text" class="text-sm" />
+                </div>
+                
+                <!-- Manufacturer with inline button -->
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Manufacturer</label>
+                  <div class="flex gap-1">
+                    <.input
+                      field={@form[:manufacturer]}
+                      type="select"
+                      options={manufacturer_options(@manufacturers, @asset.manufacturer || "")}
+                      prompt="Select..."
+                      class="text-sm flex-1"
+                    />
+                    <button
+                      type="button"
+                      phx-click="show_manufacturer_modal"
+                      class="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded"
+                      title="Add New Manufacturer"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
-                <div>
-                  <.input field={@form[:model]} label="Model" type="text" />
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:model]} label="Model" type="text" class="text-sm" />
                 </div>
                 
-                <!-- Status & Criticality -->
-                <div>
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:barcode]} label="Barcode" type="text" class="text-sm" />
+                </div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:qr_code]} label="QR Code" type="text" class="text-sm" />
+                </div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input
                     field={@form[:status]}
                     label="Status"
                     type="select"
                     options={status_options()}
                     required
+                    class="text-sm"
                   />
                 </div>
-                <div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input
                     field={@form[:criticality]}
                     label="Criticality"
                     type="select"
                     options={criticality_options()}
                     required
+                    class="text-sm"
                   />
                 </div>
                 
-                <!-- Dates -->
-                <div>
-                  <.input field={@form[:purchase_date]} label="Purchase Date" type="date" />
-                </div>
-                <div>
-                  <.input field={@form[:install_date]} label="Install Date" type="date" />
-                </div>
-                <div>
-                  <.input field={@form[:commission_date]} label="Commission Date" type="date" />
-                </div>
-                <div>
-                  <.input field={@form[:warranty_expiry]} label="Warranty Expiry" type="date" />
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:purchase_date]} label="Purchase Date" type="date" class="text-sm" />
                 </div>
                 
-                <!-- Financial -->
-                <div>
-                  <.input field={@form[:purchase_cost]} label="Purchase Cost" type="number" step="0.01" min="0" />
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:install_date]} label="Install Date" type="date" class="text-sm" />
+                </div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:commission_date]} label="Commission Date" type="date" class="text-sm" />
+                </div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:warranty_expiry]} label="Warranty Expiry" type="date" class="text-sm" />
+                </div>
+                
+                <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                  <.input field={@form[:purchase_cost]} label="Purchase Cost ($)" type="number" step="0.01" min="0" class="text-sm" />
                 </div>
               </div>
 
-              <!-- Full-width fields -->
-              <div>
-                <.input field={@form[:description]} label="Description" type="textarea" rows="3" />
+              <!-- Full-width text fields -->
+              <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                <.input field={@form[:description]} label="Description" type="textarea" rows="2" class="text-sm" />
               </div>
               
-              <div>
-                <.input field={@form[:notes]} label="Notes" type="textarea" rows="3" />
+              <div class="border border-gray-300 rounded p-2 bg-gray-50">
+                <.input field={@form[:notes]} label="Notes" type="textarea" rows="2" class="text-sm" />
               </div>
 
-              <div class="flex justify-end space-x-3 pt-6 border-t">
-                <.button type="button" phx-click="toggle_edit" class="bg-gray-300 hover:bg-gray-400 text-gray-800">
+              <!-- Action buttons -->
+              <div class="flex justify-end space-x-2 pt-3 border-t">
+                <button
+                  type="button"
+                  phx-click="toggle_edit"
+                  class="px-3 py-1.5 text-sm bg-gray-300 hover:bg-gray-400 text-gray-800 rounded"
+                >
                   Cancel
-                </.button>
-                <.button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white">
-                  Save Asset
-                </.button>
+                </button>
+                <button
+                  type="submit"
+                  class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded"
+                >
+                  Save Changes
+                </button>
               </div>
             </.form>
           <% else %>
-            <!-- Read-only View -->
-            <div class="space-y-6">
-              <!-- Basic Information -->
-              <div>
-                <h3 class="text-sm font-semibold text-gray-900 mb-3">Basic Information</h3>
-                <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+            <!-- Read-only View - Compact -->
+            <div class="space-y-4">
+              <!-- Basic Information Section -->
+              <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                <h3 class="text-xs font-semibold text-gray-700 uppercase mb-2">Basic Information</h3>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Asset Number</dt>
-                    <dd class="mt-1 text-sm text-gray-900 font-mono"><%= @asset.asset_number %></dd>
+                    <dt class="text-xs text-gray-500">Asset Number</dt>
+                    <dd class="text-sm font-medium text-gray-900 font-mono"><%= @asset.asset_number %></dd>
                   </div>
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Asset Type</dt>
-                    <dd class="mt-1 text-sm text-gray-900"><%= @asset.asset_type.name %></dd>
+                    <dt class="text-xs text-gray-500">Asset Type</dt>
+                    <dd class="text-sm text-gray-900"><%= @asset.asset_type.name %></dd>
                   </div>
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Asset Name</dt>
-                    <dd class="mt-1 text-sm text-gray-900"><%= @asset.name %></dd>
+                    <dt class="text-xs text-gray-500">Asset Name</dt>
+                    <dd class="text-sm text-gray-900"><%= @asset.name %></dd>
                   </div>
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Location</dt>
-                    <dd class="mt-1 text-sm text-gray-900"><%= if @asset.location, do: @asset.location.name, else: "N/A" %></dd>
-                  </div>
-                </dl>
-              </div>
-
-              <!-- Identification -->
-              <div class="pt-4 border-t border-gray-200">
-                <h3 class="text-sm font-semibold text-gray-900 mb-3">Identification</h3>
-                <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
-                  <div>
-                    <dt class="text-sm font-medium text-gray-500">Serial Number</dt>
-                    <dd class="mt-1 text-sm text-gray-900"><%= @asset.serial_number || "N/A" %></dd>
+                    <dt class="text-xs text-gray-500">Location</dt>
+                    <dd class="text-sm text-gray-900"><%= if @asset.location, do: @asset.location.name, else: "N/A" %></dd>
                   </div>
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Barcode</dt>
-                    <dd class="mt-1 text-sm text-gray-900 font-mono"><%= @asset.barcode || "N/A" %></dd>
+                    <dt class="text-xs text-gray-500">Status</dt>
+                    <dd class="text-sm"><AssetComponents.status_badge status={@asset.status} /></dd>
                   </div>
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">QR Code</dt>
-                    <dd class="mt-1 text-sm text-gray-900 font-mono"><%= @asset.qr_code || "N/A" %></dd>
+                    <dt class="text-xs text-gray-500">Criticality</dt>
+                    <dd class="text-sm"><AssetComponents.criticality_badge criticality={@asset.criticality} /></dd>
                   </div>
                 </dl>
               </div>
 
-              <!-- Manufacturer & Model -->
-              <div class="pt-4 border-t border-gray-200">
-                <h3 class="text-sm font-semibold text-gray-900 mb-3">Manufacturer Details</h3>
-                <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+              <!-- Identification Section -->
+              <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                <h3 class="text-xs font-semibold text-gray-700 uppercase mb-2">Identification</h3>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Manufacturer</dt>
-                    <dd class="mt-1 text-sm text-gray-900"><%= @asset.manufacturer || "N/A" %></dd>
+                    <dt class="text-xs text-gray-500">Serial Number</dt>
+                    <dd class="text-sm text-gray-900"><%= @asset.serial_number || "N/A" %></dd>
                   </div>
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Model</dt>
-                    <dd class="mt-1 text-sm text-gray-900"><%= @asset.model || "N/A" %></dd>
+                    <dt class="text-xs text-gray-500">Barcode</dt>
+                    <dd class="text-sm text-gray-900 font-mono"><%= @asset.barcode || "N/A" %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-gray-500">QR Code</dt>
+                    <dd class="text-sm text-gray-900 font-mono"><%= @asset.qr_code || "N/A" %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-gray-500">Manufacturer</dt>
+                    <dd class="text-sm text-gray-900"><%= @asset.manufacturer || "N/A" %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-gray-500">Model</dt>
+                    <dd class="text-sm text-gray-900"><%= @asset.model || "N/A" %></dd>
                   </div>
                 </dl>
               </div>
 
-              <!-- Dates -->
-              <div class="pt-4 border-t border-gray-200">
-                <h3 class="text-sm font-semibold text-gray-900 mb-3">Important Dates</h3>
-                <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+              <!-- Dates Section -->
+              <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                <h3 class="text-xs font-semibold text-gray-700 uppercase mb-2">Important Dates</h3>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Purchase Date</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                      <%= if @asset.purchase_date, do: Calendar.strftime(@asset.purchase_date, "%B %d, %Y"), else: "N/A" %>
+                    <dt class="text-xs text-gray-500">Purchase Date</dt>
+                    <dd class="text-sm text-gray-900">
+                      <%= if @asset.purchase_date, do: Calendar.strftime(@asset.purchase_date, "%m/%d/%Y"), else: "N/A" %>
                     </dd>
                   </div>
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Install Date</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                      <%= if @asset.install_date, do: Calendar.strftime(@asset.install_date, "%B %d, %Y"), else: "N/A" %>
+                    <dt class="text-xs text-gray-500">Install Date</dt>
+                    <dd class="text-sm text-gray-900">
+                      <%= if @asset.install_date, do: Calendar.strftime(@asset.install_date, "%m/%d/%Y"), else: "N/A" %>
                     </dd>
                   </div>
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Commission Date</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                      <%= if @asset.commission_date, do: Calendar.strftime(@asset.commission_date, "%B %d, %Y"), else: "N/A" %>
+                    <dt class="text-xs text-gray-500">Commission Date</dt>
+                    <dd class="text-sm text-gray-900">
+                      <%= if @asset.commission_date, do: Calendar.strftime(@asset.commission_date, "%m/%d/%Y"), else: "N/A" %>
                     </dd>
                   </div>
                   <div>
-                    <dt class="text-sm font-medium text-gray-500">Warranty Expiry</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                      <%= if @asset.warranty_expiry, do: Calendar.strftime(@asset.warranty_expiry, "%B %d, %Y"), else: "N/A" %>
+                    <dt class="text-xs text-gray-500">Warranty Expiry</dt>
+                    <dd class="text-sm text-gray-900">
+                      <%= if @asset.warranty_expiry, do: Calendar.strftime(@asset.warranty_expiry, "%m/%d/%Y"), else: "N/A" %>
                     </dd>
                   </div>
                 </dl>
@@ -568,16 +582,16 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
 
               <!-- Description & Notes -->
               <%= if @asset.description || @asset.notes do %>
-                <div class="pt-4 border-t border-gray-200 space-y-4">
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
                   <%= if @asset.description do %>
                     <div>
-                      <dt class="text-sm font-medium text-gray-500 mb-2">Description</dt>
+                      <dt class="text-xs font-semibold text-gray-700 uppercase mb-1">Description</dt>
                       <dd class="text-sm text-gray-900 whitespace-pre-wrap"><%= @asset.description %></dd>
                     </div>
                   <% end %>
                   <%= if @asset.notes do %>
-                    <div>
-                      <dt class="text-sm font-medium text-gray-500 mb-2">Notes</dt>
+                    <div class={if @asset.description, do: "pt-2 border-t border-gray-300", else: ""}>
+                      <dt class="text-xs font-semibold text-gray-700 uppercase mb-1">Notes</dt>
                       <dd class="text-sm text-gray-900 whitespace-pre-wrap"><%= @asset.notes %></dd>
                     </div>
                   <% end %>
@@ -588,45 +602,45 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         </div>
       </div>
 
-      <!-- Quick Stats -->
-      <div class="space-y-6">
+      <!-- Quick Stats Sidebar -->
+      <div class="space-y-4">
         <!-- Status Card -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Stats</h3>
-          <div class="space-y-4">
-            <div class="flex justify-between">
-              <span class="text-sm text-gray-500">Open Work Orders</span>
-              <span class="text-sm font-medium text-gray-900">
+        <div class="bg-white shadow rounded-lg p-4">
+          <h3 class="text-sm font-semibold text-gray-900 mb-3">Quick Stats</h3>
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-500">Open Work Orders</span>
+              <span class="text-sm font-bold text-blue-600">
                 <%= Enum.count(@work_orders, &(&1.status in [:pending, :in_progress])) %>
               </span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-sm text-gray-500">Total Work Orders</span>
-              <span class="text-sm font-medium text-gray-900"><%= length(@work_orders) %></span>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-500">Total Work Orders</span>
+              <span class="text-sm font-semibold text-gray-900"><%= length(@work_orders) %></span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-sm text-gray-500">Maintenance Tasks</span>
-              <span class="text-sm font-medium text-gray-900"><%= length(@maintenance_history) %></span>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-500">Maintenance Tasks</span>
+              <span class="text-sm font-semibold text-gray-900"><%= length(@maintenance_history) %></span>
             </div>
           </div>
         </div>
 
         <!-- Financial Info -->
         <%= if @asset.purchase_cost do %>
-          <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Financial</h3>
-            <div class="space-y-4">
-              <div class="flex justify-between">
-                <span class="text-sm text-gray-500">Purchase Cost</span>
-                <span class="text-sm font-medium text-gray-900">
+          <div class="bg-white shadow rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Financial</h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-500">Purchase Cost</span>
+                <span class="text-sm font-bold text-green-600">
                   $<%= Decimal.to_string(@asset.purchase_cost, :normal) %>
                 </span>
               </div>
               <%= if @asset.warranty_expiry do %>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-500">Warranty Expiry</span>
-                  <span class="text-sm font-medium text-gray-900">
-                    <%= Calendar.strftime(@asset.warranty_expiry, "%B %d, %Y") %>
+                <div class="flex justify-between items-center">
+                  <span class="text-xs text-gray-500">Warranty Expiry</span>
+                  <span class="text-sm text-gray-900">
+                    <%= Calendar.strftime(@asset.warranty_expiry, "%m/%d/%Y") %>
                   </span>
                 </div>
               <% end %>
