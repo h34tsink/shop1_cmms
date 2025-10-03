@@ -2,6 +2,7 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
   use Shop1CmmsWeb, :live_view
   alias Shop1Cmms.Maintenance
   alias Shop1Cmms.Assets
+  alias Shop1Cmms.Metadata
   alias Shop1Cmms.Maintenance.PmSchedule
   alias Shop1Cmms.Exports
 
@@ -25,6 +26,9 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
      |> assign(:asset_search, "")
      |> assign(:sort_by, :schedule_number)
      |> assign(:sort_direction, :asc)
+     |> assign(:required_skills, [])
+     |> assign(:required_tools, [])
+     |> assign(:ppe_required, [])
      |> load_pm_schedules(tenant_id)
      |> load_assets(tenant_id)}
   end
@@ -54,6 +58,9 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     |> assign(:checklist_items, [])
     |> assign(:components, [])
     |> assign(:documents, [])
+    |> assign(:required_skills, [])
+    |> assign(:required_tools, [])
+    |> assign(:ppe_required, [])
   end
 
   defp apply_action(socket, :edit, %{"id" => id}) do
@@ -78,6 +85,9 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     |> assign(:selected_schedule, schedule)
     |> assign(:form, to_form(changeset))
     |> assign(:work_instruction_lines, work_instruction_lines)
+    |> assign(:required_skills, schedule.required_skills || [])
+    |> assign(:required_tools, schedule.required_tools || [])
+    |> assign(:ppe_required, schedule.ppe_required || [])
     |> assign(:checklist_items, schedule.checklist_items || [])
     |> assign(:components, schedule.components || [])
     |> assign(:documents, schedule.documents || [])
@@ -186,12 +196,22 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     id = String.to_integer(id)
     lines = socket.assigns.work_instruction_lines
     idx = Enum.find_index(lines, &(&1.id == id))
-    
+
     if idx && idx < length(lines) - 1 do
       lines = swap_elements(lines, idx, idx + 1)
       {:noreply, assign(socket, :work_instruction_lines, lines)}
     else
       {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_info({:tags_updated, field_name, tags}, socket) do
+    case field_name do
+      "required_skills" -> {:noreply, assign(socket, :required_skills, tags)}
+      "required_tools" -> {:noreply, assign(socket, :required_tools, tags)}
+      "ppe_required" -> {:noreply, assign(socket, :ppe_required, tags)}
+      _ -> {:noreply, socket}
     end
   end
 
@@ -273,9 +293,17 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
       pm_params
       |> Map.put("tenant_id", tenant_id)
       |> Map.put("work_instructions", work_instructions)
+      |> Map.put("required_skills", socket.assigns.required_skills)
+      |> Map.put("required_tools", socket.assigns.required_tools)
+      |> Map.put("ppe_required", socket.assigns.ppe_required)
 
     case Maintenance.create_pm_schedule(pm_params) do
       {:ok, _pm_schedule} ->
+        # Auto-create tags for future autocomplete
+        create_tags_if_needed(tenant_id, socket.assigns.required_skills, :skill)
+        create_tags_if_needed(tenant_id, socket.assigns.required_tools, :tool)
+        create_tags_if_needed(tenant_id, socket.assigns.ppe_required, :ppe)
+        
         {:noreply,
          socket
          |> put_flash(:info, "PM Schedule created successfully")
@@ -287,6 +315,8 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
   end
 
   defp save_pm_schedule(socket, :edit, pm_params) do
+    tenant_id = socket.assigns.current_tenant_id
+    
     # Combine work instruction lines into a single text field
     work_instructions = 
       socket.assigns.work_instruction_lines
@@ -294,10 +324,20 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
       |> Enum.filter(&(String.trim(&1) != ""))
       |> Enum.join("\n")
     
-    pm_params = Map.put(pm_params, "work_instructions", work_instructions)
+    pm_params = 
+      pm_params
+      |> Map.put("work_instructions", work_instructions)
+      |> Map.put("required_skills", socket.assigns.required_skills)
+      |> Map.put("required_tools", socket.assigns.required_tools)
+      |> Map.put("ppe_required", socket.assigns.ppe_required)
 
     case Maintenance.update_pm_schedule(socket.assigns.selected_schedule, pm_params) do
       {:ok, _pm_schedule} ->
+        # Auto-create tags for future autocomplete
+        create_tags_if_needed(tenant_id, socket.assigns.required_skills, :skill)
+        create_tags_if_needed(tenant_id, socket.assigns.required_tools, :tool)
+        create_tags_if_needed(tenant_id, socket.assigns.ppe_required, :ppe)
+        
         {:noreply,
          socket
          |> put_flash(:info, "PM Schedule updated successfully")
@@ -306,6 +346,12 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :form, to_form(changeset))}
     end
+  end
+
+  defp create_tags_if_needed(tenant_id, tag_names, tag_type) do
+    Enum.each(tag_names, fn tag_name ->
+      Metadata.get_or_create_pm_tag(tenant_id, tag_name, tag_type)
+    end)
   end
 
   defp load_pm_schedules(socket, tenant_id) do
@@ -980,6 +1026,54 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
                           </div>
                         <% end %>
                       <% end %>
+                    </div>
+                  </div>
+
+                  <!-- Required Skills, Tools, PPE -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                      <svg class="w-4 h-4 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                      </svg>
+                      Requirements
+                    </h3>
+                    
+                    <div class="space-y-3">
+                      <!-- Required Skills -->
+                      <.live_component
+                        module={Shop1CmmsWeb.TagInputComponent}
+                        id="skills-input"
+                        tags={@required_skills}
+                        tag_type={:skill}
+                        field_name="required_skills"
+                        label="Required Skills"
+                        placeholder="Type skills (e.g., LOTO, Mechanical, Electrical)..."
+                        tenant_id={@current_tenant_id}
+                      />
+                      
+                      <!-- Required Tools -->
+                      <.live_component
+                        module={Shop1CmmsWeb.TagInputComponent}
+                        id="tools-input"
+                        tags={@required_tools}
+                        tag_type={:tool}
+                        field_name="required_tools"
+                        label="Required Tools"
+                        placeholder="Type tools (e.g., Torque Wrench, Multimeter)..."
+                        tenant_id={@current_tenant_id}
+                      />
+                      
+                      <!-- PPE Required -->
+                      <.live_component
+                        module={Shop1CmmsWeb.TagInputComponent}
+                        id="ppe-input"
+                        tags={@ppe_required}
+                        tag_type={:ppe}
+                        field_name="ppe_required"
+                        label="PPE Required"
+                        placeholder="Type PPE (e.g., Safety Glasses, Gloves)..."
+                        tenant_id={@current_tenant_id}
+                      />
                     </div>
                   </div>
 

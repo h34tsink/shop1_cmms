@@ -2,7 +2,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   use Shop1CmmsWeb, :live_view
 
   alias Shop1Cmms.Metadata
-  alias Shop1Cmms.Metadata.{Manufacturer, Department, Supplier, PriorityCode, MaintenanceCategory, CustomField}
+  alias Shop1Cmms.Metadata.{Manufacturer, Department, Supplier, PriorityCode, MaintenanceCategory, CustomField, PmTag}
   alias Shop1Cmms.Assets
   alias Shop1Cmms.Assets.{AssetType, AssetLocation}
 
@@ -54,11 +54,17 @@ defmodule Shop1CmmsWeb.MetadataLive do
       schema: AssetLocation,
       context_fn: :list_asset_locations,
       singular: "asset_location"
+    },
+    "pm_tags" => %{
+      title: "PM Tags (Skills, Tools, PPE)",
+      schema: PmTag,
+      context_fn: :list_pm_tags,
+      singular: "pm_tag"
     }
   }
 
   @impl true
-  def mount(%{"type" => type} = _params, _session, socket) when type in ["manufacturers", "departments", "suppliers", "priority_codes", "maintenance_categories", "custom_fields", "asset_types", "asset_locations"] do
+  def mount(%{"type" => type} = _params, _session, socket) when type in ["manufacturers", "departments", "suppliers", "priority_codes", "maintenance_categories", "custom_fields", "asset_types", "asset_locations", "pm_tags"] do
     tenant_id = socket.assigns.current_tenant.id
 
     {:ok,
@@ -69,6 +75,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
      |> assign(:show_modal, false)
      |> assign(:form_action, :new)
      |> assign(:selected_item, nil)
+     |> assign(:tag_type_filter, "all")
      |> load_metadata_items(tenant_id)}
   end
 
@@ -212,6 +219,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp get_empty_item("custom_fields"), do: %Shop1Cmms.Metadata.CustomField{}
   defp get_empty_item("asset_types"), do: %Shop1Cmms.Assets.AssetType{}
   defp get_empty_item("asset_locations"), do: %Shop1Cmms.Assets.AssetLocation{}
+  defp get_empty_item("pm_tags"), do: %Shop1Cmms.Metadata.PmTag{}
 
   defp load_metadata_items(socket, tenant_id, search_query \\ "") do
     opts = [active_only: true]
