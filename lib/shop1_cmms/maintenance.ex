@@ -277,7 +277,18 @@ defmodule Shop1Cmms.Maintenance do
   Creates a PM execution record for the history.
   """
   def complete_pm_schedule(%PmSchedule{} = schedule, completed_at \\ nil, user_id \\ nil) do
+    require Logger
     completed_at = completed_at || DateTime.utc_now()
+    
+    Logger.info("Starting PM completion for schedule #{schedule.id}")
+    
+    # Convert estimated_duration to integer minutes
+    duration_minutes = case schedule.estimated_duration do
+      nil -> 0
+      %Decimal{} = d -> Decimal.to_integer(d)
+      n when is_number(n) -> trunc(n)
+      _ -> 0
+    end
     
     Repo.transaction(fn ->
       # Create PM execution record for history
@@ -291,23 +302,34 @@ defmodule Shop1Cmms.Maintenance do
         completed_by_user_id: user_id,
         tenant_id: schedule.tenant_id,
         tech_notes: "PM completed via schedule",
-        actual_duration_minutes: schedule.estimated_duration || 0
+        actual_duration_minutes: duration_minutes
       }
       
+      Logger.debug("Creating PM execution with attrs: #{inspect(execution_attrs)}")
+      
       case create_pm_execution(execution_attrs) do
-        {:ok, _execution} ->
+        {:ok, execution} ->
+          Logger.info("PM execution #{execution.id} created successfully")
           # Update schedule with new dates
+          next_due = calculate_next_due_date(%{schedule | last_completed_date: completed_at})
           attrs = %{
             last_completed_date: completed_at,
-            next_due_date: calculate_next_due_date(%{schedule | last_completed_date: completed_at})
+            next_due_date: next_due
           }
           
+          Logger.debug("Updating PM schedule with attrs: #{inspect(attrs)}")
+          
           case update_pm_schedule(schedule, attrs) do
-            {:ok, updated_schedule} -> updated_schedule
-            {:error, changeset} -> Repo.rollback(changeset)
+            {:ok, updated_schedule} -> 
+              Logger.info("PM schedule #{schedule.id} updated successfully")
+              updated_schedule
+            {:error, changeset} -> 
+              Logger.error("Failed to update PM schedule: #{inspect(changeset.errors)}")
+              Repo.rollback(changeset)
           end
           
         {:error, changeset} ->
+          Logger.error("Failed to create PM execution: #{inspect(changeset.errors)}")
           Repo.rollback(changeset)
       end
     end)
@@ -385,6 +407,14 @@ defmodule Shop1Cmms.Maintenance do
   @doc """
   Gets a single PM execution.
   """
+  def get_pm_execution(tenant_id, id) do
+    from(e in PmExecution,
+      where: e.tenant_id == ^tenant_id and e.id == ^id,
+      preload: [:pm_schedule, :asset, :component, :completed_by_user, :work_order]
+    )
+    |> Repo.one()
+  end
+
   def get_pm_execution!(tenant_id, id) do
     from(e in PmExecution,
       where: e.tenant_id == ^tenant_id and e.id == ^id,
@@ -560,3 +590,4 @@ defmodule Shop1Cmms.Maintenance do
     |> Enum.sort_by(fn item -> item.date end, {:desc, DateTime})
   end
 end
+

@@ -72,6 +72,7 @@ defmodule Shop1CmmsWeb.Router do
       live "/pm-schedules/new", PmSchedulesLive, :new
       live "/pm-schedules/:id", PmScheduleDetailLive, :show
       live "/pm-schedules/:id/edit", PmSchedulesLive, :edit
+      live "/pm-executions/:id", PmExecutionDetailLive, :show
 
       # Maintenance History
       live "/maintenance-history", MaintenanceHistoryLive, :index
@@ -109,3 +110,5 @@ defmodule Shop1CmmsWeb.Router do
     end
   end
 end
+
+

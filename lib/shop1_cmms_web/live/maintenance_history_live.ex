@@ -149,7 +149,7 @@ defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
     # Redirect to detail page based on type
     path =
       case type do
-        "PM" -> ~p"/pm-schedules/#{id}"
+        "PM" -> ~p"/pm-executions/#{id}"
         "Work Order" -> ~p"/work_orders/#{id}"
         _ -> ~p"/maintenance-history"
       end

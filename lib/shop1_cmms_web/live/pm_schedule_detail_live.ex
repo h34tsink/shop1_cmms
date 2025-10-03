@@ -222,20 +222,26 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
   end
 
   def handle_event("complete_pm", _params, socket) do
+    require Logger
     user_id = socket.assigns.current_user_id
+    schedule = socket.assigns.schedule
     
-    case Maintenance.complete_pm_schedule(socket.assigns.schedule, nil, user_id) do
-      {:ok, _schedule} ->
+    Logger.info("Completing PM schedule #{schedule.id} for user #{user_id}")
+    
+    case Maintenance.complete_pm_schedule(schedule, nil, user_id) do
+      {:ok, updated_schedule} ->
+        Logger.info("PM schedule #{schedule.id} completed successfully")
         tenant_id = socket.assigns.current_tenant_id
-        schedule = Maintenance.get_pm_schedule!(tenant_id, socket.assigns.schedule.id)
+        refreshed_schedule = Maintenance.get_pm_schedule!(tenant_id, socket.assigns.schedule.id)
         
         {:noreply,
          socket
          |> put_flash(:info, "PM marked as completed and next due date updated")
-         |> assign(:schedule, schedule)}
+         |> assign(:schedule, refreshed_schedule)}
       
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to complete PM")}
+      {:error, reason} ->
+        Logger.error("Failed to complete PM schedule #{schedule.id}: #{inspect(reason)}")
+        {:noreply, put_flash(socket, :error, "Failed to complete PM: #{inspect(reason)}")}
     end
   end
 
@@ -262,8 +268,11 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
           
           <div class="flex items-center gap-3">
             <button
+              type="button"
               phx-click="complete_pm"
-              class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+              phx-disable-with="Completing..."
+              data-confirm="Are you sure you want to mark this PM as completed? This will create an execution record and update the next due date."
+              class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
