@@ -13,6 +13,9 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
     assets = Assets.list_assets(tenant_id, [])
     asset_types = Assets.list_asset_types(tenant_id)
 
+    # Parse work instructions into list if it's a string
+    work_instructions_list = parse_work_instructions(schedule.work_instructions)
+
     {:ok,
      socket
      |> assign(:page_title, "PM Schedule Details")
@@ -22,6 +25,7 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
      |> assign(:active_tab, "overview")
      |> assign(:edit_mode, false)
      |> assign(:form, nil)
+     |> assign(:work_instructions_list, work_instructions_list)
      |> assign(:show_component_form, false)
      |> assign(:show_checklist_form, false)
      |> assign(:show_document_form, false)
@@ -31,6 +35,16 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
      |> assign(:component_form, nil)
      |> assign(:checklist_form, nil)
      |> assign(:document_form, nil)}
+  end
+
+  defp parse_work_instructions(nil), do: []
+  defp parse_work_instructions(""), do: []
+  defp parse_work_instructions(instructions) when is_binary(instructions) do
+    instructions
+    |> String.split("\n")
+    |> Enum.reject(&(String.trim(&1) == ""))
+    |> Enum.with_index()
+    |> Enum.map(fn {line, idx} -> %{id: idx, text: String.trim(line)} end)
   end
 
   @impl true
@@ -59,13 +73,65 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
     else
       # Entering edit mode - create form
       changeset = Maintenance.change_pm_schedule(socket.assigns.schedule)
+      work_instructions_list = parse_work_instructions(socket.assigns.schedule.work_instructions)
 
       socket = socket
       |> assign(:edit_mode, true)
       |> assign(:form, to_form(changeset))
+      |> assign(:work_instructions_list, work_instructions_list)
 
       {:noreply, socket}
     end
+  end
+
+  def handle_event("add_instruction", _params, socket) do
+    new_id = (Enum.map(socket.assigns.work_instructions_list, & &1.id) |> Enum.max(fn -> -1 end)) + 1
+    new_list = socket.assigns.work_instructions_list ++ [%{id: new_id, text: ""}]
+    {:noreply, assign(socket, :work_instructions_list, new_list)}
+  end
+
+  def handle_event("remove_instruction", %{"id" => id_str}, socket) do
+    id = String.to_integer(id_str)
+    new_list = Enum.reject(socket.assigns.work_instructions_list, &(&1.id == id))
+    {:noreply, assign(socket, :work_instructions_list, new_list)}
+  end
+
+  def handle_event("update_instruction", %{"id" => id_str, "value" => value}, socket) do
+    id = String.to_integer(id_str)
+    new_list = Enum.map(socket.assigns.work_instructions_list, fn item ->
+      if item.id == id, do: %{item | text: value}, else: item
+    end)
+    {:noreply, assign(socket, :work_instructions_list, new_list)}
+  end
+
+  def handle_event("move_instruction_up", %{"id" => id_str}, socket) do
+    id = String.to_integer(id_str)
+    list = socket.assigns.work_instructions_list
+    idx = Enum.find_index(list, &(&1.id == id))
+    
+    new_list = if idx > 0 do
+      List.update_at(list, idx, fn item -> Enum.at(list, idx - 1) end)
+      |> List.update_at(idx - 1, fn _ -> Enum.at(list, idx) end)
+    else
+      list
+    end
+    
+    {:noreply, assign(socket, :work_instructions_list, new_list)}
+  end
+
+  def handle_event("move_instruction_down", %{"id" => id_str}, socket) do
+    id = String.to_integer(id_str)
+    list = socket.assigns.work_instructions_list
+    idx = Enum.find_index(list, &(&1.id == id))
+    
+    new_list = if idx < length(list) - 1 do
+      List.update_at(list, idx, fn item -> Enum.at(list, idx + 1) end)
+      |> List.update_at(idx + 1, fn _ -> Enum.at(list, idx) end)
+    else
+      list
+    end
+    
+    {:noreply, assign(socket, :work_instructions_list, new_list)}
   end
 
   def handle_event("validate", %{"pm_schedule" => schedule_params}, socket) do
@@ -78,6 +144,14 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
   end
 
   def handle_event("save", %{"pm_schedule" => schedule_params}, socket) do
+    # Convert work instructions list back to string
+    work_instructions_text = socket.assigns.work_instructions_list
+    |> Enum.map(& &1.text)
+    |> Enum.reject(&(String.trim(&1) == ""))
+    |> Enum.join("\n")
+    
+    schedule_params = Map.put(schedule_params, "work_instructions", work_instructions_text)
+
     case Maintenance.update_pm_schedule(socket.assigns.schedule, schedule_params) do
       {:ok, updated_schedule} ->
         # Reload schedule with details to get fresh data
@@ -88,6 +162,7 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
         |> assign(:schedule, schedule)
         |> assign(:edit_mode, false)
         |> assign(:form, nil)
+        |> assign(:work_instructions_list, [])
         |> put_flash(:info, "PM Schedule updated successfully")
 
         {:noreply, socket}
@@ -418,7 +493,7 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
         <div class="px-6 py-6">
           <%= case @active_tab do %>
             <% "overview" -> %>
-              <.render_overview schedule={@schedule} edit_mode={@edit_mode} form={@form} assets={@assets} />
+              <.render_overview schedule={@schedule} edit_mode={@edit_mode} form={@form} assets={@assets} work_instructions_list={@work_instructions_list} />
             <% "instructions" -> %>
               <.render_instructions schedule={@schedule} />
             <% "checklist" -> %>
