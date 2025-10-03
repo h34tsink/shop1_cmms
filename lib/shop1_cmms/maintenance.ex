@@ -6,8 +6,130 @@ defmodule Shop1Cmms.Maintenance do
   import Ecto.Query, warn: false
   alias Shop1Cmms.Repo
 
-  alias Shop1Cmms.Maintenance.{PmSchedule, PmScheduleComponent, PmChecklistItem, AssetDocument, PmExecution}
+  alias Shop1Cmms.Maintenance.{PmSchedule, PmScheduleComponent, PmChecklistItem, AssetDocument, PmExecution, PmTag}
   alias Shop1Cmms.Accounts.User
+
+  ## PM Tags Configuration
+
+  @doc """
+  Returns the list of PM tags for a tenant, optionally filtered by type.
+  """
+  def list_pm_tags(tenant_id, opts \\ []) do
+    query = PmTag.by_tenant(tenant_id)
+    
+    query =
+      case opts[:type] do
+        type when type in [:skill, :tool, :ppe] -> PmTag.by_type(query, type)
+        _ -> query
+      end
+    
+    query =
+      if opts[:active_only] do
+        PmTag.active_only(query)
+      else
+        query
+      end
+    
+    query =
+      case opts[:order_by] do
+        :usage -> PmTag.order_by_usage(query)
+        _ -> PmTag.order_by_name(query)
+      end
+    
+    Repo.all(query)
+  end
+
+  @doc """
+  Search PM tags by name.
+  """
+  def search_pm_tags(tenant_id, search_term, type \\ nil) do
+    query =
+      PmTag.by_tenant(tenant_id)
+      |> PmTag.active_only()
+      |> PmTag.search(search_term)
+    
+    query =
+      if type in [:skill, :tool, :ppe] do
+        PmTag.by_type(query, type)
+      else
+        query
+      end
+    
+    query
+    |> PmTag.order_by_usage()
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a single PM tag.
+  """
+  def get_pm_tag!(id), do: Repo.get!(PmTag, id)
+
+  @doc """
+  Gets or creates a PM tag by name and type.
+  """
+  def get_or_create_pm_tag(tenant_id, name, type) when type in [:skill, :tool, :ppe] do
+    # Try to find existing tag
+    query =
+      PmTag.by_tenant(tenant_id)
+      |> PmTag.by_type(type)
+      |> where([t], t.name == ^name)
+    
+    case Repo.one(query) do
+      nil ->
+        # Create new tag
+        %PmTag{}
+        |> PmTag.changeset(%{
+          name: name,
+          tag_type: type,
+          tenant_id: tenant_id
+        })
+        |> Repo.insert()
+      
+      tag ->
+        {:ok, tag}
+    end
+  end
+
+  @doc """
+  Creates a PM tag.
+  """
+  def create_pm_tag(attrs \\ %{}) do
+    %PmTag{}
+    |> PmTag.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a PM tag.
+  """
+  def update_pm_tag(%PmTag{} = pm_tag, attrs) do
+    pm_tag
+    |> PmTag.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a PM tag.
+  """
+  def delete_pm_tag(%PmTag{} = pm_tag) do
+    Repo.delete(pm_tag)
+  end
+
+  @doc """
+  Increments the usage count for a PM tag.
+  """
+  def increment_pm_tag_usage(tag_id) do
+    from(t in PmTag, where: t.id == ^tag_id)
+    |> Repo.update_all(inc: [usage_count: 1])
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking PM tag changes.
+  """
+  def change_pm_tag(%PmTag{} = pm_tag, attrs \\ %{}) do
+    PmTag.changeset(pm_tag, attrs)
+  end
 
   ## PM Schedules
 

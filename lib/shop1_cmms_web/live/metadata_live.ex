@@ -2,7 +2,9 @@ defmodule Shop1CmmsWeb.MetadataLive do
   use Shop1CmmsWeb, :live_view
 
   alias Shop1Cmms.Metadata
-  alias Shop1Cmms.Metadata.{Manufacturer, Department, Supplier, PriorityCode, MaintenanceCategory, CustomField, PmTag}
+  alias Shop1Cmms.Metadata.{Manufacturer, Department, Supplier, PriorityCode, MaintenanceCategory, CustomField}
+  alias Shop1Cmms.Maintenance
+  alias Shop1Cmms.Maintenance.PmTag
   alias Shop1Cmms.Assets
   alias Shop1Cmms.Assets.{AssetType, AssetLocation}
 
@@ -219,13 +221,20 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp get_empty_item("custom_fields"), do: %Shop1Cmms.Metadata.CustomField{}
   defp get_empty_item("asset_types"), do: %Shop1Cmms.Assets.AssetType{}
   defp get_empty_item("asset_locations"), do: %Shop1Cmms.Assets.AssetLocation{}
-  defp get_empty_item("pm_tags"), do: %Shop1Cmms.Metadata.PmTag{}
+  defp get_empty_item("pm_tags"), do: %Shop1Cmms.Maintenance.PmTag{}
 
   defp load_metadata_items(socket, tenant_id, search_query \\ "") do
     opts = [active_only: true]
     opts = if search_query != "", do: Keyword.put(opts, :search, search_query), else: opts
 
-    context_module = if socket.assigns.metadata_type in ["asset_types", "asset_locations"], do: Assets, else: Metadata
+    # Choose the right context module
+    context_module = 
+      cond do
+        socket.assigns.metadata_type in ["asset_types", "asset_locations"] -> Assets
+        socket.assigns.metadata_type == "pm_tags" -> Maintenance
+        true -> Metadata
+      end
+    
     items = apply(context_module, socket.assigns.metadata_config.context_fn, [tenant_id, opts])
     assign(socket, :items, items)
   end  # Context function helpers
@@ -237,7 +246,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp get_metadata_item("custom_fields", tenant_id, id), do: Metadata.get_custom_field!(tenant_id, id)
   defp get_metadata_item("asset_types", tenant_id, id), do: Assets.get_asset_type!(tenant_id, id)
   defp get_metadata_item("asset_locations", tenant_id, id), do: Assets.get_asset_location!(tenant_id, id)
-  defp get_metadata_item("pm_tags", tenant_id, id), do: Metadata.get_pm_tag!(id)
+  defp get_metadata_item("pm_tags", _tenant_id, id), do: Maintenance.get_pm_tag!(id)
 
   # These function definitions are moved to be grouped together at the end of the file
 
@@ -707,7 +716,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp update_metadata_by_type("custom_fields", item, attrs), do: Metadata.update_custom_field(item, attrs)
   defp update_metadata_by_type("asset_types", item, attrs), do: Assets.update_asset_type(item, attrs)
   defp update_metadata_by_type("asset_locations", item, attrs), do: Assets.update_asset_location(item, attrs)
-  defp update_metadata_by_type("pm_tags", item, attrs), do: Metadata.update_pm_tag(item, attrs)
+  defp update_metadata_by_type("pm_tags", item, attrs), do: Maintenance.update_pm_tag(item, attrs)
 
   defp delete_metadata_item("manufacturers", item), do: Metadata.delete_manufacturer(item)
   defp delete_metadata_item("departments", item), do: Metadata.delete_department(item)
@@ -717,7 +726,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp delete_metadata_item("custom_fields", item), do: Metadata.delete_custom_field(item)
   defp delete_metadata_item("asset_types", item), do: Assets.delete_asset_type(item)
   defp delete_metadata_item("asset_locations", item), do: Assets.delete_asset_location(item)
-  defp delete_metadata_item("pm_tags", item), do: Metadata.delete_pm_tag(item)
+  defp delete_metadata_item("pm_tags", item), do: Maintenance.delete_pm_tag(item)
 
   defp change_metadata_by_type("manufacturers", item), do: Metadata.change_manufacturer(item)
   defp change_metadata_by_type("departments", item), do: Metadata.change_department(item)
@@ -727,7 +736,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp change_metadata_by_type("custom_fields", item), do: Metadata.change_custom_field(item)
   defp change_metadata_by_type("asset_types", item), do: Assets.change_asset_type(item)
   defp change_metadata_by_type("asset_locations", item), do: Assets.change_asset_location(item)
-  defp change_metadata_by_type("pm_tags", item), do: Metadata.change_pm_tag(item)
+  defp change_metadata_by_type("pm_tags", item), do: Maintenance.change_pm_tag(item)
 
   defp create_metadata_by_type("manufacturers", attrs), do: Metadata.create_manufacturer(attrs)
   defp create_metadata_by_type("departments", attrs), do: Metadata.create_department(attrs)
@@ -737,7 +746,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp create_metadata_by_type("custom_fields", attrs), do: Metadata.create_custom_field(attrs)
   defp create_metadata_by_type("asset_types", attrs), do: Assets.create_asset_type(attrs)
   defp create_metadata_by_type("asset_locations", attrs), do: Assets.create_asset_location(attrs)
-  defp create_metadata_by_type("pm_tags", attrs), do: Metadata.create_pm_tag(attrs)
+  defp create_metadata_by_type("pm_tags", attrs), do: Maintenance.create_pm_tag(attrs)
 
   defp render_pm_tag_fields(f, _config) do
     assigns = %{f: f}
