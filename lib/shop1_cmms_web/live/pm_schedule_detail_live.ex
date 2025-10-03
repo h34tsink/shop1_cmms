@@ -854,60 +854,58 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
         </div>
       </div>
 
-      <!-- Sidebar -->
+      <!-- Sidebar - Always visible like assets page -->
       <div class="space-y-4">
         <!-- Status Card -->
-        <%= if not @edit_mode do %>
-          <div class="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Schedule Status</h3>
-            <div class="space-y-2">
-              <%= if @schedule.next_due_date do %>
-                <%= cond do %>
-                  <% DateTime.compare(@schedule.next_due_date, DateTime.utc_now()) == :lt -> %>
-                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
-                      Overdue
-                    </span>
-                  <% DateTime.diff(@schedule.next_due_date, DateTime.utc_now(), :day) <= 7 -> %>
-                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
-                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
-                      Due Soon
-                    </span>
-                  <% true -> %>
-                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
-                      On Track
-                    </span>
-                <% end %>
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 class="text-sm font-semibold text-gray-900 mb-3">Schedule Status</h3>
+          <div class="space-y-2">
+            <%= if @schedule.next_due_date do %>
+              <%= cond do %>
+                <% DateTime.compare(@schedule.next_due_date, DateTime.utc_now()) == :lt -> %>
+                  <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Overdue
+                  </span>
+                <% DateTime.diff(@schedule.next_due_date, DateTime.utc_now(), :day) <= 7 -> %>
+                  <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Due Soon
+                  </span>
+                <% true -> %>
+                  <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    On Track
+                  </span>
               <% end %>
-            </div>
+            <% end %>
           </div>
+        </div>
 
-          <!-- Quick Stats -->
-          <div class="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Quick Stats</h3>
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-gray-600">Checklist Items</span>
-                <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.checklist_items) %></span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-gray-600">Components</span>
-                <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.components) %></span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-gray-600">Documents</span>
-                <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.documents) %></span>
-              </div>
+        <!-- Quick Stats -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 class="text-sm font-semibold text-gray-900 mb-3">Quick Stats</h3>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-gray-600">Checklist Items</span>
+              <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.checklist_items) %></span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-gray-600">Components</span>
+              <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.components) %></span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-gray-600">Documents</span>
+              <span class="text-sm font-semibold text-gray-900"><%= length(@schedule.documents) %></span>
             </div>
           </div>
-        <% end %>
+        </div>
       </div>
     </div>
     """
