@@ -703,6 +703,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp update_metadata_by_type("custom_fields", item, attrs), do: Metadata.update_custom_field(item, attrs)
   defp update_metadata_by_type("asset_types", item, attrs), do: Assets.update_asset_type(item, attrs)
   defp update_metadata_by_type("asset_locations", item, attrs), do: Assets.update_asset_location(item, attrs)
+  defp update_metadata_by_type("pm_tags", item, attrs), do: Metadata.update_pm_tag(item, attrs)
 
   defp delete_metadata_item("manufacturers", item), do: Metadata.delete_manufacturer(item)
   defp delete_metadata_item("departments", item), do: Metadata.delete_department(item)
@@ -712,6 +713,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp delete_metadata_item("custom_fields", item), do: Metadata.delete_custom_field(item)
   defp delete_metadata_item("asset_types", item), do: Assets.delete_asset_type(item)
   defp delete_metadata_item("asset_locations", item), do: Assets.delete_asset_location(item)
+  defp delete_metadata_item("pm_tags", item), do: Metadata.delete_pm_tag(item)
 
   defp change_metadata_by_type("manufacturers", item), do: Metadata.change_manufacturer(item)
   defp change_metadata_by_type("departments", item), do: Metadata.change_department(item)
