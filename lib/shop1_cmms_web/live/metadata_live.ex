@@ -263,6 +263,9 @@ defmodule Shop1CmmsWeb.MetadataLive do
 
       "asset_locations" ->
         render_asset_location_fields(f, config)
+      
+      "pm_tags" ->
+        render_pm_tag_fields(f, config)
     end
   end
 
@@ -724,4 +727,45 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp change_metadata_by_type("custom_fields", item), do: Metadata.change_custom_field(item)
   defp change_metadata_by_type("asset_types", item), do: Assets.change_asset_type(item)
   defp change_metadata_by_type("asset_locations", item), do: Assets.change_asset_location(item)
+  defp change_metadata_by_type("pm_tags", item), do: Metadata.change_pm_tag(item)
+
+  defp create_metadata_by_type("manufacturers", attrs), do: Metadata.create_manufacturer(attrs)
+  defp create_metadata_by_type("departments", attrs), do: Metadata.create_department(attrs)
+  defp create_metadata_by_type("suppliers", attrs), do: Metadata.create_supplier(attrs)
+  defp create_metadata_by_type("priority_codes", attrs), do: Metadata.create_priority_code(attrs)
+  defp create_metadata_by_type("maintenance_categories", attrs), do: Metadata.create_maintenance_category(attrs)
+  defp create_metadata_by_type("custom_fields", attrs), do: Metadata.create_custom_field(attrs)
+  defp create_metadata_by_type("asset_types", attrs), do: Assets.create_asset_type(attrs)
+  defp create_metadata_by_type("asset_locations", attrs), do: Assets.create_asset_location(attrs)
+  defp create_metadata_by_type("pm_tags", attrs), do: Metadata.create_pm_tag(attrs)
+
+  defp render_pm_tag_fields(f, _config) do
+    assigns = %{f: f}
+
+    ~H"""
+    <div>
+      <.input field={@f[:name]} label="Tag Name" required placeholder="e.g., LOTO Certified, Torque Wrench, Safety Glasses" />
+    </div>
+    <div>
+      <.input
+        field={@f[:tag_type]}
+        label="Tag Type"
+        type="select"
+        required
+        options={[
+          {"Skill", "skill"},
+          {"Tool", "tool"},
+          {"PPE", "ppe"}
+        ]}
+      />
+    </div>
+    <div>
+      <.input field={@f[:description]} label="Description" type="textarea" placeholder="Optional description for this tag" />
+    </div>
+    <div class="text-sm text-gray-600">
+      <p>Tags are used to categorize PM schedules by required skills, tools, and PPE.</p>
+      <p class="mt-1">Usage count is automatically tracked when tags are used in PM schedules.</p>
+    </div>
+    """
+  end
 end
