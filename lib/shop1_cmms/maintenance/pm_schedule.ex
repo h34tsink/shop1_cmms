@@ -172,11 +172,17 @@ defmodule Shop1Cmms.Maintenance.PmSchedule do
   def by_frequency(query, _), do: query
 
   def search_text(query \\ __MODULE__, term) when is_binary(term) and term != "" do
-    term = "%" <> String.downcase(term) <> "%"
+    term_pattern = "%" <> String.downcase(term) <> "%"
+    
     from pm in query,
-      where: ilike(pm.title, ^term) or
-             ilike(pm.description, ^term) or
-             ilike(pm.schedule_number, ^term)
+      where: ilike(pm.title, ^term_pattern) or
+             ilike(pm.description, ^term_pattern) or
+             ilike(pm.schedule_number, ^term_pattern) or
+             ilike(pm.work_instructions, ^term_pattern) or
+             ilike(pm.safety_notes, ^term_pattern) or
+             fragment("EXISTS (SELECT 1 FROM unnest(?) AS skill WHERE LOWER(skill) LIKE ?)", pm.required_skills, ^term_pattern) or
+             fragment("EXISTS (SELECT 1 FROM unnest(?) AS tool WHERE LOWER(tool) LIKE ?)", pm.required_tools, ^term_pattern) or
+             fragment("EXISTS (SELECT 1 FROM unnest(?) AS ppe WHERE LOWER(ppe) LIKE ?)", pm.ppe_required, ^term_pattern)
   end
   def search_text(query, _), do: query
 end
