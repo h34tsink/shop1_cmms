@@ -371,12 +371,26 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
               <.input field={@form[:asset_type_id]} type="hidden" />
 
               <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <!-- Basic Information -->
                 <div>
                   <.input field={@form[:name]} label="Asset Name" type="text" required />
                 </div>
                 <div>
                   <.input field={@form[:asset_number]} label="Asset Number" type="text" required />
                 </div>
+                
+                <!-- Identification -->
+                <div>
+                  <.input field={@form[:serial_number]} label="Serial Number" type="text" />
+                </div>
+                <div>
+                  <.input field={@form[:barcode]} label="Barcode" type="text" />
+                </div>
+                <div>
+                  <.input field={@form[:qr_code]} label="QR Code" type="text" />
+                </div>
+                
+                <!-- Manufacturer & Model -->
                 <div>
                   <div class="flex items-end gap-2">
                     <div class="flex-1">
@@ -402,17 +416,28 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
                 <div>
                   <.input field={@form[:model]} label="Model" type="text" />
                 </div>
-                <div>
-                  <.input field={@form[:serial_number]} label="Serial Number" type="text" />
-                </div>
+                
+                <!-- Status & Criticality -->
                 <div>
                   <.input
                     field={@form[:status]}
                     label="Status"
                     type="select"
                     options={status_options()}
+                    required
                   />
                 </div>
+                <div>
+                  <.input
+                    field={@form[:criticality]}
+                    label="Criticality"
+                    type="select"
+                    options={criticality_options()}
+                    required
+                  />
+                </div>
+                
+                <!-- Dates -->
                 <div>
                   <.input field={@form[:purchase_date]} label="Purchase Date" type="date" />
                 </div>
@@ -420,28 +445,28 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
                   <.input field={@form[:install_date]} label="Install Date" type="date" />
                 </div>
                 <div>
-                  <.input
-                    field={@form[:criticality]}
-                    label="Criticality"
-                    type="select"
-                    options={[
-                      {"Low", "low"},
-                      {"Medium", "medium"},
-                      {"High", "high"},
-                      {"Critical", "critical"}
-                    ]}
-                  />
+                  <.input field={@form[:commission_date]} label="Commission Date" type="date" />
                 </div>
                 <div>
-                  <.input field={@form[:purchase_cost]} label="Purchase Cost" type="number" step="0.01" />
+                  <.input field={@form[:warranty_expiry]} label="Warranty Expiry" type="date" />
+                </div>
+                
+                <!-- Financial -->
+                <div>
+                  <.input field={@form[:purchase_cost]} label="Purchase Cost" type="number" step="0.01" min="0" />
                 </div>
               </div>
 
+              <!-- Full-width fields -->
               <div>
                 <.input field={@form[:description]} label="Description" type="textarea" rows="3" />
               </div>
+              
+              <div>
+                <.input field={@form[:notes]} label="Notes" type="textarea" rows="3" />
+              </div>
 
-              <div class="flex justify-end space-x-3 pt-6">
+              <div class="flex justify-end space-x-3 pt-6 border-t">
                 <.button type="button" phx-click="toggle_edit" class="bg-gray-300 hover:bg-gray-400 text-gray-800">
                   Cancel
                 </.button>
@@ -451,51 +476,114 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
               </div>
             </.form>
           <% else %>
-            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            <!-- Read-only View -->
+            <div class="space-y-6">
+              <!-- Basic Information -->
               <div>
-                <dt class="text-sm font-medium text-gray-500">Asset Number</dt>
-                <dd class="mt-1 text-sm text-gray-900"><%= @asset.asset_number %></dd>
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Basic Information</h3>
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Asset Number</dt>
+                    <dd class="mt-1 text-sm text-gray-900 font-mono"><%= @asset.asset_number %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Asset Type</dt>
+                    <dd class="mt-1 text-sm text-gray-900"><%= @asset.asset_type.name %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Asset Name</dt>
+                    <dd class="mt-1 text-sm text-gray-900"><%= @asset.name %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Location</dt>
+                    <dd class="mt-1 text-sm text-gray-900"><%= if @asset.location, do: @asset.location.name, else: "N/A" %></dd>
+                  </div>
+                </dl>
               </div>
-              <div>
-                <dt class="text-sm font-medium text-gray-500">Asset Type</dt>
-                <dd class="mt-1 text-sm text-gray-900"><%= @asset.asset_type.name %></dd>
-              </div>
-              <div>
-                <dt class="text-sm font-medium text-gray-500">Manufacturer</dt>
-                <dd class="mt-1 text-sm text-gray-900"><%= @asset.manufacturer || "N/A" %></dd>
-              </div>
-              <div>
-                <dt class="text-sm font-medium text-gray-500">Model</dt>
-                <dd class="mt-1 text-sm text-gray-900"><%= @asset.model || "N/A" %></dd>
-              </div>
-              <div>
-                <dt class="text-sm font-medium text-gray-500">Serial Number</dt>
-                <dd class="mt-1 text-sm text-gray-900"><%= @asset.serial_number || "N/A" %></dd>
-              </div>
-              <div>
-                <dt class="text-sm font-medium text-gray-500">Location</dt>
-                <dd class="mt-1 text-sm text-gray-900"><%= if @asset.location, do: @asset.location.name, else: "N/A" %></dd>
-              </div>
-              <div>
-                <dt class="text-sm font-medium text-gray-500">Purchase Date</dt>
-                <dd class="mt-1 text-sm text-gray-900">
-                  <%= if @asset.purchase_date, do: Calendar.strftime(@asset.purchase_date, "%B %d, %Y"), else: "N/A" %>
-                </dd>
-              </div>
-              <div>
-                <dt class="text-sm font-medium text-gray-500">Install Date</dt>
-                <dd class="mt-1 text-sm text-gray-900">
-                  <%= if @asset.install_date, do: Calendar.strftime(@asset.install_date, "%B %d, %Y"), else: "N/A" %>
-                </dd>
-              </div>
-            </dl>
 
-            <%= if @asset.description do %>
-              <div class="mt-6 pt-6 border-t border-gray-200">
-                <dt class="text-sm font-medium text-gray-500 mb-2">Description</dt>
-                <dd class="text-sm text-gray-900"><%= @asset.description %></dd>
+              <!-- Identification -->
+              <div class="pt-4 border-t border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Identification</h3>
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Serial Number</dt>
+                    <dd class="mt-1 text-sm text-gray-900"><%= @asset.serial_number || "N/A" %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Barcode</dt>
+                    <dd class="mt-1 text-sm text-gray-900 font-mono"><%= @asset.barcode || "N/A" %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">QR Code</dt>
+                    <dd class="mt-1 text-sm text-gray-900 font-mono"><%= @asset.qr_code || "N/A" %></dd>
+                  </div>
+                </dl>
               </div>
-            <% end %>
+
+              <!-- Manufacturer & Model -->
+              <div class="pt-4 border-t border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Manufacturer Details</h3>
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Manufacturer</dt>
+                    <dd class="mt-1 text-sm text-gray-900"><%= @asset.manufacturer || "N/A" %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Model</dt>
+                    <dd class="mt-1 text-sm text-gray-900"><%= @asset.model || "N/A" %></dd>
+                  </div>
+                </dl>
+              </div>
+
+              <!-- Dates -->
+              <div class="pt-4 border-t border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Important Dates</h3>
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Purchase Date</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                      <%= if @asset.purchase_date, do: Calendar.strftime(@asset.purchase_date, "%B %d, %Y"), else: "N/A" %>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Install Date</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                      <%= if @asset.install_date, do: Calendar.strftime(@asset.install_date, "%B %d, %Y"), else: "N/A" %>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Commission Date</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                      <%= if @asset.commission_date, do: Calendar.strftime(@asset.commission_date, "%B %d, %Y"), else: "N/A" %>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Warranty Expiry</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                      <%= if @asset.warranty_expiry, do: Calendar.strftime(@asset.warranty_expiry, "%B %d, %Y"), else: "N/A" %>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <!-- Description & Notes -->
+              <%= if @asset.description || @asset.notes do %>
+                <div class="pt-4 border-t border-gray-200 space-y-4">
+                  <%= if @asset.description do %>
+                    <div>
+                      <dt class="text-sm font-medium text-gray-500 mb-2">Description</dt>
+                      <dd class="text-sm text-gray-900 whitespace-pre-wrap"><%= @asset.description %></dd>
+                    </div>
+                  <% end %>
+                  <%= if @asset.notes do %>
+                    <div>
+                      <dt class="text-sm font-medium text-gray-500 mb-2">Notes</dt>
+                      <dd class="text-sm text-gray-900 whitespace-pre-wrap"><%= @asset.notes %></dd>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
           <% end %>
         </div>
       </div>
@@ -708,6 +796,15 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
       {"Repair", "repair"},
       {"Retired", "retired"},
       {"Disposed", "disposed"}
+    ]
+  end
+
+  defp criticality_options do
+    [
+      {"Low", "low"},
+      {"Medium", "medium"},
+      {"High", "high"},
+      {"Critical", "critical"}
     ]
   end
 end
