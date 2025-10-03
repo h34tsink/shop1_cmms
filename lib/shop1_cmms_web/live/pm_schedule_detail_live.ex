@@ -2,17 +2,26 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
   use Shop1CmmsWeb, :live_view
   alias Shop1Cmms.Maintenance
   alias Shop1Cmms.Maintenance.{PmSchedule, PmScheduleComponent, PmChecklistItem, AssetDocument}
+  alias Shop1Cmms.Assets
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     tenant_id = socket.assigns.current_tenant_id
     schedule = Maintenance.get_pm_schedule!(tenant_id, id)
 
+    # Get assets and asset types for dropdowns
+    assets = Assets.list_assets(tenant_id, [])
+    asset_types = Assets.list_asset_types(tenant_id)
+
     {:ok,
      socket
      |> assign(:page_title, "PM Schedule Details")
      |> assign(:schedule, schedule)
+     |> assign(:assets, assets)
+     |> assign(:asset_types, asset_types)
      |> assign(:active_tab, "overview")
+     |> assign(:edit_mode, false)
+     |> assign(:form, nil)
      |> assign(:show_component_form, false)
      |> assign(:show_checklist_form, false)
      |> assign(:show_document_form, false)
@@ -36,6 +45,56 @@ defmodule Shop1CmmsWeb.PmScheduleDetailLive do
   @impl true
   def handle_event("switch_tab", %{"tab" => tab}, socket) do
     {:noreply, assign(socket, :active_tab, tab)}
+  end
+
+  # Edit Mode for PM Schedule
+  def handle_event("toggle_edit", _params, socket) do
+    if socket.assigns.edit_mode do
+      # Exiting edit mode - clear form
+      socket = socket
+      |> assign(:edit_mode, false)
+      |> assign(:form, nil)
+
+      {:noreply, socket}
+    else
+      # Entering edit mode - create form
+      changeset = Maintenance.change_pm_schedule(socket.assigns.schedule)
+
+      socket = socket
+      |> assign(:edit_mode, true)
+      |> assign(:form, to_form(changeset))
+
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("validate", %{"pm_schedule" => schedule_params}, socket) do
+    changeset =
+      socket.assigns.schedule
+      |> Maintenance.change_pm_schedule(schedule_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, :form, to_form(changeset))}
+  end
+
+  def handle_event("save", %{"pm_schedule" => schedule_params}, socket) do
+    case Maintenance.update_pm_schedule(socket.assigns.schedule, schedule_params) do
+      {:ok, updated_schedule} ->
+        # Reload schedule with details to get fresh data
+        tenant_id = socket.assigns.current_tenant_id
+        schedule = Maintenance.get_pm_schedule!(tenant_id, updated_schedule.id)
+
+        socket = socket
+        |> assign(:schedule, schedule)
+        |> assign(:edit_mode, false)
+        |> assign(:form, nil)
+        |> put_flash(:info, "PM Schedule updated successfully")
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
+    end
   end
 
   # Component Events
