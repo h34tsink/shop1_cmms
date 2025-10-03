@@ -16,7 +16,8 @@
           {"maintenance_categories", %{title: "Categories", icon: "🔧"}},
           {"custom_fields", %{title: "Custom Fields", icon: "⚙️"}},
           {"asset_types", %{title: "Equipment Types", icon: "🏷️"}},
-          {"asset_locations", %{title: "Equipment Locations", icon: "📍"}}
+          {"asset_locations", %{title: "Equipment Locations", icon: "📍"}},
+          {"pm_tags", %{title: "PM Tags (Skills/Tools/PPE)", icon: "🏷️"}}
         ] do %>
           <.link
             navigate={~p"/configuration/#{type}"}
@@ -128,6 +129,14 @@
                 <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
                 <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
                 <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
+                <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <% end %>
+
+              <%= if @metadata_type == "pm_tags" do %>
+                <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage</th>
                 <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <% end %>
 
@@ -304,6 +313,57 @@
                     <% else %>
                       <span class="text-gray-400">-</span>
                     <% end %>
+                  </td>
+                  <td class="px-4 py-2.5">
+                    <span class={[
+                      "inline-flex px-2 py-0.5 text-xs font-medium rounded",
+                      if item.is_active do
+                        "bg-green-100 text-green-800"
+                      else
+                        "bg-red-100 text-red-800"
+                      end
+                    ]}>
+                      <%= if item.is_active, do: "Active", else: "Inactive" %>
+                    </span>
+                  </td>
+                <% end %>
+
+                <%= if @metadata_type == "pm_tags" do %>
+                  <td class="px-4 py-2.5 text-sm font-medium text-gray-900">
+                    <%= item.name %>
+                  </td>
+                  <td class="px-4 py-2.5">
+                    <span class={[
+                      "inline-flex px-2 py-0.5 text-xs font-medium rounded",
+                      case item.tag_type do
+                        :skill -> "bg-blue-100 text-blue-800"
+                        :tool -> "bg-purple-100 text-purple-800"
+                        :ppe -> "bg-orange-100 text-orange-800"
+                        _ -> "bg-gray-100 text-gray-800"
+                      end
+                    ]}>
+                      <%= case item.tag_type do
+                        :skill -> "Skill"
+                        :tool -> "Tool"
+                        :ppe -> "PPE"
+                        _ -> to_string(item.tag_type)
+                      end %>
+                    </span>
+                  </td>
+                  <td class="px-4 py-2.5 text-sm text-gray-600">
+                    <%= if item.description do %>
+                      <%= String.slice(item.description, 0..60) %><%= if String.length(item.description || "") > 60, do: "...", else: "" %>
+                    <% else %>
+                      <span class="text-gray-400">-</span>
+                    <% end %>
+                  </td>
+                  <td class="px-4 py-2.5 text-sm text-gray-600">
+                    <span class="inline-flex items-center">
+                      <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                      </svg>
+                      <%= item.usage_count || 0 %>
+                    </span>
                   </td>
                   <td class="px-4 py-2.5">
                     <span class={[
