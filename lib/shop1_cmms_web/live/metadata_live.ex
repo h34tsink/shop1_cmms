@@ -130,7 +130,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
      |> load_metadata_items(tenant_id, query)}
   end
 
-  def handle_event("filter_tag_type", %{"filter" => %{"type" => type}}, socket) do
+  def handle_event("filter_tag_type", %{"filter" => %{"tag_type" => type}}, socket) do
     require Logger
     Logger.debug("Filter tag type: #{type}, current: #{socket.assigns.tag_type_filter}")
     
@@ -142,7 +142,15 @@ defmodule Shop1CmmsWeb.MetadataLive do
      |> load_metadata_items(tenant_id, search_query)
     
     Logger.debug("Items after filter: #{length(socket.assigns.items)}")
+    Logger.debug("Tag type filter set to: #{type}")
     
+    {:noreply, socket}
+  end
+  
+  # Fallback for other param formats
+  def handle_event("filter_tag_type", params, socket) do
+    require Logger
+    Logger.warning("Unexpected filter_tag_type params: #{inspect(params)}")
     {:noreply, socket}
   end
 

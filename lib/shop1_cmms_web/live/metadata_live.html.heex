@@ -82,22 +82,19 @@
           <%= if @metadata_type == "pm_tags" do %>
             <div class="flex items-center gap-2">
               <label class="text-sm font-medium text-gray-700">Filter by type:</label>
-              <.form :let={f} for={%{}} as={:filter} phx-change="filter_tag_type">
-                <.input
-                  field={f[:type]}
-                  type="select"
-                  value={@tag_type_filter}
-                  options={[
-                    {"All Types", "all"},
-                    {"Skills", "skill"},
-                    {"Tools", "tool"},
-                    {"PPE", "ppe"}
-                  ]}
+              <.form :let={f} for={%{}} as={:filter} phx-change="filter_tag_type" class="m-0">
+                <select
+                  name="filter[tag_type]"
                   class={[
-                    "text-sm rounded focus:ring-blue-500 focus:border-blue-500",
+                    "text-sm rounded focus:ring-blue-500 focus:border-blue-500 border py-2 px-3",
                     if(@tag_type_filter != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
                   ]}
-                />
+                >
+                  <option value="all" selected={@tag_type_filter == "all"}>All Types</option>
+                  <option value="skill" selected={@tag_type_filter == "skill"}>Skills</option>
+                  <option value="tool" selected={@tag_type_filter == "tool"}>Tools</option>
+                  <option value="ppe" selected={@tag_type_filter == "ppe"}>PPE</option>
+                </select>
               </.form>
             </div>
           <% end %>

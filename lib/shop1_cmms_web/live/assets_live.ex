@@ -154,7 +154,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
                 <th phx-click="sort" phx-value-field="asset_number" class="cursor-pointer hover:bg-gray-100">
                   <div class="flex items-center gap-1">
                     Equipment #
-                    <%= if @sort_field == "asset_number" do %>
+                    <%= if @sort_field == :asset_number do %>
                       <%= if @sort_direction == :asc do %>
                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
                       <% else %>
@@ -166,7 +166,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
                 <th phx-click="sort" phx-value-field="name" class="cursor-pointer hover:bg-gray-100">
                   <div class="flex items-center gap-1">
                     Name
-                    <%= if @sort_field == "name" do %>
+                    <%= if @sort_field == :name do %>
                       <%= if @sort_direction == :asc do %>
                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
                       <% else %>
@@ -182,7 +182,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
                 <th phx-click="sort" phx-value-field="status" class="cursor-pointer hover:bg-gray-100">
                   <div class="flex items-center gap-1">
                     Status
-                    <%= if @sort_field == "status" do %>
+                    <%= if @sort_field == :status do %>
                       <%= if @sort_direction == :asc do %>
                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
                       <% else %>
@@ -194,7 +194,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
                 <th phx-click="sort" phx-value-field="criticality" class="cursor-pointer hover:bg-gray-100">
                   <div class="flex items-center gap-1">
                     Criticality
-                    <%= if @sort_field == "criticality" do %>
+                    <%= if @sort_field == :criticality do %>
                       <%= if @sort_direction == :asc do %>
                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
                       <% else %>
@@ -362,7 +362,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> assign(:view_mode, "grid")
     |> assign(:live_action, :edit)
     |> assign(:show_modal, true)
-    |> assign(:sort_field, "name")
+    |> assign(:sort_field, :name)
     |> assign(:sort_direction, :asc)
 
     {:ok, socket}
@@ -399,7 +399,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> assign(:view_mode, "grid")
     |> assign(:live_action, :new)
     |> assign(:show_modal, true)
-    |> assign(:sort_field, "name")
+    |> assign(:sort_field, :name)
     |> assign(:sort_direction, :asc)
 
     {:ok, socket}
@@ -435,7 +435,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> assign(:view_mode, "grid")  # grid, list, kanban
     |> assign(:live_action, :index)
     |> assign(:show_modal, false)
-    |> assign(:sort_field, "name")
+    |> assign(:sort_field, :name)
     |> assign(:sort_direction, :asc)
 
     {:ok, socket}

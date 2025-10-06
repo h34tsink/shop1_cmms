@@ -125,4 +125,25 @@ defmodule Shop1Cmms.MaintenanceFixtures do
     {:ok, document} = Maintenance.create_asset_document(document_attrs)
     document
   end
+
+  @doc """
+  Generate a PM tag.
+  """
+  def pm_tag_fixture(attrs \\ %{}) do
+    tenant_id = attrs[:tenant_id] || raise "tenant_id is required"
+    
+    tag_attrs =
+      attrs
+      |> Enum.into(%{
+        name: "Test Tag #{System.unique_integer([:positive])}",
+        tag_type: :skill,
+        description: "Test tag description",
+        is_active: true,
+        usage_count: 0,
+        tenant_id: tenant_id
+      })
+
+    {:ok, tag} = Maintenance.create_pm_tag(tag_attrs)
+    tag
+  end
 end
