@@ -57,7 +57,7 @@ defmodule Shop1CmmsWeb.CoreComponents do
               phx-window-keydown={JS.exec("data-cancel", to: "##{@id}")}
               phx-key="escape"
               phx-click-away={JS.exec("data-cancel", to: "##{@id}")}
-              class="shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-md bg-white p-4 shadow-lg ring-1 transition"
+              class="shadow-zinc-700/10 ring-zinc-700/10 dark:ring-zinc-300/10 relative hidden rounded-md bg-white dark:bg-gray-800 p-4 shadow-lg ring-1 transition"
             >
               <div class="absolute top-3 right-3">
                 <button
@@ -223,7 +223,7 @@ defmodule Shop1CmmsWeb.CoreComponents do
   def simple_form(assigns) do
     ~H"""
     <.form :let={f} for={@for} as={@as} {@rest}>
-      <div class="mt-10 space-y-8 bg-white">
+      <div class="mt-10 space-y-8 bg-white dark:bg-gray-800">
         <%= render_slot(@inner_block, f) %>
         <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
           <%= render_slot(action, f) %>
@@ -355,7 +355,7 @@ defmodule Shop1CmmsWeb.CoreComponents do
       <select
         id={@id}
         name={@name}
-        class="mt-2 block w-full rounded-md border-2 border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-0 sm:text-sm"
+        class="mt-2 block w-full rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-0 sm:text-sm"
         multiple={@multiple}
         {@rest}
       >
@@ -375,9 +375,9 @@ defmodule Shop1CmmsWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "mt-2 block w-full rounded-lg border-2 text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
-          "min-h-[6rem] phx-no-feedback:border-gray-300 phx-no-feedback:focus:border-blue-500",
-          @errors == [] && "border-gray-300 focus:border-blue-500",
+          "mt-2 block w-full rounded-lg border-2 text-zinc-900 dark:text-gray-100 dark:bg-gray-700 focus:ring-0 sm:text-sm sm:leading-6",
+          "min-h-[6rem] phx-no-feedback:border-gray-300 dark:phx-no-feedback:border-gray-600 phx-no-feedback:focus:border-blue-500",
+          @errors == [] && "border-gray-300 dark:border-gray-600 focus:border-blue-500",
           @errors != [] && "border-rose-400 focus:border-rose-400"
         ]}
         {@rest}
@@ -397,9 +397,9 @@ defmodule Shop1CmmsWeb.CoreComponents do
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
         class={[
-          "mt-2 block w-full rounded-lg border-2 text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
-          "phx-no-feedback:border-gray-300 phx-no-feedback:focus:border-blue-500",
-          @errors == [] && "border-gray-300 focus:border-blue-500",
+          "mt-2 block w-full rounded-lg border-2 text-zinc-900 dark:text-gray-100 dark:bg-gray-700 focus:ring-0 sm:text-sm sm:leading-6",
+          "phx-no-feedback:border-gray-300 dark:phx-no-feedback:border-gray-600 phx-no-feedback:focus:border-blue-500",
+          @errors == [] && "border-gray-300 dark:border-gray-600 focus:border-blue-500",
           @errors != [] && "border-rose-400 focus:border-rose-400"
         ]}
         {@rest}

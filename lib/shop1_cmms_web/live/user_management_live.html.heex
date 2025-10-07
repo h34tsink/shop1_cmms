@@ -1,11 +1,11 @@
-<div class="h-screen flex flex-col overflow-hidden bg-gray-50">
+<div class="h-screen flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
   <%= if @live_action == :index do %>
     <!-- Header -->
-    <div class="border-b border-gray-200 px-6 py-3.5 bg-white">
+    <div class="border-b border-gray-200 dark:border-gray-700 px-6 py-3.5 bg-white dark:bg-gray-800">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-xl font-semibold text-gray-900">User Management</h1>
-          <p class="text-xs text-gray-500 mt-0.5">Manage user access and roles for your tenant</p>
+          <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">User Management</h1>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Manage user access and roles for your tenant</p>
         </div>
         <div>
           <.link
@@ -20,14 +20,14 @@
     </div>
 
     <!-- Search and Filters -->
-    <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+    <div class="bg-gray-50 dark:bg-gray-900 px-6 py-3 border-b border-gray-200 dark:border-gray-700">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <!-- Search -->
         <div>
           <.form for={%{}} phx-submit="search">
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <.icon name="hero-magnifying-glass" class="h-4 w-4 text-gray-400" />
+                <.icon name="hero-magnifying-glass" class="h-4 w-4 text-gray-400 dark:text-gray-500" />
               </div>
               <input
                 type="text"
@@ -36,7 +36,7 @@
                 placeholder="Search by username..."
                 phx-debounce="300"
                 phx-change="search"
-                class="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                class="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
           </.form>
@@ -47,7 +47,7 @@
           <select
             name="role"
             phx-change="filter_role"
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
           >
             <%= for {label, value} <- @role_options do %>
               <option value={value} selected={@selected_role == value}>
@@ -60,50 +60,50 @@
     </div>
 
     <!-- Users Table -->
-    <div class="flex-1 overflow-auto bg-white">
+    <div class="flex-1 overflow-auto bg-white dark:bg-gray-800">
       <%= if @loading do %>
         <div class="p-12 text-center">
           <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p class="mt-2 text-sm text-gray-500">Loading users...</p>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading users...</p>
         </div>
       <% else %>
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50 sticky top-0 z-10">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead class="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
             <tr>
-              <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 User
               </th>
-              <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Status
               </th>
-              <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Role
               </th>
-              <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Last Login
               </th>
-              <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+              <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-48">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
+          <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             <%= for user <- @users do %>
-              <tr class="hover:bg-gray-50">
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td class="px-4 py-2.5">
                   <div class="flex items-center">
                     <div class="flex-shrink-0 h-9 w-9">
-                      <div class="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
-                        <span class="text-sm font-medium text-blue-700">
+                      <div class="h-9 w-9 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                        <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
                           <%= String.first(user.username) |> String.upcase() %>
                         </span>
                       </div>
                     </div>
                     <div class="ml-3">
-                      <div class="text-sm font-medium text-gray-900">
+                      <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                         <%= user.username %>
                       </div>
-                      <div class="text-xs text-gray-500">
+                      <div class="text-xs text-gray-500 dark:text-gray-400">
                         ID: <%= user.id %>
                       </div>
                     </div>
@@ -111,10 +111,10 @@
                 </td>
                 <td class="px-4 py-2.5">
                   <div class="flex gap-1.5">
-                    <span class={"inline-flex px-2 py-0.5 text-xs font-medium rounded #{if user.is_active, do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800"}"}>
+                    <span class={"inline-flex px-2 py-0.5 text-xs font-medium rounded #{if user.is_active, do: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300", else: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"}"}>
                       <%= if user.is_active, do: "Active", else: "Inactive" %>
                     </span>
-                    <span class={"inline-flex px-2 py-0.5 text-xs font-medium rounded #{if user.cmms_enabled, do: "bg-blue-100 text-blue-800", else: "bg-gray-100 text-gray-600"}"}>
+                    <span class={"inline-flex px-2 py-0.5 text-xs font-medium rounded #{if user.cmms_enabled, do: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300", else: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"}"}>
                       <%= if user.cmms_enabled, do: "CMMS", else: "No CMMS" %>
                     </span>
                   </div>
@@ -125,7 +125,7 @@
                       name="role"
                       phx-change="change_role"
                       phx-value-user_id={user.id}
-                      class="text-sm border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      class="text-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <%= options_for_select(
                         @role_select_options, 
@@ -155,11 +155,11 @@
                     <% end %>
                   </div>
                 </td>
-                <td class="px-4 py-2.5 text-sm text-gray-600">
+                <td class="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">
                   <%= if user.last_cmms_login do %>
                     <%= Calendar.strftime(user.last_cmms_login, "%b %d, %Y") %>
                   <% else %>
-                    <span class="text-gray-400">Never</span>
+                    <span class="text-gray-400 dark:text-gray-500">Never</span>
                   <% end %>
                 </td>
                 <td class="px-4 py-2.5 text-sm font-medium">
@@ -169,7 +169,7 @@
                         phx-click="disable_cmms"
                         phx-value-user_id={user.id}
                         data-confirm="Are you sure you want to disable CMMS access for this user?"
-                        class="text-red-600 hover:text-red-800"
+                        class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                       >
                         Disable CMMS
                       </button>
@@ -177,14 +177,14 @@
                       <button
                         phx-click="enable_cmms"
                         phx-value-user_id={user.id}
-                        class="text-green-600 hover:text-green-800"
+                        class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
                       >
                         Enable CMMS
                       </button>
                     <% end %>
                     <.link
                       navigate={~p"/admin/users/#{user.id}/edit"}
-                      class="text-blue-600 hover:text-blue-800"
+                      class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                     >
                       Edit
                     </.link>
@@ -196,10 +196,10 @@
         </table>
 
         <%= if Enum.empty?(@users) do %>
-          <div class="p-12 text-center bg-white">
-            <.icon name="hero-users" class="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h3 class="text-base font-medium text-gray-900 mb-1">No users found</h3>
-            <p class="text-sm text-gray-500 mb-4">
+          <div class="p-12 text-center bg-white dark:bg-gray-800">
+            <.icon name="hero-users" class="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 mb-1">No users found</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
               <%= if @search_term != "" do %>
                 No users match your search criteria.
               <% else %>
@@ -224,11 +224,11 @@
     <!-- Form View -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Form Header -->
-      <div class="border-b border-gray-200 px-6 py-3.5 bg-white">
+      <div class="border-b border-gray-200 dark:border-gray-700 px-6 py-3.5 bg-white dark:bg-gray-800">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-xl font-semibold text-gray-900"><%= @page_title %></h1>
-            <p class="text-xs text-gray-500 mt-0.5">
+            <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100"><%= @page_title %></h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               <%= if @live_action == :new do %>
                 Add a new user to your tenant
               <% else %>
@@ -239,7 +239,7 @@
           <div>
             <.link
               navigate={~p"/admin/users"}
-              class="inline-flex items-center px-3.5 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors"
+              class="inline-flex items-center px-3.5 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 shadow-sm transition-colors"
             >
               <.icon name="hero-arrow-left" class="h-4 w-4 mr-1.5" />
               Back to Users
@@ -249,8 +249,8 @@
       </div>
 
       <!-- User Form -->
-      <div class="flex-1 overflow-auto bg-gray-50 p-6">
-        <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-sm">
+      <div class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 p-6">
+        <div class="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <.form
             for={@form}
             phx-change="validate"
@@ -259,7 +259,7 @@
           >
             <!-- Basic Information -->
             <div>
-              <h3 class="text-base font-semibold text-gray-900 mb-4">Basic Information</h3>
+              <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Basic Information</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <.input
@@ -273,19 +273,19 @@
 
                 <%= if @live_action == :new do %>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Initial Role
                     </label>
                     <select
                       name="user[role_id]"
-                      class="w-full border border-gray-300 rounded shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select a role (optional)</option>
                       <%= for {display_name, role_id} <- Enum.drop(@role_options, 1) do %>
                         <option value={role_id}><%= display_name %></option>
                       <% end %>
                     </select>
-                    <p class="mt-1.5 text-xs text-gray-500">
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       You can assign a role now or later from the user list
                     </p>
                   </div>
@@ -295,8 +295,8 @@
 
             <%= if @live_action == :new do %>
               <!-- Password Section for New Users -->
-              <div class="border-t border-gray-200 pt-6">
-                <h3 class="text-base font-semibold text-gray-900 mb-4">Password Setup</h3>
+              <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Password Setup</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <.input
@@ -317,7 +317,7 @@
                     />
                   </div>
                 </div>
-                <div class="mt-3 p-3 bg-blue-50 border border-blue-100 rounded text-xs text-gray-700">
+                <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded text-xs text-gray-700 dark:text-gray-300">
                   <p class="font-medium mb-1">Password requirements:</p>
                   <ul class="list-disc list-inside space-y-0.5">
                     <li>At least 12 characters long</li>
@@ -330,8 +330,8 @@
             <% end %>
 
             <!-- Account Settings -->
-            <div class="border-t border-gray-200 pt-6">
-              <h3 class="text-base font-semibold text-gray-900 mb-4">Account Settings</h3>
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Account Settings</h3>
               <div class="space-y-3">
                 <div class="flex items-start">
                   <.input
@@ -340,8 +340,8 @@
                     label=""
                   />
                   <div class="ml-3">
-                    <p class="text-sm font-medium text-gray-900">Account Active</p>
-                    <p class="text-xs text-gray-500">Inactive users cannot log in</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Account Active</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Inactive users cannot log in</p>
                   </div>
                 </div>
                 <div class="flex items-start">
@@ -351,18 +351,18 @@
                     label=""
                   />
                   <div class="ml-3">
-                    <p class="text-sm font-medium text-gray-900">CMMS Access Enabled</p>
-                    <p class="text-xs text-gray-500">Allow access to CMMS features</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">CMMS Access Enabled</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Allow access to CMMS features</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Form Actions -->
-            <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+            <div class="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
               <.link
                 navigate={~p"/admin/users"}
-                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 shadow-sm transition-colors"
               >
                 Cancel
               </.link>

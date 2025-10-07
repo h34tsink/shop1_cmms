@@ -79,6 +79,61 @@ window.addEventListener("phx:download", (event) => {
 })
 
 // ============================================
+// THEME MANAGEMENT
+// ============================================
+
+const ThemeManager = {
+  getStoredTheme() {
+    return localStorage.getItem('theme') || 'light';
+  },
+  
+  setStoredTheme(theme) {
+    localStorage.setItem('theme', theme);
+  },
+  
+  applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    
+    // Update body background
+    if (theme === 'dark') {
+      document.body.style.backgroundColor = '#111827';
+    } else {
+      document.body.style.backgroundColor = '#f3f4f6';
+    }
+  },
+  
+  init() {
+    // Apply theme on page load
+    const theme = this.getStoredTheme();
+    this.applyTheme(theme);
+    
+    // Listen for theme updates from LiveView
+    window.addEventListener('phx:update_theme', (e) => {
+      const newTheme = e.detail.theme;
+      this.setStoredTheme(newTheme);
+      this.applyTheme(newTheme);
+    });
+  },
+  
+  toggle() {
+    const currentTheme = this.getStoredTheme();
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    this.setStoredTheme(newTheme);
+    this.applyTheme(newTheme);
+    return newTheme;
+  }
+};
+
+// Initialize theme on page load
+document.addEventListener('DOMContentLoaded', () => {
+  ThemeManager.init();
+});
+
+// Make ThemeManager available globally
+window.ThemeManager = ThemeManager;
+
+// ============================================
 // DESKTOP UI ENHANCEMENTS
 // ============================================
 

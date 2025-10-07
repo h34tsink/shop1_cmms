@@ -1,41 +1,41 @@
 <div class="space-y-4">
   <!-- Statistics Summary -->
   <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-    <div class="bg-white p-3 rounded border border-gray-200">
-      <div class="text-xs text-gray-500 font-medium">Total</div>
-      <div class="text-2xl font-bold text-gray-900"><%= @stats.total %></div>
+    <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700">
+      <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total</div>
+      <div class="text-2xl font-bold text-gray-900 dark:text-gray-100"><%= @stats.total %></div>
     </div>
-    <div class="bg-white p-3 rounded border border-gray-200">
-      <div class="text-xs text-gray-500 font-medium">Completed</div>
-      <div class="text-2xl font-bold text-green-600"><%= @stats.completed %></div>
+    <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700">
+      <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Completed</div>
+      <div class="text-2xl font-bold text-green-600 dark:text-green-400"><%= @stats.completed %></div>
     </div>
-    <div class="bg-white p-3 rounded border border-gray-200">
-      <div class="text-xs text-gray-500 font-medium">In Progress</div>
-      <div class="text-2xl font-bold text-blue-600"><%= @stats.in_progress %></div>
+    <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700">
+      <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">In Progress</div>
+      <div class="text-2xl font-bold text-blue-600 dark:text-blue-400"><%= @stats.in_progress %></div>
     </div>
-    <div class="bg-white p-3 rounded border border-gray-200">
-      <div class="text-xs text-gray-500 font-medium">Incomplete</div>
-      <div class="text-2xl font-bold text-yellow-600"><%= @stats.incomplete %></div>
+    <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700">
+      <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Incomplete</div>
+      <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400"><%= @stats.incomplete %></div>
     </div>
-    <div class="bg-white p-3 rounded border border-gray-200">
-      <div class="text-xs text-gray-500 font-medium">Completion Rate</div>
-      <div class="text-2xl font-bold text-gray-900"><%= @stats.completion_rate %>%</div>
+    <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700">
+      <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Completion Rate</div>
+      <div class="text-2xl font-bold text-gray-900 dark:text-gray-100"><%= @stats.completion_rate %>%</div>
     </div>
-    <div class="bg-white p-3 rounded border border-gray-200">
-      <div class="text-xs text-gray-500 font-medium">Avg Duration</div>
-      <div class="text-2xl font-bold text-gray-900"><%= format_duration(@stats.avg_duration_minutes) %></div>
+    <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700">
+      <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Avg Duration</div>
+      <div class="text-2xl font-bold text-gray-900 dark:text-gray-100"><%= format_duration(@stats.avg_duration_minutes) %></div>
     </div>
   </div>
 
   <!-- Filters and Actions -->
-  <div class="flex items-center justify-between bg-white p-3 rounded border border-gray-200">
+  <div class="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700">
     <div class="flex items-center space-x-3">
-      <label class="text-sm font-medium text-gray-700">Filter by Status:</label>
+      <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Status:</label>
       <select
         phx-change="filter_status"
         phx-target={@myself}
         name="status"
-        class="text-sm border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+        class="text-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded focus:ring-blue-500 focus:border-blue-500"
       >
         <option value="all" selected={@filter_status == "all"}>All</option>
         <option value="completed" selected={@filter_status == "completed"}>Completed</option>
@@ -55,16 +55,16 @@
   </div>
 
   <!-- History Table -->
-  <div class="bg-white rounded border border-gray-200 overflow-hidden">
+  <div class="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-900">
           <tr>
             <th
               phx-click="sort"
               phx-value-column="execution_number"
               phx-target={@myself}
-              class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               Execution # <%= sort_icon(:execution_number, @sort_by, @sort_direction) %>
             </th>
@@ -72,7 +72,7 @@
               phx-click="sort"
               phx-value-column="execution_date"
               phx-target={@myself}
-              class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               Execution Date <%= sort_icon(:execution_date, @sort_by, @sort_direction) %>
             </th>
@@ -80,18 +80,18 @@
               phx-click="sort"
               phx-value-column="completed_date"
               phx-target={@myself}
-              class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               Completed Date <%= sort_icon(:completed_date, @sort_by, @sort_direction) %>
             </th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
               Technician
             </th>
             <th
               phx-click="sort"
               phx-value-column="status"
               phx-target={@myself}
-              class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               Status <%= sort_icon(:status, @sort_by, @sort_direction) %>
             </th>
@@ -99,35 +99,35 @@
               phx-click="sort"
               phx-value-column="actual_duration_minutes"
               phx-target={@myself}
-              class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               Duration <%= sort_icon(:actual_duration_minutes, @sort_by, @sort_direction) %>
             </th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
               Notes
             </th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           <%= if Enum.empty?(@executions) do %>
             <tr>
-              <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+              <td colspan="7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                 No execution history found. Create the first PM execution to see history here.
               </td>
             </tr>
           <% else %>
             <%= for execution <- @executions do %>
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-4 py-2 text-sm font-medium text-blue-600">
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <td class="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400">
                   <%= execution.execution_number %>
                 </td>
-                <td class="px-4 py-2 text-sm text-gray-900">
+                <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">
                   <%= format_datetime(execution.execution_date) %>
                 </td>
-                <td class="px-4 py-2 text-sm text-gray-900">
+                <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">
                   <%= format_datetime(execution.completed_date) %>
                 </td>
-                <td class="px-4 py-2 text-sm text-gray-900">
+                <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">
                   <%= if execution.completed_by_user do %>
                     <%= execution.completed_by_user.name || execution.completed_by_user.email %>
                   <% else %>
@@ -139,10 +139,10 @@
                     <%= status_label(execution.status) %>
                   </span>
                 </td>
-                <td class="px-4 py-2 text-sm text-gray-900">
+                <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">
                   <%= format_duration(execution.actual_duration_minutes) %>
                 </td>
-                <td class="px-4 py-2 text-sm text-gray-600">
+                <td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
                   <%= if execution.tech_notes do %>
                     <div class="max-w-xs truncate" title={execution.tech_notes}>
                       <%= execution.tech_notes %>

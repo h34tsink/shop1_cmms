@@ -231,7 +231,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
 
     case socket.assigns.component_action do
       :new ->
-        case Assets.create_component(component_params) do
+        case Assets.create_component(component_params, socket.assigns.user.id) do
           {:ok, _component} ->
             components = Assets.list_components_for_asset(socket.assigns.asset.id, socket.assigns.tenant_id)
             
@@ -247,7 +247,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         end
 
       :edit ->
-        case Assets.update_component(socket.assigns.selected_component, component_params) do
+        case Assets.update_component(socket.assigns.selected_component, component_params, socket.assigns.user.id) do
           {:ok, _component} ->
             components = Assets.list_components_for_asset(socket.assigns.asset.id, socket.assigns.tenant_id)
             
@@ -284,7 +284,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
   def handle_event("delete_component", %{"id" => id}, socket) do
     component = Assets.get_component!(id, socket.assigns.tenant_id)
 
-    case Assets.delete_component(component) do
+    case Assets.delete_component(component, socket.assigns.user.id) do
       {:ok, _component} ->
         components = Assets.list_components_for_asset(socket.assigns.asset.id, socket.assigns.tenant_id)
 

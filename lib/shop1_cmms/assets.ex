@@ -506,26 +506,77 @@ defmodule Shop1Cmms.Assets do
   @doc """
   Creates a component.
   """
-  def create_component(attrs \\ %{}) do
-    %Component{}
+  def create_component(attrs \\ %{}, user_id \\ nil) do
+    result = %Component{}
     |> Component.changeset(attrs)
     |> Repo.insert()
+
+    case result do
+      {:ok, component} ->
+        # Log the creation in audit trail
+        if user_id && attrs["tenant_id"] do
+          Shop1Cmms.Audit.log_component_created(component, user_id, attrs["tenant_id"])
+        end
+        {:ok, component}
+      
+      error -> error
+    end
   end
 
   @doc """
   Updates a component.
   """
-  def update_component(%Component{} = component, attrs) do
-    component
-    |> Component.changeset(attrs)
-    |> Repo.update()
+  def update_component(%Component{} = component, attrs, user_id \\ nil) do
+    # Track what changed
+    changeset = Component.changeset(component, attrs)
+    changes = changeset.changes
+
+    result = Repo.update(changeset)
+
+    case result do
+      {:ok, updated_component} ->
+        # Log the update in audit trail if there were actual changes
+        if user_id && map_size(changes) > 0 do
+          # Check for status change specifically
+          if Map.has_key?(changes, :status) do
+            Shop1Cmms.Audit.log_component_status_changed(
+              updated_component,
+              component.status,
+              changes.status,
+              user_id,
+              component.tenant_id
+            )
+          else
+            Shop1Cmms.Audit.log_component_updated(
+              updated_component,
+              changes,
+              user_id,
+              component.tenant_id
+            )
+          end
+        end
+        {:ok, updated_component}
+      
+      error -> error
+    end
   end
 
   @doc """
   Deletes a component.
   """
-  def delete_component(%Component{} = component) do
-    Repo.delete(component)
+  def delete_component(%Component{} = component, user_id \\ nil) do
+    result = Repo.delete(component)
+
+    case result do
+      {:ok, deleted_component} ->
+        # Log the deletion in audit trail
+        if user_id do
+          Shop1Cmms.Audit.log_component_deleted(deleted_component, user_id, component.tenant_id)
+        end
+        {:ok, deleted_component}
+      
+      error -> error
+    end
   end
 
   @doc """

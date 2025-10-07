@@ -8,6 +8,7 @@ module.exports = {
     '../lib/shop1_cmms_web.ex',
     '../lib/shop1_cmms_web/**/*.*ex'
   ],
+  darkMode: 'class', // Enable class-based dark mode
   theme: {
     extend: {
       fontFamily: {
