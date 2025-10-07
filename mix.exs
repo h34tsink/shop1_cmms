@@ -57,6 +57,7 @@ defmodule Shop1Cmms.MixProject do
       {:gettext, "~> 0.20"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.2"},
+      {:elixlsx, "~> 0.6.0"},
 
       # Asset Build Tools
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},

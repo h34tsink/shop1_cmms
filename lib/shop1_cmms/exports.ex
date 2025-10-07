@@ -31,6 +31,58 @@ defmodule Shop1Cmms.Exports do
   end
 
   @doc """
+  Exports assets to Excel format
+  """
+  def export_assets_to_xlsx(assets) do
+    # Create header row
+    header_row = [
+      "Asset Number", "Name", "Type", "Location", "Manufacturer", 
+      "Model", "Status", "Criticality", "Install Date"
+    ]
+    
+    # Create data rows
+    data_rows = Enum.map(assets, fn asset ->
+      [
+        asset.asset_number || "",
+        asset.name || "",
+        get_in(asset, [Access.key(:asset_type), Access.key(:name)]) || "",
+        get_in(asset, [Access.key(:location), Access.key(:name)]) || "",
+        asset.manufacturer || "",
+        asset.model || "",
+        format_status(asset.status),
+        format_criticality(asset.criticality),
+        format_date(asset.install_date)
+      ]
+    end)
+    
+    # Create workbook
+    workbook = %Elixlsx.Workbook{
+      sheets: [
+        %Elixlsx.Sheet{
+          name: "Assets",
+          rows: [header_row | data_rows],
+          col_widths: %{
+            0 => 15,  # Asset Number
+            1 => 25,  # Name
+            2 => 20,  # Type
+            3 => 20,  # Location
+            4 => 20,  # Manufacturer
+            5 => 20,  # Model
+            6 => 15,  # Status
+            7 => 15,  # Criticality
+            8 => 15   # Install Date
+          }
+        }
+      ]
+    }
+    
+    # Generate binary content  
+    # Elixlsx.write_to_memory returns tuple: {charlist_filename, binary_content}
+    result = Elixlsx.write_to_memory(workbook, "assets.xlsx")
+    elem(result, 1)  # Get the binary content (second element of tuple)
+  end
+
+  @doc """
   Exports work orders to CSV format
   """
   def export_work_orders_to_csv(work_orders) do

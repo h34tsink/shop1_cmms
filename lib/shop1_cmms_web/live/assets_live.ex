@@ -24,6 +24,38 @@ defmodule Shop1CmmsWeb.AssetsLive do
         />
       </.modal>
     <% end %>
+
+    <%= if @show_delete_modal && @delete_confirm_asset do %>
+      <.modal id="delete-confirm-modal" show on_cancel={JS.push("cancel_delete")}>
+        <div class="p-6">
+          <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">
+            Delete Asset?
+          </h3>
+          <p class="text-sm text-gray-600 text-center mb-1">
+            Are you sure you want to delete <strong><%= @delete_confirm_asset.name %></strong>?
+          </p>
+          <p class="text-sm text-gray-600 text-center mb-6">
+            Asset Number: <strong><%= @delete_confirm_asset.asset_number %></strong>
+          </p>
+          <p class="text-xs text-red-600 text-center mb-6">
+            This action cannot be undone.
+          </p>
+          <div class="flex justify-center gap-3">
+            <button phx-click="cancel_delete" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50">
+              Cancel
+            </button>
+            <button phx-click="delete_asset" phx-value-id={@delete_confirm_asset.id} class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700">
+              Delete Asset
+            </button>
+          </div>
+        </div>
+      </.modal>
+    <% end %>
     
     <!-- Desktop-Style Assets Page with Dense Table -->
     <div class="h-full flex flex-col overflow-hidden">
@@ -100,40 +132,46 @@ defmodule Shop1CmmsWeb.AssetsLive do
           </div>
 
           <!-- Quick Filters -->
-          <select phx-change="filter_status" name="status" class={[
-            "text-xs py-1 px-2 rounded",
-            if(@selected_status != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
-          ]}>
-            <option value="all">All Status</option>
-            <option value="operational" selected={@selected_status == "operational"}>Operational</option>
-            <option value="maintenance" selected={@selected_status == "maintenance"}>Maintenance</option>
-            <option value="repair" selected={@selected_status == "repair"}>Repair</option>
-            <option value="retired" selected={@selected_status == "retired"}>Retired</option>
-            <option value="disposed" selected={@selected_status == "disposed"}>Disposed</option>
-          </select>
+          <form phx-change="filter_status">
+            <select name="status" class={[
+              "text-xs py-1 px-2 rounded",
+              if(@selected_status != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
+            ]}>
+              <option value="all">All Status</option>
+              <option value="operational" selected={@selected_status == "operational"}>Operational</option>
+              <option value="maintenance" selected={@selected_status == "maintenance"}>Maintenance</option>
+              <option value="repair" selected={@selected_status == "repair"}>Repair</option>
+              <option value="retired" selected={@selected_status == "retired"}>Retired</option>
+              <option value="disposed" selected={@selected_status == "disposed"}>Disposed</option>
+            </select>
+          </form>
 
-          <select phx-change="filter_type" name="type" class={[
-            "text-xs py-1 px-2 rounded",
-            if(@selected_type != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
-          ]}>
-            <option value="all">All Types</option>
-            <%= for asset_type <- @asset_types do %>
-              <option value={asset_type.id} selected={@selected_type == to_string(asset_type.id)}>
-                <%= asset_type.name %>
-              </option>
-            <% end %>
-          </select>
+          <form phx-change="filter_type">
+            <select name="type" class={[
+              "text-xs py-1 px-2 rounded",
+              if(@selected_type != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
+            ]}>
+              <option value="all">All Types</option>
+              <%= for asset_type <- @asset_types do %>
+                <option value={asset_type.id} selected={@selected_type == to_string(asset_type.id)}>
+                  <%= asset_type.name %>
+                </option>
+              <% end %>
+            </select>
+          </form>
 
-          <select phx-change="filter_criticality" name="criticality" class={[
-            "text-xs py-1 px-2 rounded",
-            if(@selected_criticality != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
-          ]}>
-            <option value="all">All Criticality</option>
-            <option value="critical" selected={@selected_criticality == "critical"}>Critical</option>
-            <option value="high" selected={@selected_criticality == "high"}>High</option>
-            <option value="medium" selected={@selected_criticality == "medium"}>Medium</option>
-            <option value="low" selected={@selected_criticality == "low"}>Low</option>
-          </select>
+          <form phx-change="filter_criticality">
+            <select name="criticality" class={[
+              "text-xs py-1 px-2 rounded",
+              if(@selected_criticality != "all", do: "border-blue-500 bg-blue-50 font-medium", else: "border-gray-300")
+            ]}>
+              <option value="all">All Criticality</option>
+              <option value="critical" selected={@selected_criticality == "critical"}>Critical</option>
+              <option value="high" selected={@selected_criticality == "high"}>High</option>
+              <option value="medium" selected={@selected_criticality == "medium"}>Medium</option>
+              <option value="low" selected={@selected_criticality == "low"}>Low</option>
+            </select>
+          </form>
 
           <!-- Results Count -->
           <div class="text-xs text-gray-600 ml-auto">
@@ -253,6 +291,11 @@ defmodule Shop1CmmsWeb.AssetsLive do
                           <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
                         </svg>
                       </.link>
+                      <button phx-click="confirm_delete" phx-value-id={asset.id} onclick="event.stopPropagation()" class="p-1 hover:bg-red-100 rounded" title="Delete">
+                        <svg class="w-3.5 h-3.5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -357,13 +400,13 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> assign(:date_from, "")
     |> assign(:date_to, "")
     |> assign(:show_advanced_filters, false)
-    |> assign(:filtered_assets, assets)
     |> assign(:page_title, "Edit Asset - #{asset.name}")
     |> assign(:view_mode, "grid")
     |> assign(:live_action, :edit)
     |> assign(:show_modal, true)
     |> assign(:sort_field, :name)
     |> assign(:sort_direction, :asc)
+    |> apply_filters()  # Apply initial sort
 
     {:ok, socket}
   end
@@ -394,19 +437,20 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> assign(:date_from, "")
     |> assign(:date_to, "")
     |> assign(:show_advanced_filters, false)
-    |> assign(:filtered_assets, assets)
     |> assign(:page_title, "Add New Asset")
     |> assign(:view_mode, "grid")
     |> assign(:live_action, :new)
     |> assign(:show_modal, true)
     |> assign(:sort_field, :name)
     |> assign(:sort_direction, :asc)
+    |> apply_filters()  # Apply initial sort
 
     {:ok, socket}
   end
 
   @impl true
   def mount(_params, _session, socket) do
+    require Logger
     current_user = socket.assigns.current_user
     current_tenant_id = socket.assigns.current_tenant_id
 
@@ -414,6 +458,10 @@ defmodule Shop1CmmsWeb.AssetsLive do
     assets = Assets.list_assets_with_details(current_tenant_id)
     asset_types = Assets.list_asset_types(current_tenant_id)
     asset_locations = Assets.list_asset_locations(current_tenant_id)
+
+    Logger.info("=== MOUNT ===")
+    Logger.info("Total assets loaded: #{length(assets)}")
+    Logger.info("First 3 assets (unsorted): #{inspect(Enum.take(assets, 3) |> Enum.map(&{&1.asset_number, &1.name}))}")
 
     socket = socket
     |> assign(:user, current_user)
@@ -430,13 +478,18 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> assign(:date_from, "")
     |> assign(:date_to, "")
     |> assign(:show_advanced_filters, false)
-    |> assign(:filtered_assets, assets)
     |> assign(:page_title, "Assets Management")
     |> assign(:view_mode, "grid")  # grid, list, kanban
     |> assign(:live_action, :index)
     |> assign(:show_modal, false)
+    |> assign(:show_delete_modal, false)
+    |> assign(:delete_confirm_asset, nil)
     |> assign(:sort_field, :name)
     |> assign(:sort_direction, :asc)
+    
+    socket = apply_filters(socket)  # Apply initial sort
+    
+    Logger.info("After initial sort - first 3 assets: #{inspect(Enum.take(socket.assigns.filtered_assets, 3) |> Enum.map(&{&1.asset_number, &1.name}))}")
 
     {:ok, socket}
   end
@@ -542,7 +595,14 @@ defmodule Shop1CmmsWeb.AssetsLive do
   end
 
   def handle_event("sort", %{"field" => field}, socket) do
+    require Logger
     field_atom = String.to_existing_atom(field)
+    
+    Logger.info("=== SORT EVENT ===")
+    Logger.info("Field received: #{inspect(field)}")
+    Logger.info("Field atom: #{inspect(field_atom)}")
+    Logger.info("Current sort_field: #{inspect(socket.assigns.sort_field)}")
+    Logger.info("Current sort_direction: #{inspect(socket.assigns.sort_direction)}")
     
     sort_direction = 
       if socket.assigns.sort_field == field_atom do
@@ -551,10 +611,14 @@ defmodule Shop1CmmsWeb.AssetsLive do
         :asc
       end
     
+    Logger.info("New sort_direction: #{inspect(sort_direction)}")
+    
     socket = socket
     |> assign(:sort_field, field_atom)
     |> assign(:sort_direction, sort_direction)
     |> apply_filters()
+
+    Logger.info("After apply_filters - first 3 assets: #{inspect(Enum.take(socket.assigns.filtered_assets, 3) |> Enum.map(&{&1.asset_number, &1.name}))}")
 
     {:noreply, socket}
   end
@@ -576,10 +640,22 @@ defmodule Shop1CmmsWeb.AssetsLive do
          |> put_flash(:info, "Exporting #{length(socket.assigns.filtered_assets)} assets to CSV...")}
       
       "xlsx" ->
-        {:noreply, put_flash(socket, :info, "Excel export coming soon - use CSV for now")}
+        xlsx_content = Exports.export_assets_to_xlsx(socket.assigns.filtered_assets)
+        timestamp = DateTime.utc_now() |> Calendar.strftime("%Y%m%d_%H%M%S")
+        filename = "assets_export_#{timestamp}.xlsx"
+        
+        {:noreply,
+         socket
+         |> push_event("download", %{
+           data: Base.encode64(xlsx_content),
+           filename: filename,
+           mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+           encoding: "base64"
+         })
+         |> put_flash(:info, "Exporting #{length(socket.assigns.filtered_assets)} assets to Excel...")}
       
       "pdf" ->
-        {:noreply, put_flash(socket, :info, "PDF export coming soon - use CSV for now")}
+        {:noreply, put_flash(socket, :info, "PDF export coming soon - use CSV or Excel for now")}
       
       _ ->
         {:noreply, put_flash(socket, :error, "Unknown export format")}
@@ -605,6 +681,24 @@ defmodule Shop1CmmsWeb.AssetsLive do
     {:noreply, socket}
   end
 
+  def handle_event("confirm_delete", %{"id" => id}, socket) do
+    asset = Assets.get_asset!(socket.assigns.tenant_id, id)
+    
+    socket = socket
+    |> assign(:delete_confirm_asset, asset)
+    |> assign(:show_delete_modal, true)
+    
+    {:noreply, socket}
+  end
+
+  def handle_event("cancel_delete", _params, socket) do
+    socket = socket
+    |> assign(:delete_confirm_asset, nil)
+    |> assign(:show_delete_modal, false)
+    
+    {:noreply, socket}
+  end
+
   def handle_event("delete_asset", %{"id" => id}, socket) do
     asset = Assets.get_asset!(socket.assigns.tenant_id, id)
 
@@ -613,13 +707,19 @@ defmodule Shop1CmmsWeb.AssetsLive do
         assets = Assets.list_assets_with_details(socket.assigns.tenant_id)
         socket = socket
         |> assign(:assets, assets)
+        |> assign(:show_delete_modal, false)
+        |> assign(:delete_confirm_asset, nil)
         |> apply_filters()
         |> put_flash(:info, "Asset deleted successfully")
 
         {:noreply, socket}
 
       {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Unable to delete asset. It may have associated work orders.")}
+        {:noreply, 
+         socket
+         |> assign(:show_delete_modal, false)
+         |> assign(:delete_confirm_asset, nil)
+         |> put_flash(:error, "Unable to delete asset. It may have associated work orders.")}
     end
   end
 
@@ -654,8 +754,8 @@ defmodule Shop1CmmsWeb.AssetsLive do
     assign(socket, :filtered_assets, filtered_assets)
   end
 
-  defp sort_assets(assets, :name, :asc), do: Enum.sort_by(assets, & &1.name)
-  defp sort_assets(assets, :name, :desc), do: Enum.sort_by(assets, & &1.name, :desc)
+  defp sort_assets(assets, :name, :asc), do: Enum.sort_by(assets, &String.downcase(&1.name || ""))
+  defp sort_assets(assets, :name, :desc), do: Enum.sort_by(assets, &String.downcase(&1.name || ""), :desc)
   defp sort_assets(assets, :asset_number, :asc), do: Enum.sort_by(assets, & &1.asset_number)
   defp sort_assets(assets, :asset_number, :desc), do: Enum.sort_by(assets, & &1.asset_number, :desc)
   defp sort_assets(assets, :status, :asc), do: Enum.sort_by(assets, & &1.status)
@@ -671,8 +771,10 @@ defmodule Shop1CmmsWeb.AssetsLive do
 
   defp filter_by_type(assets, "all"), do: assets
   defp filter_by_type(assets, type_id) when is_binary(type_id) do
-    {type_id_int, _} = Integer.parse(type_id)
-    Enum.filter(assets, &(&1.asset_type_id == type_id_int))
+    case Integer.parse(type_id) do
+      {type_id_int, _} -> Enum.filter(assets, &(&1.asset_type_id == type_id_int))
+      :error -> assets
+    end
   end
   defp filter_by_type(assets, type_id) do
     Enum.filter(assets, &(&1.asset_type_id == type_id))
