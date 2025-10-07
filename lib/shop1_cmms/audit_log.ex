@@ -19,7 +19,7 @@ defmodule Shop1Cmms.AuditLog do
     belongs_to :performed_by, Shop1Cmms.Accounts.User, type: :integer
     field :tenant_id, :integer
 
-    timestamps(type: :naive_datetime, updated_at: false)
+    field :inserted_at, :utc_datetime
   end
 
   @doc false

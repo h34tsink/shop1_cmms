@@ -32,9 +32,23 @@ defmodule Shop1CmmsWeb.TagInputComponent do
   end
 
   @impl true
-  def handle_event("input_change", %{"value" => value}, socket) do
-    # Get suggestions based on input
-    suggestions = if String.length(value) >= 2 do
+  def handle_event("input_change", %{"value" => value}, socket) when is_binary(value) do
+    handle_input_change(value, socket)
+  end
+
+  # Handle phx-keyup event format (comes from input element)
+  def handle_event("input_change", %{"key" => _key, "value" => value}, socket) do
+    handle_input_change(value, socket)
+  end
+
+  # Fallback for other event formats
+  def handle_event("input_change", _params, socket) do
+    {:noreply, socket}
+  end
+
+  defp handle_input_change(value, socket) do
+    # Get suggestions based on input - show after 1 character
+    suggestions = if String.length(value) >= 1 do
       tenant_id = socket.assigns.tenant_id
       tag_type = socket.assigns.tag_type
       
@@ -54,7 +68,16 @@ defmodule Shop1CmmsWeb.TagInputComponent do
   end
 
   @impl true
-  def handle_event("add_tags", %{"value" => value}, socket) do
+  def handle_event("add_tags", %{"value" => value}, socket) when is_binary(value) do
+    add_tags_from_value(value, socket)
+  end
+
+  # Handle blur event which might not have value param
+  def handle_event("add_tags", _params, socket) do
+    add_tags_from_value(socket.assigns.input_value, socket)
+  end
+
+  defp add_tags_from_value(value, socket) do
     new_tags = value
     |> String.split(",")
     |> Enum.map(&String.trim/1)
@@ -64,8 +87,10 @@ defmodule Shop1CmmsWeb.TagInputComponent do
     current_tags = socket.assigns.tags
     updated_tags = (current_tags ++ new_tags) |> Enum.uniq()
     
-    # Notify parent component
-    send(self(), {:tags_updated, socket.assigns.field_name, updated_tags})
+    # Only notify if there are actual changes
+    if updated_tags != current_tags and length(new_tags) > 0 do
+      send(self(), {:tags_updated, socket.assigns.field_name, updated_tags})
+    end
     
     {:noreply,
      socket
@@ -146,11 +171,13 @@ defmodule Shop1CmmsWeb.TagInputComponent do
         <input
           type="text"
           value={@input_value}
-          phx-change="input_change"
+          phx-keyup="input_change"
+          phx-debounce="300"
           phx-blur="add_tags"
           phx-keydown="keydown"
           phx-target={@myself}
           placeholder={@placeholder}
+          autocomplete="off"
           class="w-full text-sm border-2 border-gray-300 rounded px-3 py-2 focus:border-blue-500 focus:ring-0"
         />
         
