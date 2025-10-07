@@ -9,7 +9,7 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
   @impl true
   def mount(_params, _session, socket) do
     tenant_id = socket.assigns.current_tenant_id
-    
+
     {:ok,
      socket
      |> assign(:page_title, "PM Schedules")
@@ -29,6 +29,11 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
      |> assign(:required_skills, [])
      |> assign(:required_tools, [])
      |> assign(:ppe_required, [])
+     |> assign(:preselected_asset_id, nil)
+     |> assign(:preselected_component_id, nil)
+     |> assign(:preselected_component_name, nil)
+     |> assign(:available_components, [])
+     |> assign(:selected_asset_id, nil)
      |> load_pm_schedules(tenant_id)
      |> load_assets(tenant_id)}
   end
@@ -48,7 +53,7 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
 
   defp apply_action(socket, :new, _params) do
     changeset = PmSchedule.changeset(%PmSchedule{tenant_id: socket.assigns.current_tenant_id}, %{})
-    
+
     socket
     |> assign(:page_title, "New PM Schedule")
     |> assign(:show_form, true)
@@ -61,6 +66,76 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     |> assign(:required_skills, [])
     |> assign(:required_tools, [])
     |> assign(:ppe_required, [])
+  end
+
+  defp apply_action(socket, :new_from_asset, %{"asset_id" => asset_id}) do
+    tenant_id = socket.assigns.current_tenant_id
+    
+    # Load the asset to verify it exists and belongs to tenant
+    asset = Assets.get_asset!(tenant_id, asset_id)
+    
+    # Load components for this asset
+    components = Assets.list_components_for_asset(asset_id, tenant_id)
+    
+    # Create changeset with pre-populated asset_id
+    changeset = PmSchedule.changeset(
+      %PmSchedule{tenant_id: tenant_id}, 
+      %{"asset_id" => asset_id}
+    )
+
+    socket
+    |> assign(:page_title, "Schedule PM for #{asset.name}")
+    |> assign(:show_form, true)
+    |> assign(:selected_schedule, %PmSchedule{})
+    |> assign(:form, to_form(changeset))
+    |> assign(:work_instruction_lines, [])
+    |> assign(:checklist_items, [])
+    |> assign(:components, [])
+    |> assign(:documents, [])
+    |> assign(:required_skills, [])
+    |> assign(:required_tools, [])
+    |> assign(:ppe_required, [])
+    |> assign(:preselected_asset_id, asset_id)
+    |> assign(:available_components, components)
+    |> assign(:selected_asset_id, asset_id)
+    |> put_flash(:info, "Creating PM schedule for #{asset.name}")
+  end
+
+  defp apply_action(socket, :new_from_component, %{"asset_id" => asset_id, "component_id" => component_id}) do
+    tenant_id = socket.assigns.current_tenant_id
+    
+    # Load the component and asset to verify they exist and belong to tenant
+    component = Assets.get_component!(component_id, tenant_id)
+    asset = Assets.get_asset!(tenant_id, asset_id)
+    
+    # Load all components for this asset
+    components = Assets.list_components_for_asset(asset_id, tenant_id)
+    
+    # Create changeset with pre-populated asset_id
+    # Note: component will be added to the PM schedule via the components array in the form
+    changeset = PmSchedule.changeset(
+      %PmSchedule{tenant_id: tenant_id}, 
+      %{"asset_id" => asset_id}
+    )
+
+    socket
+    |> assign(:page_title, "Schedule PM for #{component.name} (#{asset.name})")
+    |> assign(:show_form, true)
+    |> assign(:selected_schedule, %PmSchedule{})
+    |> assign(:form, to_form(changeset))
+    |> assign(:work_instruction_lines, [])
+    |> assign(:checklist_items, [])
+    |> assign(:components, [%{id: component_id, name: component.name}])
+    |> assign(:documents, [])
+    |> assign(:required_skills, [])
+    |> assign(:required_tools, [])
+    |> assign(:ppe_required, [])
+    |> assign(:preselected_asset_id, asset_id)
+    |> assign(:preselected_component_id, component_id)
+    |> assign(:preselected_component_name, component.name)
+    |> assign(:available_components, components)
+    |> assign(:selected_asset_id, asset_id)
+    |> put_flash(:info, "Creating PM schedule for component: #{component.name}")
   end
 
   defp apply_action(socket, :edit, %{"id" => id}) do
@@ -144,6 +219,21 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
       socket.assigns.selected_schedule
       |> PmSchedule.changeset(pm_params)
       |> Map.put(:action, :validate)
+
+    # Load components if asset_id has changed
+    socket = if pm_params["asset_id"] && pm_params["asset_id"] != socket.assigns.selected_asset_id do
+      components = if pm_params["asset_id"] != "" do
+        Assets.list_components_for_asset(pm_params["asset_id"], socket.assigns.current_tenant_id)
+      else
+        []
+      end
+      
+      socket
+      |> assign(:available_components, components)
+      |> assign(:selected_asset_id, pm_params["asset_id"])
+    else
+      socket
+    end
 
     {:noreply, assign(socket, :form, to_form(changeset))}
   end
@@ -868,6 +958,28 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
                           <.input field={@form[:asset_id]} type="select" options={Enum.map(filtered_assets(assigns), &{"#{&1.name} (#{&1.asset_number})", &1.id})} prompt="Select equipment" required class="text-sm" />
                         </div>
                       </div>
+
+                      <%= if @selected_asset_id && !Enum.empty?(@available_components) do %>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700 mb-1">
+                            Component (Optional)
+                          </label>
+                          <select
+                            name="component_id"
+                            class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="">All Components (General PM)</option>
+                            <%= for component <- @available_components do %>
+                              <option value={component.id} selected={@preselected_component_id == component.id}>
+                                <%= component.name %><%= if component.component_type, do: " - #{component.component_type}", else: "" %>
+                              </option>
+                            <% end %>
+                          </select>
+                          <p class="mt-1 text-xs text-gray-500">
+                            Select a specific component or leave blank for general equipment PM
+                          </p>
+                        </div>
+                      <% end %>
 
                       <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">

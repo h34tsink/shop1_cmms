@@ -14,6 +14,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
     work_orders = WorkOrders.list_work_orders_for_asset(id, current_tenant_id)
     maintenance_history = WorkOrders.get_maintenance_history(id, current_tenant_id)
     manufacturers = Shop1Cmms.Metadata.list_manufacturers(current_tenant_id, active_only: true)
+    components = Assets.list_components_for_asset(id, current_tenant_id)
 
     # Check if user can edit assets
     can_edit = Shop1Cmms.Accounts.can?(current_user, :manage_assets, asset, current_tenant_id)
@@ -28,8 +29,14 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
     |> assign(:work_orders, work_orders)
     |> assign(:maintenance_history, maintenance_history)
     |> assign(:manufacturers, manufacturers)
+    |> assign(:components, components)
     |> assign(:manufacturer_form, to_form(manufacturer_changeset))
     |> assign(:show_manufacturer_modal, false)
+    |> assign(:show_component_modal, false)
+    |> assign(:show_delete_component_modal, false)
+    |> assign(:component_form, nil)
+    |> assign(:selected_component, nil)
+    |> assign(:component_action, :new)
     |> assign(:page_title, "Asset Details - #{asset.name}")
     |> assign(:active_tab, "overview")
     |> assign(:edit_mode, false)
@@ -166,6 +173,136 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
     end
   end
 
+  # Component Management Handlers
+
+  def handle_event("show_component_modal", _params, socket) do
+    changeset = Assets.change_component(%Shop1Cmms.Assets.Component{
+      tenant_id: socket.assigns.tenant_id,
+      asset_id: socket.assigns.asset.id
+    })
+
+    {:noreply,
+     socket
+     |> assign(:show_component_modal, true)
+     |> assign(:component_action, :new)
+     |> assign(:selected_component, nil)
+     |> assign(:component_form, to_form(changeset))}
+  end
+
+  def handle_event("edit_component", %{"id" => id}, socket) do
+    component = Assets.get_component!(id, socket.assigns.tenant_id)
+    changeset = Assets.change_component(component)
+
+    {:noreply,
+     socket
+     |> assign(:show_component_modal, true)
+     |> assign(:component_action, :edit)
+     |> assign(:selected_component, component)
+     |> assign(:component_form, to_form(changeset))}
+  end
+
+  def handle_event("hide_component_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_component_modal, false)
+     |> assign(:component_form, nil)
+     |> assign(:selected_component, nil)}
+  end
+
+  def handle_event("validate_component", %{"component" => component_params}, socket) do
+    component = socket.assigns.selected_component || %Shop1Cmms.Assets.Component{
+      tenant_id: socket.assigns.tenant_id,
+      asset_id: socket.assigns.asset.id
+    }
+    
+    changeset = 
+      component
+      |> Assets.change_component(component_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, component_form: to_form(changeset))}
+  end
+
+  def handle_event("save_component", %{"component" => component_params}, socket) do
+    component_params = 
+      component_params
+      |> Map.put("tenant_id", socket.assigns.tenant_id)
+      |> Map.put("asset_id", socket.assigns.asset.id)
+
+    case socket.assigns.component_action do
+      :new ->
+        case Assets.create_component(component_params) do
+          {:ok, _component} ->
+            components = Assets.list_components_for_asset(socket.assigns.asset.id, socket.assigns.tenant_id)
+            
+            {:noreply,
+             socket
+             |> assign(:components, components)
+             |> assign(:show_component_modal, false)
+             |> assign(:component_form, nil)
+             |> put_flash(:info, "Component created successfully")}
+
+          {:error, changeset} ->
+            {:noreply, assign(socket, component_form: to_form(changeset))}
+        end
+
+      :edit ->
+        case Assets.update_component(socket.assigns.selected_component, component_params) do
+          {:ok, _component} ->
+            components = Assets.list_components_for_asset(socket.assigns.asset.id, socket.assigns.tenant_id)
+            
+            {:noreply,
+             socket
+             |> assign(:components, components)
+             |> assign(:show_component_modal, false)
+             |> assign(:component_form, nil)
+             |> assign(:selected_component, nil)
+             |> put_flash(:info, "Component updated successfully")}
+
+          {:error, changeset} ->
+            {:noreply, assign(socket, component_form: to_form(changeset))}
+        end
+    end
+  end
+
+  def handle_event("confirm_delete_component", %{"id" => id}, socket) do
+    component = Assets.get_component!(id, socket.assigns.tenant_id)
+
+    {:noreply,
+     socket
+     |> assign(:show_delete_component_modal, true)
+     |> assign(:selected_component, component)}
+  end
+
+  def handle_event("cancel_delete_component", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_delete_component_modal, false)
+     |> assign(:selected_component, nil)}
+  end
+
+  def handle_event("delete_component", %{"id" => id}, socket) do
+    component = Assets.get_component!(id, socket.assigns.tenant_id)
+
+    case Assets.delete_component(component) do
+      {:ok, _component} ->
+        components = Assets.list_components_for_asset(socket.assigns.asset.id, socket.assigns.tenant_id)
+
+        {:noreply,
+         socket
+         |> assign(:components, components)
+         |> assign(:show_delete_component_modal, false)
+         |> assign(:selected_component, nil)
+         |> put_flash(:info, "Component deleted successfully")}
+
+      {:error, _changeset} ->
+        {:noreply,
+         socket
+         |> assign(:show_delete_component_modal, false)
+         |> put_flash(:error, "Unable to delete component. It may have associated PM schedules.")}
+    end
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -209,12 +346,15 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
             <span>Create WO</span>
           </button>
           
-          <button class="btn-toolbar">
+          <.link
+            navigate={~p"/assets/#{@asset.id}/schedule-pm"}
+            class="btn-toolbar"
+          >
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
             </svg>
             <span>Schedule PM</span>
-          </button>
+          </.link>
           
           <button class="btn-toolbar">
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -301,6 +441,18 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
           >
             Documents
           </button>
+          <button
+            phx-click="change_tab"
+            phx-value-tab="components"
+            class={[
+              "px-3 py-1.5 text-xs font-medium border-b-2 transition-colors",
+              if(@active_tab == "components",
+                do: "border-blue-500 text-blue-600 bg-white",
+                else: "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300")
+            ]}
+          >
+            Components
+          </button>
         </nav>
       </div>
 
@@ -315,6 +467,8 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
             <%= render_maintenance_tab(assigns) %>
           <% "documents" -> %>
             <%= render_documents_tab(assigns) %>
+          <% "components" -> %>
+            <%= render_components_tab(assigns) %>
         <% end %>
       </div>
     </div>
@@ -350,6 +504,105 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
                 </.button>
               </div>
             </.simple_form>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Component Creation/Edit Modal -->
+    <%= if @show_component_modal do %>
+      <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" phx-click="hide_component_modal">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white" phx-click-away="hide_component_modal" @click.stop="">
+          <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-medium text-gray-900">
+                <%= if @component_action == :new, do: "Add Component", else: "Edit Component" %>
+              </h3>
+              <button phx-click="hide_component_modal" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <.simple_form
+              for={@component_form}
+              phx-change="validate_component"
+              phx-submit="save_component"
+            >
+              <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                  <.input field={@component_form[:name]} type="text" label="Component Name" required />
+                </div>
+                <.input field={@component_form[:component_type]} type="text" label="Type" />
+                <.input field={@component_form[:status]} type="select" label="Status" options={[
+                  {"Active", "active"},
+                  {"Inactive", "inactive"},
+                  {"Maintenance", "maintenance"},
+                  {"Failed", "failed"}
+                ]} />
+                <.input field={@component_form[:manufacturer]} type="text" label="Manufacturer" />
+                <.input field={@component_form[:model]} type="text" label="Model" />
+                <.input field={@component_form[:serial_number]} type="text" label="Serial Number" />
+                <.input field={@component_form[:install_date]} type="date" label="Install Date" />
+                <div class="col-span-2">
+                  <.input field={@component_form[:description]} type="textarea" label="Description" rows="3" />
+                </div>
+              </div>
+              <div class="mt-4 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  phx-click="hide_component_modal"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+                >
+                  <%= if @component_action == :new, do: "Create Component", else: "Update Component" %>
+                </button>
+              </div>
+            </.simple_form>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Delete Component Confirmation Modal -->
+    <%= if @show_delete_component_modal && @selected_component do %>
+      <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div class="mt-3">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">
+              Delete Component?
+            </h3>
+            <p class="text-sm text-gray-600 text-center mb-4">
+              Are you sure you want to delete <strong><%= @selected_component.name %></strong>?
+            </p>
+            <p class="text-xs text-red-600 text-center mb-6">
+              This action cannot be undone.
+            </p>
+            <div class="flex justify-center gap-3">
+              <button
+                phx-click="cancel_delete_component"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                phx-click="delete_component"
+                phx-value-id={@selected_component.id}
+                class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700"
+              >
+                Delete Component
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -785,6 +1038,154 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
     </div>
     """
   end
+
+  defp render_components_tab(assigns) do
+    ~H"""
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-medium text-gray-900">Components</h2>
+          <p class="mt-1 text-sm text-gray-500">
+            Physical components of this equipment that require maintenance
+          </p>
+        </div>
+        <button
+          phx-click="show_component_modal"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+        >
+          <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+          </svg>
+          Add Component
+        </button>
+      </div>
+
+      <%= if Enum.empty?(@components) do %>
+        <div class="p-6 text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No components</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            Add components to this equipment to track maintenance for individual parts.
+          </p>
+          <div class="mt-6">
+            <button
+              phx-click="show_component_modal"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            >
+              <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+              </svg>
+              Add Your First Component
+            </button>
+          </div>
+        </div>
+      <% else %>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Component Name
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Manufacturer
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Install Date
+                </th>
+                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <%= for component <- @components do %>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900"><%= component.name %></div>
+                    <%= if component.description do %>
+                      <div class="text-sm text-gray-500"><%= component.description %></div>
+                    <% end %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900"><%= component.component_type || "-" %></div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900"><%= component.manufacturer || "-" %></div>
+                    <%= if component.model do %>
+                      <div class="text-sm text-gray-500"><%= component.model %></div>
+                    <% end %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class={[
+                      "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
+                      component_status_color_class(component.status)
+                    ]}>
+                      <%= component.status |> to_string() |> String.capitalize() %>
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <%= if component.install_date do %>
+                      <%= Calendar.strftime(component.install_date, "%b %d, %Y") %>
+                    <% else %>
+                      -
+                    <% end %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                    <.link
+                      navigate={~p"/assets/#{@asset.id}/components/#{component.id}/schedule-pm"}
+                      class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200"
+                      title="Schedule PM"
+                    >
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                      </svg>
+                    </.link>
+                    <button
+                      phx-click="edit_component"
+                      phx-value-id={component.id}
+                      class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
+                      title="Edit Component"
+                    >
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
+                        <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
+                      </svg>
+                    </button>
+                    <button
+                      phx-click="confirm_delete_component"
+                      phx-value-id={component.id}
+                      class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200"
+                      title="Delete Component"
+                    >
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp component_status_color_class(:active), do: "bg-green-100 text-green-800"
+  defp component_status_color_class(:inactive), do: "bg-gray-100 text-gray-800"
+  defp component_status_color_class(:maintenance), do: "bg-yellow-100 text-yellow-800"
+  defp component_status_color_class(:failed), do: "bg-red-100 text-red-800"
+  defp component_status_color_class(_), do: "bg-gray-100 text-gray-800"
 
   defp status_color_class(:pending), do: "bg-yellow-100 text-yellow-800"
   defp status_color_class(:in_progress), do: "bg-blue-100 text-blue-800"

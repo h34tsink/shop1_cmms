@@ -66,6 +66,8 @@ defmodule Shop1CmmsWeb.Router do
       live "/assets/new", AssetsLive, :new
       live "/assets/:id", AssetDetailLive, :show
       live "/assets/:id/edit", AssetsLive, :edit
+      live "/assets/:asset_id/schedule-pm", PmSchedulesLive, :new_from_asset
+      live "/assets/:asset_id/components/:component_id/schedule-pm", PmSchedulesLive, :new_from_component
 
       # Preventive Maintenance
       live "/pm-schedules", PmSchedulesLive, :index

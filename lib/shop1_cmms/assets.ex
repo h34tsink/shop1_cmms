@@ -8,7 +8,7 @@ defmodule Shop1Cmms.Assets do
 
   alias Shop1Cmms.Assets.{
     Asset, AssetType, AssetLocation, AssetLocationType,
-    MeterType, AssetMeter, MeterReading
+    MeterType, AssetMeter, MeterReading, Component
   }
 
   ## Asset Location Types
@@ -479,5 +479,59 @@ defmodule Shop1Cmms.Assets do
     |> Asset.by_status(status)
     |> preload([:asset_type, :location])
     |> Repo.all()
+  end
+
+  ## Components
+
+  @doc """
+  Returns the list of components for an asset.
+  """
+  def list_components_for_asset(asset_id, tenant_id) do
+    Component
+    |> where([c], c.asset_id == ^asset_id and c.tenant_id == ^tenant_id)
+    |> order_by([c], c.name)
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a single component.
+  """
+  def get_component!(id, tenant_id) do
+    Component
+    |> where([c], c.id == ^id and c.tenant_id == ^tenant_id)
+    |> preload(:asset)
+    |> Repo.one!()
+  end
+
+  @doc """
+  Creates a component.
+  """
+  def create_component(attrs \\ %{}) do
+    %Component{}
+    |> Component.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a component.
+  """
+  def update_component(%Component{} = component, attrs) do
+    component
+    |> Component.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a component.
+  """
+  def delete_component(%Component{} = component) do
+    Repo.delete(component)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking component changes.
+  """
+  def change_component(%Component{} = component, attrs \\ %{}) do
+    Component.changeset(component, attrs)
   end
 end

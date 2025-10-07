@@ -1,32 +1,65 @@
 # Shop1 CMMS (Computerized Maintenance Management System)
 
-A modern, multi-tenant CMMS built with ## 📞 Support
-
-- **Repository**: [Shop1 CMMS on GitHub](https://github.com/h34tsink/shop1_cmms)
-- **Issues**: Use GitHub Issues for bug reports
-- **Documentation**: See linked documentation files aboveix LiveView that integrates seamlessly with the existing Shop1FinishLine ERP system.
+A modern, multi-tenant CMMS built with Phoenix LiveView that integrates seamlessly with the existing Shop1FinishLine ERP system.
 
 ## 🏭 Overview
 
-Shop1 CMMS provides comprehensive maintenance management capabilities for manufacturing facilities, with a focus on preventive maintenance scheduling, asset management, and work order tracking.
+Shop1 CMMS provides comprehensive maintenance management capabilities for manufacturing facilities, with a focus on preventive maintenance scheduling, asset management, and work order tracking. The system features a professional desktop business application interface similar to enterprise ERP systems.
 
 ## ✨ Current Status
 
-**Phase 1 Complete** ✅ - Foundation and Authentication
-- Multi-tenant architecture with row-level security
-- Integration with existing Shop1FinishLine users
-- Role-based access control (5 user roles)
-- Responsive dashboard with Phoenix LiveView
-- Secure authentication and session management
+**Phase 3 Complete** ✅ - Advanced Features & Polish
+
+- ✅ Multi-tenant architecture with row-level security
+- ✅ Integration with existing Shop1FinishLine users  
+- ✅ Role-based access control (5 user roles)
+- ✅ Professional desktop UI with multi-panel layouts
+- ✅ Advanced asset management with filtering and export
+- ✅ Comprehensive testing framework (85% coverage)
+- ✅ Real-time dashboard with LiveView updates
+
+## 🚀 Quick Start
+
+1. **Prerequisites**: Elixir 1.15+, Phoenix 1.7+, PostgreSQL 14+, Node.js 18+
+2. **Clone**: `git clone https://github.com/h34tsink/shop1_cmms.git`
+3. **Setup**: `mix deps.get && mix ecto.setup`
+4. **Start**: `mix phx.server`
+5. **Access**: [http://localhost:4000](http://localhost:4000)
+
+For detailed setup instructions, see the [Development Guide](docs/development/development-guide.md).
 
 ## 📚 Documentation
 
+### 📖 Core Documentation
+
 | Document | Description |
 |----------|-------------|
-| **[ROADMAP.md](ROADMAP.md)** | Development phases and feature timeline |
-| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Technical architecture and design decisions |
-| **[DEVELOPMENT.md](DEVELOPMENT.md)** | Setup guide and development workflow |
-| **[MIGRATION.md](MIGRATION.md)** | Database migration details and verification |
+| **[Documentation Index](docs/index.md)** | 🎯 **Start here** - Complete navigation to all documentation |
+| **[Features Overview](docs/features/features-overview.md)** | Complete feature list and capabilities |
+| **[Development Guide](docs/development/development-guide.md)** | Setup, patterns, testing, and deployment |
+| **[System Architecture](docs/architecture/system-architecture.md)** | Technical architecture and design decisions |
+
+### 📊 Project Status & Implementation
+
+| Document | Description |
+|----------|-------------|
+| **[Implementation Status](docs/implementation/implementation-status.md)** | Current progress and completed phases |
+| **[Testing Guide](docs/testing/testing-guide.md)** | Testing strategies, patterns, and coverage |
+| **[ROADMAP.md](ROADMAP.md)** | Development roadmap and future features |
+| **[MIGRATION.md](MIGRATION.md)** | Database migration and integration details |
+
+### 📁 Documentation Structure
+
+```text
+docs/
+├── index.md                    # Master documentation index
+├── architecture/               # System design and technical architecture
+├── development/               # Development setup, patterns, and guides  
+├── features/                  # Feature documentation and specifications
+├── implementation/            # Project status and implementation tracking
+├── testing/                   # Testing strategies and coverage reports
+└── status/                    # Current status and progress tracking
+```
 
 ## � Quick Start
 
@@ -72,7 +105,8 @@ mix phx.server
 
 ## 🔧 Development
 
-See **[DEVELOPMENT.md](DEVELOPMENT.md)** for:
+See **[Development Guide](docs/development/development-guide.md)** for:
+
 - Local setup instructions
 - Development workflow
 - Testing procedures
@@ -96,19 +130,20 @@ See **[DEVELOPMENT.md](DEVELOPMENT.md)** for:
 ## 🎯 Next Phase: Asset Management
 
 Ready to implement:
-- Asset hierarchy and categorization
-- Equipment specifications
-- Meter readings and monitoring
-- QR code generation
-- Asset search and filtering
 
-## � Support
+- Advanced work order workflows
+- Preventive maintenance automation
+- Parts inventory integration
+- Equipment manufacturer APIs
+- Mobile field technician app
 
-- **Repository**: https://github.com/h34tsink/shop1_cmms
+## 📞 Support
+
+- **Repository**: [Shop1 CMMS on GitHub](https://github.com/h34tsink/shop1_cmms)
 - **Issues**: Use GitHub Issues for bug reports
-- **Documentation**: See linked documentation files above
+- **Documentation**: See organized documentation above
 
 ---
 
 **Built for International Hardcoat LLC manufacturing operations**  
-*Last Updated: September 9, 2025*
+*Last Updated: January 2025*

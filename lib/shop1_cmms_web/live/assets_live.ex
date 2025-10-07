@@ -15,6 +15,7 @@ defmodule Shop1CmmsWeb.AssetsLive do
           id={@asset.id || :new}
           title={@page_title}
           action={@live_action}
+          live_action={@live_action}
           asset={@asset}
           asset_types={@asset_types}
           asset_locations={@asset_locations}
@@ -375,80 +376,6 @@ defmodule Shop1CmmsWeb.AssetsLive do
   defp criticality_to_number(_), do: 0
 
   @impl true
-  def mount(%{"id" => id}, _session, socket) when socket.assigns.live_action == :edit do
-    current_user = socket.assigns.current_user
-    current_tenant_id = socket.assigns.current_tenant_id
-
-    asset = Assets.get_asset!(current_tenant_id, id)
-    assets = Assets.list_assets_with_details(current_tenant_id)
-    asset_types = Assets.list_asset_types(current_tenant_id)
-    asset_locations = Assets.list_asset_locations(current_tenant_id)
-
-    socket = socket
-    |> assign(:user, current_user)
-    |> assign(:tenant_id, current_tenant_id)
-    |> assign(:assets, assets)
-    |> assign(:asset, asset)
-    |> assign(:asset_types, asset_types)
-    |> assign(:asset_locations, asset_locations)
-    |> assign(:unique_manufacturers, get_unique_manufacturers(assets))
-    |> assign(:selected_status, "all")
-    |> assign(:selected_type, "all")
-    |> assign(:selected_criticality, "all")
-    |> assign(:selected_manufacturer, "all")
-    |> assign(:search_term, "")
-    |> assign(:date_from, "")
-    |> assign(:date_to, "")
-    |> assign(:show_advanced_filters, false)
-    |> assign(:page_title, "Edit Asset - #{asset.name}")
-    |> assign(:view_mode, "grid")
-    |> assign(:live_action, :edit)
-    |> assign(:show_modal, true)
-    |> assign(:sort_field, :name)
-    |> assign(:sort_direction, :asc)
-    |> apply_filters()  # Apply initial sort
-
-    {:ok, socket}
-  end
-
-  @impl true
-  def mount(_params, _session, socket) when socket.assigns.live_action == :new do
-    current_user = socket.assigns.current_user
-    current_tenant_id = socket.assigns.current_tenant_id
-
-    # Load assets and asset types
-    assets = Assets.list_assets_with_details(current_tenant_id)
-    asset_types = Assets.list_asset_types(current_tenant_id)
-    asset_locations = Assets.list_asset_locations(current_tenant_id)
-
-    socket = socket
-    |> assign(:user, current_user)
-    |> assign(:tenant_id, current_tenant_id)
-    |> assign(:assets, assets)
-    |> assign(:asset_types, asset_types)
-    |> assign(:asset_locations, asset_locations)
-    |> assign(:asset, %Assets.Asset{})
-    |> assign(:unique_manufacturers, get_unique_manufacturers(assets))
-    |> assign(:selected_status, "all")
-    |> assign(:selected_type, "all")
-    |> assign(:selected_criticality, "all")
-    |> assign(:selected_manufacturer, "all")
-    |> assign(:search_term, "")
-    |> assign(:date_from, "")
-    |> assign(:date_to, "")
-    |> assign(:show_advanced_filters, false)
-    |> assign(:page_title, "Add New Asset")
-    |> assign(:view_mode, "grid")
-    |> assign(:live_action, :new)
-    |> assign(:show_modal, true)
-    |> assign(:sort_field, :name)
-    |> assign(:sort_direction, :asc)
-    |> apply_filters()  # Apply initial sort
-
-    {:ok, socket}
-  end
-
-  @impl true
   def mount(_params, _session, socket) do
     require Logger
     current_user = socket.assigns.current_user
@@ -479,16 +406,15 @@ defmodule Shop1CmmsWeb.AssetsLive do
     |> assign(:date_to, "")
     |> assign(:show_advanced_filters, false)
     |> assign(:page_title, "Assets Management")
-    |> assign(:view_mode, "grid")  # grid, list, kanban
-    |> assign(:live_action, :index)
+    |> assign(:view_mode, "grid")
     |> assign(:show_modal, false)
     |> assign(:show_delete_modal, false)
     |> assign(:delete_confirm_asset, nil)
     |> assign(:sort_field, :name)
     |> assign(:sort_direction, :asc)
-    
-    socket = apply_filters(socket)  # Apply initial sort
-    
+
+    socket = apply_filters(socket)
+
     Logger.info("After initial sort - first 3 assets: #{inspect(Enum.take(socket.assigns.filtered_assets, 3) |> Enum.map(&{&1.asset_number, &1.name}))}")
 
     {:ok, socket}
