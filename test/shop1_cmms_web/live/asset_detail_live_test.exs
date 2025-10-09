@@ -5,19 +5,11 @@ defmodule Shop1CmmsWeb.AssetDetailLiveTest do
   alias Shop1Cmms.Factory
 
   setup %{conn: conn} do
-    # Create authenticated user with tenant
-    user = Factory.insert(:user)
-    tenant_id = 1
+    # Create user with proper tenant assignment
+    user = Factory.insert_user_with_tenant(tenant_id: 1)
+    conn = log_in_user(conn, user)
     
-    conn = 
-      conn
-      |> Plug.Test.init_test_session(%{})
-      |> Plug.Conn.put_session(:user_id, user.id)
-      |> Plug.Conn.put_session(:tenant_id, tenant_id)
-      |> Plug.Conn.assign(:current_user, user)
-      |> Plug.Conn.assign(:current_tenant_id, tenant_id)
-    
-    {:ok, conn: conn, user: user, tenant_id: tenant_id}
+    {:ok, conn: conn, user: user, tenant_id: 1}
   end
 
   describe "Components Tab" do

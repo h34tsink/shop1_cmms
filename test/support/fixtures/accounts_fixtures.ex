@@ -37,6 +37,7 @@ defmodule Shop1Cmms.AccountsFixtures do
         first_name: "Test",
         last_name: "User",
         is_active: true,
+        cmms_enabled: true,
         password: "Password123456",
         password_confirmation: "Password123456"
       })

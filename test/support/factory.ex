@@ -5,7 +5,7 @@ defmodule Shop1Cmms.Factory do
   
   alias Shop1Cmms.Repo
   alias Shop1Cmms.Tenants.Tenant
-  alias Shop1Cmms.Accounts.User
+  alias Shop1Cmms.Accounts.{User, CMMSUserRole, UserTenantAssignment}
   alias Shop1Cmms.Assets.{Asset, AssetType, AssetLocation, AssetLocationType, Component}
   alias Shop1Cmms.Maintenance.{PmSchedule, PmExecution}
   alias Shop1Cmms.WorkOrders.WorkOrder
@@ -29,16 +29,45 @@ defmodule Shop1Cmms.Factory do
   def build(:user, attrs) do
     %User{
       username: attrs[:username] || "user#{System.unique_integer([:positive])}",
-      password_hash: attrs[:password_hash] || Bcrypt.hash_pwd_salt("password123"),
+      password_hash: attrs[:password_hash] || Pbkdf2.hash_pwd_salt("password123"),
       is_active: Map.get(attrs, :is_active, true),
       cmms_enabled: Map.get(attrs, :cmms_enabled, true)
     }
     |> struct!(attrs)
   end
 
+  def build(:cmms_user_role, attrs) do
+    %CMMSUserRole{
+      name: attrs[:name] || "technician",
+      display_name: attrs[:display_name] || "Technician",
+      description: attrs[:description] || "Test role",
+      permissions: attrs[:permissions] || [],
+      is_system_role: Map.get(attrs, :is_system_role, false),
+      is_active: Map.get(attrs, :is_active, true)
+    }
+    |> struct!(attrs)
+  end
+
+  def build(:user_tenant_assignment, attrs) do
+    %UserTenantAssignment{
+      user_id: attrs[:user_id],
+      tenant_id: attrs[:tenant_id] || 1,
+      role_id: attrs[:role_id],
+      default_site_id: attrs[:default_site_id],
+      assigned_by_id: attrs[:assigned_by_id],
+      assigned_at: attrs[:assigned_at] || NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
+      is_active: Map.get(attrs, :is_active, true),
+      notes: attrs[:notes]
+    }
+    |> struct!(attrs)
+  end
+
   def build(:asset_type, attrs) do
+    unique_num = System.unique_integer([:positive])
     %AssetType{
-      name: attrs[:name] || "Equipment Type #{System.unique_integer([:positive])}",
+      name: attrs[:name] || "Equipment Type #{unique_num}",
+      code: attrs[:code] || "TYPE#{unique_num}",
+      category: attrs[:category] || "Equipment",
       description: attrs[:description] || "Test equipment type",
       tenant_id: attrs[:tenant_id] || 1
     }
@@ -46,8 +75,10 @@ defmodule Shop1Cmms.Factory do
   end
 
   def build(:asset_location_type, attrs) do
+    unique_num = System.unique_integer([:positive])
     %AssetLocationType{
-      name: attrs[:name] || "Location Type #{System.unique_integer([:positive])}",
+      name: attrs[:name] || "Location Type #{unique_num}",
+      code: attrs[:code] || "LOC#{unique_num}",
       description: attrs[:description],
       tenant_id: attrs[:tenant_id] || 1
     }
@@ -55,8 +86,10 @@ defmodule Shop1Cmms.Factory do
   end
 
   def build(:asset_location, attrs) do
+    unique_num = System.unique_integer([:positive])
     %AssetLocation{
-      name: attrs[:name] || "Location #{System.unique_integer([:positive])}",
+      name: attrs[:name] || "Location #{unique_num}",
+      code: attrs[:code] || "LOC#{unique_num}",
       description: attrs[:description],
       location_type_id: attrs[:location_type_id],
       tenant_id: attrs[:tenant_id] || 1,
@@ -73,7 +106,8 @@ defmodule Shop1Cmms.Factory do
       status: attrs[:status] || :operational,
       criticality: attrs[:criticality] || :medium,
       tenant_id: attrs[:tenant_id] || 1,
-      asset_type_id: attrs[:asset_type_id]
+      asset_type_id: attrs[:asset_type_id],
+      location_id: attrs[:location_id]
     }
     |> struct!(attrs)
   end
@@ -162,10 +196,73 @@ defmodule Shop1Cmms.Factory do
   @doc """
   Build and insert into database
   """
-  def insert(factory_name, attrs \\ %{}) do
-    factory_name
-    |> build(attrs)
+  def insert(factory_name, attrs \\ %{})
+  
+  # Special handling for assets to auto-create dependencies if not provided
+  def insert(:asset, attrs) do
+    attrs_map = Enum.into(attrs, %{})
+    tenant_id = attrs_map[:tenant_id] || 1
+    
+    # Ensure tenant exists
+    ensure_tenant_exists(tenant_id)
+    
+    # Auto-create asset_type if not provided
+    attrs_with_type = if attrs_map[:asset_type_id] do
+      attrs_map
+    else
+      asset_type = insert(:asset_type, tenant_id: tenant_id)
+      Map.put(attrs_map, :asset_type_id, asset_type.id)
+    end
+    
+    :asset
+    |> build(attrs_with_type)
     |> Repo.insert!()
+  end
+  
+  # Special handling for tenant-dependent types
+  def insert(factory_name, attrs) when factory_name in [:asset_type, :asset_location, :asset_location_type] do
+    attrs_map = Enum.into(attrs, %{})
+    tenant_id = attrs_map[:tenant_id] || 1
+    ensure_tenant_exists(tenant_id)
+    
+    factory_name
+    |> build(attrs_map)
+    |> Repo.insert!()
+  end
+  
+  # Special handling for component - ensure asset exists
+  def insert(:component, attrs) do
+    attrs_map = Enum.into(attrs, %{})
+    
+    # If no asset_id provided, create a default asset
+    attrs_with_asset = if attrs_map[:asset_id] do
+      attrs_map
+    else
+      asset = insert(:asset, tenant_id: attrs_map[:tenant_id] || 1)
+      Map.put(attrs_map, :asset_id, asset.id)
+    end
+    
+    :component
+    |> build(attrs_with_asset)
+    |> Repo.insert!()
+  end
+  
+  def insert(factory_name, attrs) do
+    attrs_map = Enum.into(attrs, %{})
+    factory_name
+    |> build(attrs_map)
+    |> Repo.insert!()
+  end
+  
+  # Ensure tenant exists before creating tenant-dependent records
+  defp ensure_tenant_exists(tenant_id) do
+    case Repo.get(Tenant, tenant_id) do
+      nil -> 
+        %Tenant{id: tenant_id, name: "Test Tenant #{tenant_id}", code: "TEST#{tenant_id}", is_active: true}
+        |> Repo.insert!()
+      tenant -> 
+        tenant
+    end
   end
 
   @doc """
@@ -182,7 +279,8 @@ defmodule Shop1Cmms.Factory do
     tenant_id = attrs[:tenant_id] || 1
     
     asset_type = insert(:asset_type, tenant_id: tenant_id)
-    location = insert(:asset_location, tenant_id: tenant_id)
+    location_type = insert(:asset_location_type, tenant_id: tenant_id)
+    location = insert(:asset_location, tenant_id: tenant_id, location_type_id: location_type.id)
     
     asset = insert(:asset,
       tenant_id: tenant_id,
@@ -230,5 +328,55 @@ defmodule Shop1Cmms.Factory do
     )
     
     %{work_order: work_order, asset: asset}
+  end
+
+  @doc """
+  Get or create a default technician role for testing
+  """
+  def get_or_create_role(role_name \\ "technician") do
+    case Repo.get_by(CMMSUserRole, name: role_name) do
+      nil ->
+        %CMMSUserRole{
+          name: role_name,
+          display_name: String.capitalize(role_name),
+          description: "Test #{role_name} role",
+          permissions: [],
+          is_system_role: true,
+          is_active: true
+        }
+        |> Repo.insert!()
+      role ->
+        role
+    end
+  end
+
+  @doc """
+  Create a user with tenant assignment and role
+  """
+  def insert_user_with_tenant(attrs \\ %{}) do
+    # Convert to map if needed
+    attrs = if is_list(attrs), do: Enum.into(attrs, %{}), else: attrs
+    
+    tenant_id = attrs[:tenant_id] || 1
+    role_name = attrs[:role_name] || "technician"
+    
+    # Ensure tenant and role exist
+    ensure_tenant_exists(tenant_id)
+    role = get_or_create_role(role_name)
+    
+    # Create user (remove tenant_id from attrs as it's not a field on User)
+    user_attrs = Map.drop(attrs, [:tenant_id, :role_name])
+    user = insert(:user, user_attrs)
+    
+    # Create tenant assignment
+    insert(:user_tenant_assignment,
+      user_id: user.id,
+      tenant_id: tenant_id,
+      role_id: role.id,
+      is_active: true
+    )
+    
+    # Add tenant_id to user struct for convenience in tests
+    Map.put(user, :tenant_id, tenant_id)
   end
 end

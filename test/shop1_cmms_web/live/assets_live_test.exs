@@ -29,10 +29,14 @@ defmodule Shop1CmmsWeb.AssetsLiveTest do
 
       {:ok, user} = Accounts.create_user(user_attrs)
 
+      # Get or create a role
+      role = Shop1Cmms.Factory.get_or_create_role("technician")
+
       # Create user-tenant assignment
       assignment_attrs = %{
         user_id: user.id,
         tenant_id: tenant.id,
+        role_id: role.id,
         is_active: true
       }
 
@@ -43,7 +47,7 @@ defmodule Shop1CmmsWeb.AssetsLiveTest do
         name: "Test Equipment",
         description: "Test equipment type",
         code: "TEST_EQUIP",
-        category: "general",
+        category: "Equipment",
         tenant_id: tenant.id
       }
 

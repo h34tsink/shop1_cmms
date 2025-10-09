@@ -290,8 +290,4 @@ defmodule Shop1CmmsWeb.PmSchedulesLiveTest do
     })
     %{asset: asset, asset_type: asset_type, location: location}
   end
-
-  defp register_and_log_in_user(%{conn: conn, user: user}) do
-    %{conn: log_in_user(conn, user)}
-  end
 end

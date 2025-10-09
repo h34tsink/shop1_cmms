@@ -37,6 +37,62 @@ defmodule Shop1CmmsWeb.ConnCase do
   end
 
   @doc """
+  Setup helper that registers and logs in a user in a test conn.
+  
+  ## Examples
+  
+      setup :register_and_log_in_user
+      
+  It stores a user in the test shared state or creates one with a tenant assignment.
+  """
+  def register_and_log_in_user(context) do
+    conn = context[:conn] || Phoenix.ConnTest.build_conn()
+    tenant = context[:tenant]
+    user = context[:user]
+    
+    # Ensure we have user and tenant
+    {user, tenant_id} = cond do
+      user && tenant -> 
+        # Ensure user has tenant assignment
+        ensure_user_tenant_assignment(user, tenant.id)
+        {Map.put(user, :tenant_id, tenant.id), tenant.id}
+      
+      user && !tenant ->
+        # Use user's tenant_id or default to 1
+        tenant_id = Map.get(user, :tenant_id, 1)
+        ensure_user_tenant_assignment(user, tenant_id)
+        {Map.put(user, :tenant_id, tenant_id), tenant_id}
+      
+      true ->
+        # Create new user with tenant assignment
+        user = Shop1Cmms.Factory.insert_user_with_tenant(tenant_id: 1)
+        {user, 1}
+    end
+    
+    %{user: user, conn: log_in_user(conn, user)}
+  end
+  
+  defp ensure_user_tenant_assignment(user, tenant_id) do
+    alias Shop1Cmms.Accounts
+    alias Shop1Cmms.Accounts.UserTenantAssignment
+    alias Shop1Cmms.Repo
+    
+    # Check if assignment already exists
+    existing = Repo.get_by(UserTenantAssignment, user_id: user.id, tenant_id: tenant_id)
+    
+    if !existing do
+      # Create assignment
+      role = Shop1Cmms.Factory.get_or_create_role("technician")
+      Accounts.create_user_tenant_assignment(%{
+        user_id: user.id,
+        tenant_id: tenant_id,
+        role_id: role.id,
+        is_active: true
+      })
+    end
+  end
+
+  @doc """
   Setup helper that logs in a user in a test conn.
   """
   def log_in_user(conn, user) do

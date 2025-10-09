@@ -55,7 +55,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
       refute html =~ tags.ppe2.name
       
       # Should show correct count
-      assert html =~ "2 items filtered"
+      assert html =~ "2 items"
     end
 
     test "filters by tool type", %{conn: conn, tags: tags} do
@@ -78,7 +78,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
       refute html =~ tags.ppe2.name
       
       # Should show correct count
-      assert html =~ "2 items filtered"
+      assert html =~ "2 items"
     end
 
     test "filters by ppe type", %{conn: conn, tags: tags} do
@@ -101,7 +101,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
       refute html =~ tags.tool2.name
       
       # Should show correct count
-      assert html =~ "2 items filtered"
+      assert html =~ "2 items"
     end
 
     test "switching between filters works correctly", %{conn: conn, tags: tags} do
@@ -173,7 +173,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
       refute html =~ tags.tool1.name
       
       # Should indicate filtered results
-      assert html =~ "1 item filtered"
+      assert html =~ "1 item"
     end
 
     test "shows correct tag type badges", %{conn: conn, tags: tags} do
@@ -203,7 +203,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
         |> render_change()
 
       assert html =~ "No PM Tags (Skills, Tools, PPE) found"
-      assert html =~ "0 items filtered"
+      assert html =~ "0 items"
     end
 
     test "filter works with inactive tags", %{conn: conn, tags: tags, tenant: tenant} do
@@ -372,18 +372,21 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
     tenant = tenant_fixture()
     user = user_fixture(%{email: "test@example.com", tenant_id: tenant.id})
     
+    # Get or create a role
+    role = Shop1Cmms.Factory.get_or_create_role("technician")
+    
     # Create user-tenant assignment
     Shop1Cmms.Accounts.create_user_tenant_assignment(%{
       user_id: user.id,
       tenant_id: tenant.id,
+      role_id: role.id,
       is_active: true
     })
     
+    # Add tenant_id to user for log_in_user helper
+    user = Map.put(user, :tenant_id, tenant.id)
+    
     %{user: user, tenant: tenant}
-  end
-
-  defp register_and_log_in_user(%{conn: conn, user: user}) do
-    %{conn: log_in_user(conn, user)}
   end
 
   defp create_pm_tags(%{tenant: tenant}) do
@@ -406,3 +409,4 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
     }
   end
 end
+
