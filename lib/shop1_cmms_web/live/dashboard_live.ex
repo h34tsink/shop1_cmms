@@ -25,7 +25,7 @@ defmodule Shop1CmmsWeb.DashboardLive do
             </div>
           </div>
         <% end %>
-        
+
         <%= if @auth.view_assets do %>
           <.link href="/assets" class="panel flex-1 min-w-0 flex flex-col overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
             <div class="panel-header flex-shrink-0">Equipment</div>
@@ -41,7 +41,7 @@ defmodule Shop1CmmsWeb.DashboardLive do
             </div>
           </.link>
         <% end %>
-        
+
         <%= if @auth.manage_pm_templates do %>
           <div class="panel flex-1 min-w-0 flex flex-col overflow-hidden">
             <div class="panel-header flex-shrink-0">PM Compliance</div>
@@ -56,7 +56,7 @@ defmodule Shop1CmmsWeb.DashboardLive do
             </div>
           </div>
         <% end %>
-        
+
         <div class="panel flex-1 min-w-0 flex flex-col overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-600">
           <div class="panel-header flex-shrink-0 bg-blue-600/50 border-blue-700 text-white">System Status</div>
           <div class="panel-body flex items-center justify-between p-3 overflow-hidden">
@@ -71,6 +71,51 @@ defmodule Shop1CmmsWeb.DashboardLive do
               </div>
               <div class="text-xxs opacity-90 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis"><%= @stats.active_users %> Users</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions Row -->
+      <div class="panel flex-shrink-0 flex flex-col overflow-hidden" style="height: 80px; min-height: 80px;">
+        <div class="panel-header flex-shrink-0">Quick Actions</div>
+        <div class="panel-body p-2 flex-1 overflow-hidden">
+          <div class="flex items-center gap-2 h-full">
+            <%= if @auth.create_work_orders do %>
+              <button class="btn-toolbar-primary flex-1 min-w-0 overflow-hidden justify-center">
+                <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                  <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="truncate overflow-hidden text-ellipsis">Create WO</span>
+              </button>
+            <% end %>
+
+            <%= if @auth.manage_assets do %>
+              <.link href="/assets/new" class="btn-toolbar flex-1 min-w-0 overflow-hidden justify-center">
+                <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="truncate overflow-hidden text-ellipsis">Add Equipment</span>
+              </.link>
+            <% end %>
+
+            <%= if @auth.view_assets do %>
+              <.link href="/assets" class="btn-toolbar flex-1 min-w-0 overflow-hidden justify-center">
+                <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="truncate overflow-hidden text-ellipsis">View All</span>
+              </.link>
+            <% end %>
+
+            <%= if @auth.view_reports do %>
+              <button class="btn-toolbar flex-1 min-w-0 overflow-hidden justify-center">
+                <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+                </svg>
+                <span class="truncate overflow-hidden text-ellipsis">Reports</span>
+              </button>
+            <% end %>
           </div>
         </div>
       </div>
@@ -108,7 +153,7 @@ defmodule Shop1CmmsWeb.DashboardLive do
                   <% end %>
                 </div>
               </div>
-              
+
               <!-- Criticality Breakdown -->
               <div>
                 <h4 class="text-xs font-semibold text-gray-700 uppercase mb-2">By Criticality</h4>
@@ -208,51 +253,6 @@ defmodule Shop1CmmsWeb.DashboardLive do
                 </div>
               <% end %>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom Row: Quick Actions -->
-      <div class="panel flex-shrink-0 flex flex-col overflow-hidden" style="height: 80px; min-height: 80px;">
-        <div class="panel-header flex-shrink-0">Quick Actions</div>
-        <div class="panel-body p-2 flex-1 overflow-hidden">
-          <div class="flex items-center gap-2 h-full">
-            <%= if @auth.create_work_orders do %>
-              <button class="btn-toolbar-primary flex-1 min-w-0 overflow-hidden justify-center">
-                <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
-                  <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
-                </svg>
-                <span class="truncate overflow-hidden text-ellipsis">Create WO</span>
-              </button>
-            <% end %>
-            
-            <%= if @auth.manage_assets do %>
-              <.link href="/assets/new" class="btn-toolbar flex-1 min-w-0 overflow-hidden justify-center">
-                <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
-                </svg>
-                <span class="truncate overflow-hidden text-ellipsis">Add Equipment</span>
-              </.link>
-            <% end %>
-            
-            <%= if @auth.view_assets do %>
-              <.link href="/assets" class="btn-toolbar flex-1 min-w-0 overflow-hidden justify-center">
-                <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
-                </svg>
-                <span class="truncate overflow-hidden text-ellipsis">View All</span>
-              </.link>
-            <% end %>
-            
-            <%= if @auth.view_reports do %>
-              <button class="btn-toolbar flex-1 min-w-0 overflow-hidden justify-center">
-                <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
-                </svg>
-                <span class="truncate overflow-hidden text-ellipsis">Reports</span>
-              </button>
-            <% end %>
           </div>
         </div>
       </div>

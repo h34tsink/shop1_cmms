@@ -214,8 +214,8 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
       tenant_id: socket.assigns.tenant_id,
       asset_id: socket.assigns.asset.id
     }
-    
-    changeset = 
+
+    changeset =
       component
       |> Assets.change_component(component_params)
       |> Map.put(:action, :validate)
@@ -224,7 +224,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
   end
 
   def handle_event("save_component", %{"component" => component_params}, socket) do
-    component_params = 
+    component_params =
       component_params
       |> Map.put("tenant_id", socket.assigns.tenant_id)
       |> Map.put("asset_id", socket.assigns.asset.id)
@@ -234,7 +234,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         case Assets.create_component(component_params, socket.assigns.user.id) do
           {:ok, _component} ->
             components = Assets.list_components_for_asset(socket.assigns.asset.id, socket.assigns.tenant_id)
-            
+
             {:noreply,
              socket
              |> assign(:components, components)
@@ -250,7 +250,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         case Assets.update_component(socket.assigns.selected_component, component_params, socket.assigns.user.id) do
           {:ok, _component} ->
             components = Assets.list_components_for_asset(socket.assigns.asset.id, socket.assigns.tenant_id)
-            
+
             {:noreply,
              socket
              |> assign(:components, components)
@@ -318,7 +318,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
           <span class="text-gray-400">/</span>
           <span class="text-gray-900 font-medium truncate max-w-xs"><%= @asset.name %></span>
         </nav>
-        
+
         <!-- Actions -->
         <div class="flex items-center space-x-1">
           <%= if @can_edit do %>
@@ -337,7 +337,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
               <span><%= if @edit_mode, do: "Cancel", else: "Edit" %></span>
             </button>
           <% end %>
-          
+
           <button class="btn-toolbar">
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
@@ -345,7 +345,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
             </svg>
             <span>Create WO</span>
           </button>
-          
+
           <.link
             navigate={~p"/assets/#{@asset.id}/schedule-pm"}
             class="btn-toolbar"
@@ -355,14 +355,14 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
             </svg>
             <span>Schedule PM</span>
           </.link>
-          
+
           <button class="btn-toolbar">
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
             </svg>
             <span>Assign</span>
           </button>
-          
+
           <button class="btn-toolbar">
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -381,7 +381,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
             <AssetComponents.status_badge status={@asset.status} />
             <AssetComponents.criticality_badge criticality={@asset.criticality} />
           </div>
-          
+
           <div class="flex items-center space-x-2 flex-shrink-0 text-xs text-gray-600">
             <%= if @asset.asset_type do %>
               <span><%= @asset.asset_type.name %></span>
@@ -618,9 +618,9 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
   end
   defp render_overview_tab(assigns) do
     ~H"""
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <!-- Asset Details -->
-      <div class="lg:col-span-2">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <!-- Asset Details - Column 1 -->
+      <div class="lg:col-span-4">
         <div class="bg-white shadow rounded-lg p-4">
           <h2 class="text-base font-semibold text-gray-900 mb-4">Asset Information</h2>
 
@@ -636,15 +636,15 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:name]} label="Asset Name" type="text" required class="text-sm" />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:asset_number]} label="Asset Number" type="text" required class="text-sm" />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:serial_number]} label="Serial Number" type="text" class="text-sm" />
                 </div>
-                
+
                 <!-- Manufacturer with inline button -->
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <label class="block text-xs font-medium text-gray-700 mb-1">Manufacturer</label>
@@ -666,19 +666,19 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
                     </button>
                   </div>
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:model]} label="Model" type="text" class="text-sm" />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:barcode]} label="Barcode" type="text" class="text-sm" />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:qr_code]} label="QR Code" type="text" class="text-sm" />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input
                     field={@form[:status]}
@@ -689,7 +689,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
                     class="text-sm"
                   />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input
                     field={@form[:criticality]}
@@ -700,23 +700,23 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
                     class="text-sm"
                   />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:purchase_date]} label="Purchase Date" type="date" class="text-sm" />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:install_date]} label="Install Date" type="date" class="text-sm" />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:commission_date]} label="Commission Date" type="date" class="text-sm" />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:warranty_expiry]} label="Warranty Expiry" type="date" class="text-sm" />
                 </div>
-                
+
                 <div class="border border-gray-300 rounded p-2 bg-gray-50">
                   <.input field={@form[:purchase_cost]} label="Purchase Cost ($)" type="number" step="0.01" min="0" class="text-sm" />
                 </div>
@@ -726,7 +726,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
               <div class="border border-gray-300 rounded p-2 bg-gray-50">
                 <.input field={@form[:description]} label="Description" type="textarea" rows="2" class="text-sm" />
               </div>
-              
+
               <div class="border border-gray-300 rounded p-2 bg-gray-50">
                 <.input field={@form[:notes]} label="Notes" type="textarea" rows="2" class="text-sm" />
               </div>
@@ -862,11 +862,125 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         </div>
       </div>
 
-      <!-- Quick Stats Sidebar -->
-      <div class="space-y-4">
+      <!-- Components Column - Column 2 -->
+      <div class="lg:col-span-5">
+        <div class="bg-white shadow rounded-lg p-4">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-base font-semibold text-gray-900">Components (<%= length(@components) %>)</h3>
+            <%= if @can_edit do %>
+              <button
+                phx-click="show_component_modal"
+                class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                title="Add Component"
+              >
+                + Add
+              </button>
+            <% end %>
+          </div>
+
+          <%= if Enum.empty?(@components) do %>
+            <div class="text-center py-4">
+              <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+              </svg>
+              <p class="mt-2 text-xs text-gray-500">No components</p>
+              <%= if @can_edit do %>
+                <button
+                  phx-click="show_component_modal"
+                  class="mt-2 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Add first component
+                </button>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="overflow-y-auto max-h-96">
+              <table class="min-w-full divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <%= for component <- @components do %>
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2">
+                        <div class="text-xs font-medium text-gray-900 truncate"><%= component.name %></div>
+                        <%= if component.description do %>
+                          <div class="text-xxs text-gray-500 truncate"><%= component.description %></div>
+                        <% end %>
+                      </td>
+                      <td class="px-3 py-2 text-center">
+                        <div class="text-xs text-gray-600"><%= component.component_type || "-" %></div>
+                      </td>
+                      <td class="px-3 py-2">
+                        <div class="text-xs text-gray-900 truncate"><%= component.manufacturer || "-" %></div>
+                        <%= if component.model do %>
+                          <div class="text-xxs text-gray-500 truncate"><%= component.model %></div>
+                        <% end %>
+                      </td>
+                      <td class="px-3 py-2 text-center">
+                        <span class={[
+                          "px-2 inline-flex text-xxs leading-4 font-semibold rounded-full whitespace-nowrap",
+                          component_status_color_class(component.status)
+                        ]}>
+                          <%= component.status |> to_string() |> String.capitalize() %>
+                        </span>
+                      </td>
+                      <td class="px-2 py-2 text-right">
+                        <div class="flex gap-0.5 justify-end">
+                          <button
+                            phx-click="view_component"
+                            phx-value-id={component.id}
+                            class="p-1.5 rounded hover:bg-blue-50 text-blue-600 hover:text-blue-700"
+                            title="Schedule PM"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                            </svg>
+                          </button>
+                          <%= if @can_edit do %>
+                            <button
+                              phx-click="edit_component"
+                              phx-value-id={component.id}
+                              class="p-1.5 rounded hover:bg-yellow-50 text-yellow-600 hover:text-yellow-700"
+                              title="Edit"
+                            >
+                              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                              </svg>
+                            </button>
+                            <button
+                              phx-click="show_delete_component_modal"
+                              phx-value-id={component.id}
+                              class="p-1.5 rounded hover:bg-red-50 text-red-600 hover:text-red-700"
+                              title="Delete"
+                            >
+                              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                              </svg>
+                            </button>
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+            <%= if length(@components) > 0 do %>
+              <button
+                phx-click="change_tab"
+                phx-value-tab="components"
+                class="mt-3 w-full text-xs text-blue-600 hover:text-blue-700 font-medium text-center py-1 border-t border-gray-200 pt-3"
+              >
+                View all details →
+              </button>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Quick Stats Column - Column 3 (Smaller) -->
+      <div class="lg:col-span-3 space-y-4">
         <!-- Status Card -->
         <div class="bg-white shadow rounded-lg p-4">
-          <h3 class="text-sm font-semibold text-gray-900 mb-3">Quick Stats</h3>
+          <h3 class="text-base font-semibold text-gray-900 mb-3">Quick Stats</h3>
           <div class="space-y-2">
             <div class="flex justify-between items-center">
               <span class="text-xs text-gray-500">Open Work Orders</span>
@@ -888,7 +1002,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
         <!-- Financial Info -->
         <%= if @asset.purchase_cost do %>
           <div class="bg-white shadow rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Financial</h3>
+            <h3 class="text-base font-semibold text-gray-900 mb-3">Financial</h3>
             <div class="space-y-2">
               <div class="flex justify-between items-center">
                 <span class="text-xs text-gray-500">Purchase Cost</span>

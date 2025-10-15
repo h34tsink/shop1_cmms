@@ -133,20 +133,20 @@ defmodule Shop1CmmsWeb.MetadataLive do
   def handle_event("filter_tag_type", %{"filter" => %{"tag_type" => type}}, socket) do
     require Logger
     Logger.debug("Filter tag type: #{type}, current: #{socket.assigns.tag_type_filter}")
-    
+
     tenant_id = socket.assigns.current_tenant.id
     search_query = socket.assigns.search_query
-    
+
     socket = socket
      |> assign(:tag_type_filter, type)
      |> load_metadata_items(tenant_id, search_query)
-    
+
     Logger.debug("Items after filter: #{length(socket.assigns.items)}")
     Logger.debug("Tag type filter set to: #{type}")
-    
+
     {:noreply, socket}
   end
-  
+
   # Fallback for other param formats
   def handle_event("filter_tag_type", params, socket) do
     require Logger
@@ -157,9 +157,9 @@ defmodule Shop1CmmsWeb.MetadataLive do
   def handle_event("sort", %{"field" => field}, socket) do
     current_sort = socket.assigns[:sort_field]
     current_order = socket.assigns[:sort_order] || "asc"
-    
+
     new_order = if current_sort == field and current_order == "asc", do: "desc", else: "asc"
-    
+
     {:noreply,
      socket
      |> assign(:sort_field, field)
@@ -230,6 +230,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp create_metadata_by_type("custom_fields", attrs), do: Metadata.create_custom_field(attrs)
   defp create_metadata_by_type("asset_types", attrs), do: Assets.create_asset_type(attrs)
   defp create_metadata_by_type("asset_locations", attrs), do: Assets.create_asset_location(attrs)
+  defp create_metadata_by_type("pm_tags", attrs), do: Maintenance.create_pm_tag(attrs)
 
   defp update_metadata_item(socket, params) do
     type = socket.assigns.metadata_type
@@ -267,7 +268,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp load_metadata_items(socket, tenant_id, search_query \\ "") do
     opts = [active_only: true]
     opts = if search_query != "", do: Keyword.put(opts, :search, search_query), else: opts
-    
+
     # Add tag type filter for PM tags
     tag_type_filter = Map.get(socket.assigns, :tag_type_filter, "all")
     opts = if socket.assigns.metadata_type == "pm_tags" and tag_type_filter != "all" do
@@ -275,11 +276,11 @@ defmodule Shop1CmmsWeb.MetadataLive do
     else
       opts
     end
-    
+
     # Add sorting
     sort_field = Map.get(socket.assigns, :sort_field)
     sort_order = Map.get(socket.assigns, :sort_order, "asc")
-    
+
     opts = if sort_field do
       opts
       |> Keyword.put(:sort_by, sort_field)
@@ -289,13 +290,13 @@ defmodule Shop1CmmsWeb.MetadataLive do
     end
 
     # Choose the right context module
-    context_module = 
+    context_module =
       cond do
         socket.assigns.metadata_type in ["asset_types", "asset_locations"] -> Assets
         socket.assigns.metadata_type == "pm_tags" -> Maintenance
         true -> Metadata
       end
-    
+
     items = apply(context_module, socket.assigns.metadata_config.context_fn, [tenant_id, opts])
     assign(socket, :items, items)
   end# Context function helpers
@@ -333,7 +334,7 @@ defmodule Shop1CmmsWeb.MetadataLive do
 
       "asset_locations" ->
         render_asset_location_fields(f, config)
-      
+
       "pm_tags" ->
         render_pm_tag_fields(f, config)
     end
@@ -799,16 +800,6 @@ defmodule Shop1CmmsWeb.MetadataLive do
   defp change_metadata_by_type("asset_locations", item), do: Assets.change_asset_location(item)
   defp change_metadata_by_type("pm_tags", item), do: Maintenance.change_pm_tag(item)
 
-  defp create_metadata_by_type("manufacturers", attrs), do: Metadata.create_manufacturer(attrs)
-  defp create_metadata_by_type("departments", attrs), do: Metadata.create_department(attrs)
-  defp create_metadata_by_type("suppliers", attrs), do: Metadata.create_supplier(attrs)
-  defp create_metadata_by_type("priority_codes", attrs), do: Metadata.create_priority_code(attrs)
-  defp create_metadata_by_type("maintenance_categories", attrs), do: Metadata.create_maintenance_category(attrs)
-  defp create_metadata_by_type("custom_fields", attrs), do: Metadata.create_custom_field(attrs)
-  defp create_metadata_by_type("asset_types", attrs), do: Assets.create_asset_type(attrs)
-  defp create_metadata_by_type("asset_locations", attrs), do: Assets.create_asset_location(attrs)
-  defp create_metadata_by_type("pm_tags", attrs), do: Maintenance.create_pm_tag(attrs)
-
   defp render_pm_tag_fields(f, _config) do
     assigns = %{f: f}
 
@@ -839,7 +830,3 @@ defmodule Shop1CmmsWeb.MetadataLive do
     """
   end
 end
-
-
-
-
