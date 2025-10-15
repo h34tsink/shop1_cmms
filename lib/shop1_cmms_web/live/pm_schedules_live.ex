@@ -111,11 +111,10 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     # Load all components for this asset
     components = Assets.list_components_for_asset(asset_id, tenant_id)
     
-    # Create changeset with pre-populated asset_id
-    # Note: component will be added to the PM schedule via the components array in the form
+    # Create changeset with pre-populated asset_id AND component_id
     changeset = PmSchedule.changeset(
       %PmSchedule{tenant_id: tenant_id}, 
-      %{"asset_id" => asset_id}
+      %{"asset_id" => asset_id, "component_id" => component_id}
     )
 
     socket
@@ -369,8 +368,13 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     |> List.replace_at(idx2, elem1)
   end
 
-  defp save_pm_schedule(socket, :new, pm_params) do
+  defp save_pm_schedule(socket, action, pm_params) when action in [:new, :new_from_asset, :new_from_component] do
+    require Logger
     tenant_id = socket.assigns.current_tenant_id
+    
+    Logger.info("Creating PM schedule with action: #{action}")
+    Logger.info("PM params: #{inspect(pm_params)}")
+    Logger.info("Components to link: #{inspect(socket.assigns.components)}")
     
     # Combine work instruction lines into a single text field
     work_instructions = 
@@ -387,8 +391,15 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
       |> Map.put("required_tools", socket.assigns.required_tools)
       |> Map.put("ppe_required", socket.assigns.ppe_required)
 
+    Logger.info("Final PM params before create: #{inspect(pm_params)}")
+
     case Maintenance.create_pm_schedule(pm_params) do
-      {:ok, _pm_schedule} ->
+      {:ok, pm_schedule} ->
+        Logger.info("PM schedule created successfully with ID: #{pm_schedule.id}")
+        
+        # Create associated components
+        create_pm_schedule_components(pm_schedule.id, socket.assigns.components, tenant_id)
+        
         # Auto-create tags for future autocomplete
         create_tags_if_needed(tenant_id, socket.assigns.required_skills, :skill)
         create_tags_if_needed(tenant_id, socket.assigns.required_tools, :tool)
@@ -396,16 +407,18 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
         
         {:noreply,
          socket
-         |> put_flash(:info, "PM Schedule created successfully")
+         |> put_flash(:info, "PM Schedule created successfully - Schedule ##{pm_schedule.schedule_number}")
          |> push_patch(to: ~p"/pm-schedules")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
+        Logger.error("Failed to create PM schedule: #{inspect(changeset.errors)}")
         {:noreply, assign(socket, :form, to_form(changeset))}
     end
   end
 
   defp save_pm_schedule(socket, :edit, pm_params) do
     tenant_id = socket.assigns.current_tenant_id
+    schedule_id = socket.assigns.selected_schedule.id
     
     # Combine work instruction lines into a single text field
     work_instructions = 
@@ -423,6 +436,10 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
 
     case Maintenance.update_pm_schedule(socket.assigns.selected_schedule, pm_params) do
       {:ok, _pm_schedule} ->
+        # Update associated components - delete old and create new
+        Maintenance.delete_pm_schedule_components(schedule_id)
+        create_pm_schedule_components(schedule_id, socket.assigns.components, tenant_id)
+        
         # Auto-create tags for future autocomplete
         create_tags_if_needed(tenant_id, socket.assigns.required_skills, :skill)
         create_tags_if_needed(tenant_id, socket.assigns.required_tools, :tool)
@@ -441,6 +458,34 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
   defp create_tags_if_needed(tenant_id, tag_names, tag_type) do
     Enum.each(tag_names, fn tag_name ->
       Metadata.get_or_create_pm_tag(tenant_id, tag_name, tag_type)
+    end)
+  end
+
+  defp create_pm_schedule_components(pm_schedule_id, components, tenant_id) do
+    require Logger
+    Logger.info("Creating PM schedule components for PM #{pm_schedule_id}, components: #{inspect(components)}")
+    
+    Enum.each(components, fn component ->
+      # Get component details from the database
+      try do
+        component_id = if is_map(component), do: component.id, else: component
+        db_component = Assets.get_component!(component_id, tenant_id)
+        
+        result = Maintenance.create_pm_schedule_component(%{
+          pm_schedule_id: pm_schedule_id,
+          component_name: db_component.name,
+          component_description: db_component.description,
+          component_location: nil,  # Components don't have a location field
+          tenant_id: tenant_id
+        })
+        
+        Logger.info("Created PM schedule component: #{inspect(result)}")
+      rescue
+        e in Ecto.NoResultsError ->
+          # Component not found - skip it
+          Logger.warning("Component not found: #{inspect(component)}, error: #{inspect(e)}")
+          :ok
+      end
     end)
   end
 
@@ -465,11 +510,15 @@ defmodule Shop1CmmsWeb.PmSchedulesLive do
     filtered =
       schedules
       |> Enum.filter(fn schedule ->
-        # Search filter
+        # Search filter - now includes component names
         search_match = search_query == "" or
           String.contains?(String.downcase(schedule.title || ""), search_query) or
           String.contains?(String.downcase(schedule.schedule_number || ""), search_query) or
-          String.contains?(String.downcase(schedule.description || ""), search_query)
+          String.contains?(String.downcase(schedule.description || ""), search_query) or
+          (schedule.asset && String.contains?(String.downcase(schedule.asset.name || ""), search_query)) or
+          Enum.any?(schedule.components || [], fn comp -> 
+            String.contains?(String.downcase(comp.component_name || ""), search_query)
+          end)
         
         # Frequency filter
         frequency_match = frequency == "all" or

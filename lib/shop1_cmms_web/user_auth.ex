@@ -34,7 +34,7 @@ defmodule Shop1CmmsWeb.UserAuth do
     |> establish_session_context(user.id, tenant_id)
   end
 
-  defp maybe_write_remember_me_cookie(conn, user_id, %{"remember_me" => "true"}) do
+  defp maybe_write_remember_me_cookie(conn, _user_id, %{"remember_me" => "true"}) do
     token = :crypto.strong_rand_bytes(32) |> Base.encode64()
     put_resp_cookie(conn, @remember_me_cookie, token, @remember_me_options)
   end
@@ -184,7 +184,7 @@ defmodule Shop1CmmsWeb.UserAuth do
     end
   end
 
-  def on_mount(:ensure_tenant_access, params, session, socket) do
+  def on_mount(:ensure_tenant_access, _params, session, socket) do
     socket = mount_current_user(socket, session)
     tenant_id = socket.assigns[:current_tenant_id]
 

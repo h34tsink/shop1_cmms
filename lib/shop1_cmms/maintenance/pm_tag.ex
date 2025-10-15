@@ -48,7 +48,8 @@ defmodule Shop1Cmms.Maintenance.PmTag do
   @doc """
   Query to filter by tag type.
   """
-  def by_type(query \\ base_query(), type) when type in @tag_types do
+  def by_type(query \\ base_query(), type)
+  def by_type(query, type) when type in @tag_types do
     from t in query, where: t.tag_type == ^type
   end
   def by_type(query, _), do: query
@@ -77,7 +78,8 @@ defmodule Shop1Cmms.Maintenance.PmTag do
   @doc """
   Search tags by name (case-insensitive).
   """
-  def search(query \\ base_query(), search_term) when is_binary(search_term) do
+  def search(query \\ base_query(), search_term)
+  def search(query, search_term) when is_binary(search_term) do
     search_pattern = "%#{search_term}%"
     from t in query, where: ilike(t.name, ^search_pattern)
   end

@@ -39,7 +39,8 @@ defmodule Shop1Cmms.AuditTest do
       )
       
       assert log.action == "updated"
-      assert log.changes == changes
+      # Changes are stored with string keys in JSON
+      assert log.changes == %{"name" => "New Name", "manufacturer" => "ABB"}
     end
   end
 
@@ -113,9 +114,9 @@ defmodule Shop1Cmms.AuditTest do
       
       # Create multiple audit logs
       Audit.log_component_created(component, user.id, component.tenant_id)
-      :timer.sleep(10) # Ensure different timestamps
+      :timer.sleep(100) # Ensure different timestamps
       Audit.log_component_updated(component, %{name: "Updated"}, user.id, component.tenant_id)
-      :timer.sleep(10)
+      :timer.sleep(100)
       Audit.log_component_status_changed(component, :active, :maintenance, user.id, component.tenant_id)
       
       history = Audit.get_component_history(component.id, component.tenant_id)
@@ -185,10 +186,10 @@ defmodule Shop1Cmms.AuditTest do
       user = Factory.insert(:user)
       
       component1 = Factory.insert(:component, tenant_id: 1, name: "First")
-      :timer.sleep(10)
       component2 = Factory.insert(:component, tenant_id: 1, name: "Second")
       
       Audit.log_component_created(component1, user.id, 1)
+      :timer.sleep(100)  # Ensure second log has later timestamp
       Audit.log_component_created(component2, user.id, 1)
       
       activity = Audit.get_recent_activity(1, 10)

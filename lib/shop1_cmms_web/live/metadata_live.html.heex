@@ -101,11 +101,7 @@
           
           <!-- Results Count -->
           <div class="text-sm text-gray-600">
-            <span class="font-medium"><%= length(@items) %></span>
-            <%= if length(@items) == 1, do: "item", else: "items" %>
-            <%= if @search_query != "" or (@metadata_type == "pm_tags" and @tag_type_filter != "all") do %>
-              <span class="text-gray-400">filtered</span>
-            <% end %>
+            <span class="font-medium"><%= length(@items) %></span> <%= if length(@items) == 1, do: "item", else: "items" %><%= if @search_query != "" or (@metadata_type == "pm_tags" and @tag_type_filter != "all") do %> <span class="text-gray-400">filtered</span><% end %>
           </div>
         </div>
       </div>

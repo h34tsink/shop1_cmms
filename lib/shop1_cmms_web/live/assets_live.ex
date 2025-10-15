@@ -697,10 +697,8 @@ defmodule Shop1CmmsWeb.AssetsLive do
 
   defp filter_by_type(assets, "all"), do: assets
   defp filter_by_type(assets, type_id) when is_binary(type_id) do
-    case Integer.parse(type_id) do
-      {type_id_int, _} -> Enum.filter(assets, &(&1.asset_type_id == type_id_int))
-      :error -> assets
-    end
+    # asset_type_id is a UUID (binary_id), compare directly as string
+    Enum.filter(assets, &(&1.asset_type_id == type_id))
   end
   defp filter_by_type(assets, type_id) do
     Enum.filter(assets, &(&1.asset_type_id == type_id))

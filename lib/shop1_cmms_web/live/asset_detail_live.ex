@@ -383,9 +383,15 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
           </div>
           
           <div class="flex items-center space-x-2 flex-shrink-0 text-xs text-gray-600">
-            <span><%= @asset.asset_type.name %></span>
-            <span class="text-gray-300">|</span>
-            <span><%= @asset.location.name %></span>
+            <%= if @asset.asset_type do %>
+              <span><%= @asset.asset_type.name %></span>
+              <%= if @asset.location do %>
+                <span class="text-gray-300">|</span>
+              <% end %>
+            <% end %>
+            <%= if @asset.location do %>
+              <span><%= @asset.location.name %></span>
+            <% end %>
           </div>
         </div>
       </div>
@@ -526,6 +532,7 @@ defmodule Shop1CmmsWeb.AssetDetailLive do
             </div>
             <.simple_form
               for={@component_form}
+              id="component-form"
               phx-change="validate_component"
               phx-submit="save_component"
             >

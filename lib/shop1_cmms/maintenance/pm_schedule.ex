@@ -37,6 +37,7 @@ defmodule Shop1Cmms.Maintenance.PmSchedule do
     
     # References
     belongs_to :asset, Shop1Cmms.Assets.Asset, type: :binary_id
+    belongs_to :component, Shop1Cmms.Assets.Component, type: :binary_id
     belongs_to :created_by_user, Shop1Cmms.Accounts.User, foreign_key: :created_by
     belongs_to :updated_by_user, Shop1Cmms.Accounts.User, foreign_key: :updated_by
     
@@ -60,7 +61,7 @@ defmodule Shop1Cmms.Maintenance.PmSchedule do
       :work_instructions, :estimated_duration, :required_skills, :required_tools, :required_parts,
       :safety_notes, :ppe_required,
       :last_completed_date, :next_due_date, :is_active,
-      :asset_id, :created_by, :updated_by, :tenant_id
+      :asset_id, :component_id, :created_by, :updated_by, :tenant_id
     ])
     |> maybe_generate_schedule_number()
     |> validate_required([:schedule_number, :title, :frequency, :asset_id, :tenant_id])
@@ -166,7 +167,8 @@ defmodule Shop1Cmms.Maintenance.PmSchedule do
       order_by: [asc: pm.next_due_date]
   end
 
-  def by_frequency(query \\ __MODULE__, frequency) when frequency in @frequency_values do
+  def by_frequency(query \\ __MODULE__, frequency)
+  def by_frequency(query, frequency) when frequency in @frequency_values do
     from pm in query, where: pm.frequency == ^frequency
   end
   def by_frequency(query, _), do: query

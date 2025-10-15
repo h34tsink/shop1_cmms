@@ -286,6 +286,14 @@ defmodule Shop1Cmms.Maintenance do
     Repo.delete(component)
   end
 
+  @doc """
+  Deletes all PM schedule components for a given schedule.
+  """
+  def delete_pm_schedule_components(pm_schedule_id) do
+    from(c in PmScheduleComponent, where: c.pm_schedule_id == ^pm_schedule_id)
+    |> Repo.delete_all()
+  end
+
   ## PM Checklist Items
 
   @doc """

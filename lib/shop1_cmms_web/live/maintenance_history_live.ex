@@ -1,6 +1,6 @@
 defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
   use Shop1CmmsWeb, :live_view
-  alias Shop1Cmms.{Assets, Accounts, Maintenance, WorkOrders}
+  alias Shop1Cmms.{Assets, WorkOrders}
   alias Shop1Cmms.Repo
   import Ecto.Query
   alias Decimal
@@ -143,7 +143,7 @@ defmodule Shop1CmmsWeb.MaintenanceHistoryLive do
   def handle_event("export", %{"format" => format}, socket) do
     case format do
       "csv" ->
-        csv_content = Exports.export_maintenance_history_to_csv(socket.assigns.history)
+        csv_content = Shop1Cmms.Exports.export_maintenance_history_to_csv(socket.assigns.history)
         timestamp = DateTime.utc_now() |> Calendar.strftime("%Y%m%d_%H%M%S")
         filename = "maintenance_history_export_#{timestamp}.csv"
         

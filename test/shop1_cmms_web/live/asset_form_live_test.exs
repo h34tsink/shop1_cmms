@@ -159,8 +159,8 @@ defmodule Shop1CmmsWeb.AssetFormLiveTest do
       |> element("button", "Cancel")
       |> render_click()
 
-      # Should redirect or close modal
-      assert_redirect(form_live, "/assets")
+      # Should patch to assets index (LiveView uses push_patch, not redirect)
+      assert_patched(form_live, "/assets")
     end
 
     test "creates asset with valid data", %{conn: conn, tenant: tenant, user: user, asset_type: asset_type, location: location} do
@@ -188,8 +188,8 @@ defmodule Shop1CmmsWeb.AssetFormLiveTest do
       })
       |> render_submit()
 
-      # Should redirect to assets index
-      assert_redirect(form_live, "/assets")
+      # Should patch to assets index (LiveView uses push_patch, not redirect)
+      assert_patched(form_live, "/assets")
     end
   end
 end

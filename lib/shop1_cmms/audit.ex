@@ -24,16 +24,16 @@ defmodule Shop1Cmms.Audit do
       entity_id: component.id,
       action: "created",
       changes: %{
-        name: component.name,
-        component_type: component.component_type,
-        manufacturer: component.manufacturer,
-        model: component.model,
-        serial_number: component.serial_number,
-        install_date: component.install_date,
-        status: component.status,
-        asset_id: component.asset_id
+        "name" => component.name,
+        "component_type" => component.component_type,
+        "manufacturer" => component.manufacturer,
+        "model" => component.model,
+        "serial_number" => component.serial_number,
+        "install_date" => component.install_date,
+        "status" => component.status,
+        "asset_id" => component.asset_id
       },
-      metadata: metadata,
+      metadata: stringify_keys(metadata),
       performed_by_id: user_id,
       tenant_id: tenant_id
     })
@@ -47,8 +47,8 @@ defmodule Shop1Cmms.Audit do
       entity_type: "component",
       entity_id: component.id,
       action: "updated",
-      changes: changes,
-      metadata: metadata,
+      changes: stringify_keys(changes),
+      metadata: stringify_keys(metadata),
       performed_by_id: user_id,
       tenant_id: tenant_id
     })
@@ -63,11 +63,11 @@ defmodule Shop1Cmms.Audit do
       entity_id: component.id,
       action: "deleted",
       changes: %{
-        name: component.name,
-        component_type: component.component_type,
-        serial_number: component.serial_number
+        "name" => component.name,
+        "component_type" => component.component_type,
+        "serial_number" => component.serial_number
       },
-      metadata: Map.merge(%{reason: "User deleted"}, metadata),
+      metadata: stringify_keys(Map.merge(%{reason: "User deleted"}, metadata)),
       performed_by_id: user_id,
       tenant_id: tenant_id
     })
@@ -82,15 +82,15 @@ defmodule Shop1Cmms.Audit do
       entity_id: old_component.id,
       action: "replaced",
       changes: %{
-        old_serial_number: old_component.serial_number,
-        old_install_date: old_component.install_date,
-        new_serial_number: new_component.serial_number,
-        new_install_date: new_component.install_date,
-        new_component_id: new_component.id
+        "old_serial_number" => old_component.serial_number,
+        "old_install_date" => old_component.install_date,
+        "new_serial_number" => new_component.serial_number,
+        "new_install_date" => new_component.install_date,
+        "new_component_id" => new_component.id
       },
       metadata: %{
-        reason: reason || "Component replaced",
-        replacement_component_id: new_component.id
+        "reason" => reason || "Component replaced",
+        "replacement_component_id" => new_component.id
       },
       performed_by_id: user_id,
       tenant_id: tenant_id
@@ -106,15 +106,25 @@ defmodule Shop1Cmms.Audit do
       entity_id: component.id,
       action: "status_changed",
       changes: %{
-        old_status: old_status,
-        new_status: new_status,
-        name: component.name
+        "old_status" => old_status,
+        "new_status" => new_status,
+        "name" => component.name
       },
-      metadata: %{reason: reason || "Status updated"},
+      metadata: %{"reason" => reason || "Status updated"},
       performed_by_id: user_id,
       tenant_id: tenant_id
     })
   end
+
+  # Helper to convert map keys to strings for JSON storage
+  defp stringify_keys(map) when is_map(map) do
+    Map.new(map, fn
+      {key, value} when is_atom(key) -> {Atom.to_string(key), value}
+      {key, value} -> {key, value}
+    end)
+  end
+  
+  defp stringify_keys(value), do: value
 
   @doc """
   Get audit history for a component

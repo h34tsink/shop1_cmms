@@ -55,7 +55,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
       refute html =~ tags.ppe2.name
       
       # Should show correct count
-      assert html =~ "2 items"
+      assert html =~ ~r/>2<\/span>\s+items/
     end
 
     test "filters by tool type", %{conn: conn, tags: tags} do
@@ -78,7 +78,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
       refute html =~ tags.ppe2.name
       
       # Should show correct count
-      assert html =~ "2 items"
+      assert html =~ ~r/>2<\/span>\s+items/
     end
 
     test "filters by ppe type", %{conn: conn, tags: tags} do
@@ -101,7 +101,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
       refute html =~ tags.tool2.name
       
       # Should show correct count
-      assert html =~ "2 items"
+      assert html =~ ~r/>2<\/span>\s+items/
     end
 
     test "switching between filters works correctly", %{conn: conn, tags: tags} do
@@ -173,7 +173,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
       refute html =~ tags.tool1.name
       
       # Should indicate filtered results
-      assert html =~ "1 item"
+      assert html =~ ~r/>1<\/span>\s+item\b/
     end
 
     test "shows correct tag type badges", %{conn: conn, tags: tags} do
@@ -202,8 +202,8 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
         |> form("form[phx-change='filter_tag_type']", filter: %{tag_type: "skill"})
         |> render_change()
 
-      assert html =~ "No PM Tags (Skills, Tools, PPE) found"
-      assert html =~ "0 items"
+      assert html =~ "No pm tags (skills, tools, ppe) found"
+      assert html =~ ~r/>0<\/span>\s+items/
     end
 
     test "filter works with inactive tags", %{conn: conn, tags: tags, tenant: tenant} do
@@ -297,8 +297,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
                pm_tag: %{
                  name: "New Skill",
                  tag_type: "skill",
-                 description: "New skill description",
-                 tenant_id: tenant.id
+                 description: "New skill description"
                }
              )
              |> render_submit()
@@ -352,7 +351,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
       |> render_change()
 
       html = render(view)
-      assert html =~ "2 items" # ppe1 and ppe2
+      assert html =~ ~r/>2<\/span>\s+items/ # ppe1 and ppe2
 
       # Delete ppe1
       view
@@ -362,7 +361,7 @@ defmodule Shop1CmmsWeb.MetadataLiveTest do
       html = render(view)
       
       # Should now show only 1 item
-      assert html =~ "1 item"
+      assert html =~ ~r/>1<\/span>\s+item\b/
       refute html =~ tags.ppe1.name
       assert html =~ tags.ppe2.name
     end

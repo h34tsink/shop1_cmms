@@ -268,7 +268,11 @@ defmodule Shop1Cmms.Factory do
   @doc """
   Insert a list of records
   """
-  def insert_list(count, factory_name, attrs \\ %{}) when count > 0 do
+  def insert_list(count, factory_name, attrs \\ %{})
+  
+  def insert_list(count, _factory_name, _attrs) when count <= 0, do: []
+  
+  def insert_list(count, factory_name, attrs) do
     Enum.map(1..count, fn _ -> insert(factory_name, attrs) end)
   end
 

@@ -7,7 +7,7 @@ defmodule Shop1Cmms.Accounts do
   import Ecto.Query, warn: false
   alias Shop1Cmms.Repo
   alias Shop1Cmms.Accounts.{User, CMMSUserRole, UserTenantAssignment}
-  alias Shop1Cmms.Tenants.{Tenant, Site}
+  alias Shop1Cmms.Tenants.Tenant
 
   ## Database getters (working with existing Shop1FinishLine structure)
 

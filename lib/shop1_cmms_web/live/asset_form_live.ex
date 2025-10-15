@@ -24,6 +24,7 @@ defmodule Shop1CmmsWeb.AssetFormLive do
 
       <.form
         for={@form}
+        id="asset-form-form"
         phx-target={@myself}
         phx-change="validate"
         phx-submit="save"

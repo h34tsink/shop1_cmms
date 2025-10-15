@@ -9,18 +9,22 @@ config :shop1_cmms, Shop1Cmms.Repo,
   database: "Shop1",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+  pool_size: 10,
+  timeout: 60_000,
+  connect_timeout: 60_000,
+  ownership_timeout: 60_000
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
 config :shop1_cmms, Shop1CmmsWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}, port: 4000],
+  http: [ip: {127, 0, 0, 1}, port: 4000, protocol_options: [idle_timeout: 120_000]],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "your-secret-key-base-here-should-be-64-characters-long-in-production",
+  live_view: [signing_salt: "your-signing-salt"],
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:shop1_cmms, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:shop1_cmms, ~w(--watch)]}
